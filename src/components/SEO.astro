@@ -1,0 +1,73 @@
+---
+// Полная SEO-оптимизация страницы для поисковых систем (Google, Яндекс)
+// внутри страницы: title, meta name="description", canonical ссылки, теги для роботов, языковые теги
+// Обычно является «родителем» (главным компонентом) для мета-тегов
+
+import type { SiteConfig, PageLike } from "../lib/seo";
+import SocialMeta from "./SocialMeta.astro";
+
+import {
+  resolveSocialTitle,
+  resolveDescription,
+  resolveShareImage,
+  resolveLocale,
+  toIso,
+} from "../lib/seo";
+
+interface Props {
+  site: SiteConfig;
+  page: PageLike;
+}
+
+const { site, page, title, ogImage } = Astro.props;
+
+const socialTitle = resolveSocialTitle(page, site);
+const description = resolveDescription(page, site);
+const shareImage = resolveShareImage(page, site);
+
+const canonicalURL = page.permalink || site.baseUrl;
+const ogType = page.isPage ? "article" : "website";
+const locale = resolveLocale(site);
+
+const publishedTime = toIso(page.publishDate);
+const modifiedTime = toIso(page.updatedDate);
+const tags = page.tags ?? [];
+---
+
+<title>{title}</title>
+<link rel="canonical" href={canonicalURL} />
+<meta name="description" content={description} />
+<meta name="robots" content="index, follow" />
+
+<meta property="og:site_name" content={site.title} />
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={socialTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:locale" content={locale} />
+{shareImage && <meta property="og:image" content={shareImage} />}
+
+<meta
+  name="twitter:card"
+  content={shareImage ? "summary_large_image" : "summary"}
+/>
+<meta name="twitter:title" content={socialTitle} />
+<meta name="twitter:description" content={description} />
+{shareImage && <meta name="twitter:image" content={shareImage} />}
+
+{
+  page.isPage && publishedTime && (
+    <meta property="article:published_time" content={publishedTime} />
+  )
+}
+{
+  page.isPage && modifiedTime && (
+    <meta property="article:modified_time" content={modifiedTime} />
+  )
+}
+{
+  page.isPage &&
+    tags.map((tag) => <meta property="article:tag" content={tag} />)
+}
+
+<SocialMeta title={title} description={description} ogImage={ogImage} />

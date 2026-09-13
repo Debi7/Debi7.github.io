@@ -1,0 +1,120 @@
+---
+// Port of ../klub_biolocation/layouts/partials/head.html (the root override, which wins over
+// the theme's own head.html) plus the font links from themes/void/layouts/partials/head/css.html
+// and the third-party script tags from head/js.html. Copied as-is where possible.
+// Do not write a literal script or style tag inside these comments: Vite's dependency
+// pre-scan looks for those tokens in .astro files without parsing the TypeScript, so it
+// would try to execute the rest of the comment as JavaScript and `astro dev` would fail.
+import SocialMeta from "./SocialMeta.astro";
+import { site } from "../config";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+const pageTitle = title ? `${title} | ${site.title}` : site.title;
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width" />
+<title>{pageTitle}</title>
+<SocialMeta title={pageTitle} description={description} />
+
+<!-- Prevent theme flash: set dark class ASAP and background color before CSS loads -->
+<meta name="color-scheme" content="light dark" />
+<!-- Keep in sync with --page-bg (html.dark) in src/styles/custom.css. Previous value: #0b1220 -->
+<meta
+  name="theme-color"
+  media="(prefers-color-scheme: dark)"
+  content="#0b1e3d"
+/>
+<script is:inline>
+  (function () {
+    try {
+      var t = localStorage.getItem("theme");
+      var dark = t
+        ? t === "dark"
+        : window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (dark) document.documentElement.classList.add("dark");
+    } catch (_) {}
+  })();
+</script>
+<style is:inline>
+  /* Minimal pre-CSS paint to avoid a white flash on dark. The final colour comes from
+     --page-bg in src/styles/custom.css (html.dark block); the literal below is only the
+     fallback used before that file is applied. Previous value: #0b1220 */
+  html.dark,
+  html.dark body {
+    background-color: var(--page-bg, #0b1e3d);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<!-- Speed up Busuanzi counter load -->
+<link rel="dns-prefetch" href="//busuanzi.ibruce.info" />
+<link rel="preconnect" href="https://busuanzi.ibruce.info" crossorigin />
+
+<!-- Favicon configuration (files in public/favicon/, copied from the Hugo static/ folder) -->
+<link
+  rel="icon"
+  type="image/png"
+  href="/favicon/favicon-96x96.png"
+  sizes="96x96"
+/>
+<link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+<link rel="shortcut icon" href="/favicon/favicon.ico" />
+<link
+  rel="apple-touch-icon"
+  sizes="180x180"
+  href="/favicon/apple-touch-icon.png"
+/>
+<link rel="manifest" href="/favicon/site.webmanifest" />
+<!-- End of favicon configuration -->
+
+<!-- Theme fonts (head/css.html). The stylesheets themselves are imported in Base.astro. -->
+<link
+  href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+  rel="stylesheet"
+/>
+<link
+  href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap"
+  rel="stylesheet"
+/>
+
+<!-- Third-party libraries (head/js.html): same URLs and versions as the Hugo theme -->
+<script
+  is:inline
+  defer
+  src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+/>
+<script
+  is:inline
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script
+  is:inline
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body);"></script>
+
+<!-- Busuanzi page/site view counter (load early to avoid delayed render) -->
+<script
+  is:inline
+  async
+  src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>

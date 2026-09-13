@@ -1,0 +1,99 @@
+---
+// The About menu item. Port of
+// ../klub_biolocation/themes/void/layouts/about/single.html (MIGRATION-PLAN.md §4.1).
+// Class attributes are copied verbatim.
+//
+// WHICH TEMPLATE: the theme ships two candidates, `about/single.html` and
+// `page/about.html`. Hugo picks the first one, because ../klub_biolocation/content/about.md
+// sets `layout = 'about'` in its front matter - confirmed against the rendered page, which
+// has the 24/28 avatar and the `p-8 sm:p-10` content card from about/single.html, not the
+// 28/32 avatar, social icons and `p-6 sm:p-8` card from page/about.html. `page/about.html`
+// is therefore dead code in this site and is NOT ported.
+//
+// That `layout` key could not be carried into the Markdown: it is reserved by Astro, where
+// it names a layout file to import. The choice is made here instead, in code.
+//
+// HOW THE GO TEMPLATE MAPS ONTO THIS FILE
+//
+//   site.Params.avatar.url  -> site.avatar in src/config.ts. Hugo wraps the avatar block in
+//                              `with`, so it disappears entirely when unset - hence the
+//                              conditional rather than an empty img.
+//   $.Site.Title            -> site.title, used as the avatar's alt text.
+//   .Title                  -> about.data.title.
+//   .Content                -> the rendered Markdown body.
+//   i18n "back_to_home"     -> t.back_to_home.
+//   partial "disqus_lazy"   -> nothing. The partial renders only when a Disqus shortname is
+//                              configured, and hugo.toml configures none, so the live page
+//                              has the wrapper div with its inline style and NOTHING inside.
+//                              The empty div is reproduced because it paints a visible white
+//                              card below the content.
+import { getEntry } from "astro:content";
+import Base from "../layouts/Base.astro";
+import { site } from "../config";
+import { t } from "../i18n/strings";
+
+const about = await getEntry("pages", "about");
+if (!about) throw new Error("src/content/pages/about.md is missing");
+const { Content } = await about.render();
+---
+
+<Base title={about.data.title}>
+  <article class="mx-auto max-w-4xl">
+    <!-- Title only, no meta/date/reading time/PV -->
+    <div class="mb-12 text-center">
+      {
+        site.avatar && (
+          <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-sm ring-2 ring-gray-200 dark:ring-slate-700 md:h-28 md:w-28">
+            <img
+              src={site.avatar}
+              alt={site.title}
+              class="h-full w-full object-cover"
+            />
+          </div>
+        )
+      }
+      <h1 class="mb-4 text-4xl font-bold text-gray-900 dark:text-gray-100">
+        {about.data.title}
+      </h1>
+    </div>
+
+    <!-- Content -->
+    <div
+      class="mb-12 overflow-hidden rounded-lg bg-white shadow-sm dark:bg-slate-900"
+    >
+      <div class="prose prose-sm sm:prose lg:prose-lg max-w-none p-8 sm:p-10">
+        <Content />
+      </div>
+    </div>
+
+    <!-- Back to home only -->
+    <div class="mb-12 flex justify-center">
+      <a
+        href="/"
+        class="inline-flex items-center text-gray-600 transition-colors hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-300"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="mr-2 h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        {t.back_to_home}
+      </a>
+    </div>
+  </article>
+
+  <!-- Optional comments (lazy Disqus). Empty until a shortname is configured. -->
+  <div
+    class="theme-card mx-auto mt-8 max-w-4xl overflow-hidden rounded-lg bg-white shadow-md dark:bg-slate-900"
+    style="--tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-links: #2563eb; --tw-prose-links-hover: #1d4ed8; --tw-prose-code-bg: #f3f4f6; color: #374151;"
+  >
+  </div>
+</Base>

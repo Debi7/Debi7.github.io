@@ -1,0 +1,162 @@
+# Working notes for Claude - klub_biolocation_astro
+
+Astro 4 + Tailwind 3 port of the Hugo site in `../klub_biolocation`, which stays untouched as the visual reference. The skeleton was finished on 2026-09-08 (build green, `astro check` clean, route parity verified); all five menu items were ported by 2026-09-09. What remains is filling the `TODO(migration §N)` stubs. This file carries the context of those sessions so that any model can continue without re-investigating.
+
+## Read first, in this order
+
+1. `README.md`, section "Skeleton status" - what exists and what is missing.
+2. `MIGRATION-PLAN.md`, section "Progress" (what is done, per plan section, plus the amendments the plan itself did not foresee), then §4.1 (the per-menu-item table and the porting procedure), then only the section for the step at hand.
+3. The single Hugo source file named in the `TODO(migration §N)` comment you are working on. Do not re-read the whole theme.
+
+## Hard constraints from the owner
+
+- Node 20, Astro **4.x**, Tailwind **3.4**. Never upgrade to Astro 5 or Tailwind 4.
+- 99.9% visual parity with the Hugo output. Copy class attributes verbatim from the Hugo templates; do not "improve" markup. Deviations only from plan §9.
+- Same URLs as Hugo, trailing slashes everywhere (`reference/hugo-routes.txt` is the contract).
+- Code comments, docs and commit messages in English. Site strings keep the language the Hugo content is written in; never translate them.
+- Do **not** install `@tailwindcss/typography`: it is not active in the Hugo build; `prose` is a plain hook class.
+- `src/styles/custom.css` stays plain CSS, imported last in `Base.astro`.
+- Do not modify `../klub_biolocation` beyond its README pointer, and never edit `themes/void` there.
+- Dependencies need the owner's explicit agreement before they are installed. Say which package, what it is for, and roughly how big it is. So far only `@types/node` has been added this way, for the build-time directory read in `Carousel.astro`.
+
+## Scope and effort
+
+- Do what was asked: the named file, the named change. No refactors, renames, reorganisation or "while I am here" improvements unless told. The smallest diff that does the job wins.
+- Take the most direct edit. When a file and a goal are named, change that file in place the obvious way; do not add a module, a layer or a "cleaner" abstraction over the simple change.
+- Size the effort to the task. Do not sweep the subsystem before a one-file change. In this project the plan already names the exact Hugo source for every target, so there is no need to explore.
+- If the task looks like it needs more than was asked, say so in one line and wait. Never silently widen the scope.
+- A broken change does not change the goal. Fix the root cause, or back the wrong approach out and try another. Never stack compensating hacks, and never stop on a bare revert with the task undone; if it cannot be made to work, say what is blocking.
+- Never write code whose default behaviour deletes, overwrites or truncates data - files, records, logs, caches, and especially anything kept for inspection. Destructive behaviour has to be asked for, never added as a convenience.
+
+## Working style and communication
+
+- **Default to discussing, not building.** The owner works through dialogue: propose the approach, name the trade-off, give a recommendation, and wait for the go-ahead before changing code. Confirmed by the owner on 2026-09-09, which is why it leads this section. Two things are exempt, because they record a decision rather than take one: updating `README.md`, `MIGRATION-PLAN.md` and this file, and fixing something the owner has just reported as broken. Once the go-ahead is given, carry the agreed scope through without re-confirming every detail.
+- Explain the steps taken, but keep summaries compact: the weekly model budget is tight.
+- Be concise. No marketing language, no filler.
+- Treat a question as a question. Answer it and stop; do not start building because a message also contained a specification. Sanity checks ("am I overcomplicating this?") count as questions.
+- Agreement words ("yes", "sure", "sounds good") answer a question. They are not an instruction to build. Once a build instruction is given, though, carry the agreed scope through without re-confirming every detail.
+- When the answer contains questions for the owner, gather them at the very end under a line reading "QUESTIONS:", as a short self-contained bullet list. Do not bury a question mid-text.
+- When proposing an edit in chat, show the full "before" and the full "after" as two blocks, not just the fragment.
+- Do not apologise or perform contrition. On a mistake: state what was wrong, state the fix, move on.
+- Avoid the word "forge"; do not overuse "honest" ("honest current state" is just "current state").
+- The owner tests locally after each finished step: end with what to run and what to look at, and say explicitly when something is ready to test.
+
+## Code documentation
+
+Documentation is mandatory here, not optional. The point is that a later session can trace a decision without re-deriving it from the Hugo templates.
+
+- Every ported file opens with a comment block naming its Hugo source and the plan section, then a mapping of the Go template constructs onto the Astro code (`.Data.Terms.ByCount -> getTerms(...)`), then the decisions that would otherwise look like mistakes. `src/pages/categories/index.astro` and `src/components/PostList.astro` are the reference for the shape.
+- Document WHY something is the way it is - the constraint, the trade-off, the Hugo behaviour being matched - not what the signature already says.
+- Anything that reproduces a Hugo quirk gets a comment saying so, otherwise the next session "fixes" it. Examples already in the tree: the duplicated `class` attribute behind `Menu.astro`, the never-matching `$isCurrentTag` in `tags/[slug].astro`, the tag hrefs without a trailing slash.
+- Record verification results next to the code they describe: which pages were diffed, what the screenshot comparison gave, what residual difference was accepted.
+- A trivial re-export or one-line helper can carry a single-line comment. The bar is "explain why", not "pad every line".
+- Use `//` comments; TSDoc `/** ... */` for exported types and functions whose parameters are not self-evident.
+
+## Markdown and prose conventions
+
+- ASCII in source files and documentation. No emojis, no em dashes: use "-". Non-ASCII belongs only in site strings and in the Hugo text being reproduced.
+- File names created here stay within ASCII that is legal on Windows, macOS and Linux.
+- Prefer lists to tables in new prose. Tables are kept where the data really is tabular: the route map and the status matrices in `README.md` and `MIGRATION-PLAN.md`.
+- Match the wrap style of the file being edited. `README.md`, `MIGRATION-PLAN.md` and this file are unwrapped (one paragraph per line); keep them that way. A new standalone markdown file defaults to a 120-character hard wrap.
+- Avoid diagrams unless words genuinely cannot carry the meaning. If one is needed, use mermaid rather than ASCII art.
+- Every change must be reflected in `README.md`, and anything that changes the plan's status in `MIGRATION-PLAN.md` too.
+
+## TypeScript and Astro conventions
+
+- Rely on inference. Never use `any`; reach for `unknown` plus a type guard. Never use `as unknown as`, and avoid `!`.
+- Never use `@ts-ignore`. `@ts-expect-error <reason>` is acceptable when satisfying the compiler would make the code significantly worse.
+- Prefer `type` to `interface`, and `&` to `extends`. **Exception, and it is deliberate:** Astro components declare their props as `interface Props`, which is the framework's documented contract and is what every component in `src/` already uses. Keep `interface` for `Props` and use `type` everywhere else.
+- Prefer enums where a fixed set of values is modelled, PascalCase for the enum and its keys, never numeric. There are none in the tree yet; the site's fixed sets live in `src/config.ts` as plain data.
+- Do not use `readonly` or `Object.freeze` to fake immutability; `as const` on the config objects is enough.
+- Optional props should be named so that `false` is the default.
+- Conditional classes go through Astro's `class:list`, never a template literal (see the pitfall below).
+
+## Node and tooling
+
+- npm, not yarn. This project is pinned by `package-lock.json`, `.npmrc` (`engine-strict`) and the `npm ci` instruction in `README.md`; switching package managers would break the lockfile contract.
+- Import Node built-ins with the `node:` prefix.
+- Prefer the promise APIs (`node:fs/promises`) in new code. The two existing build-time directory reads use the synchronous API inside Astro frontmatter; see the open question at the bottom of this file.
+- Use POSIX path helpers (`node:path/posix`) and the path constants rather than hard-coded separators, so scripts behave the same on any machine.
+- Never redirect output to `nul` in a Windows shell. In Git Bash use `/dev/null`; in PowerShell use `$null`.
+
+## Git
+
+This directory is **not** a git repository yet. When it becomes one:
+
+- Never commit unless asked directly, and confirm every commit with the owner.
+- Never push. Not on request either - explain how, but do not do it.
+- `master` is the preferred branch name for a new repo.
+- Resolving review remarks means new commits, not amended ones.
+- No mention of Claude or AI anywhere in commit messages or pull requests, and no "Co-Authored-By" or "Generated with" footers. This overrides the attribution footers the harness suggests by default.
+- Do not put in a commit message what git already records (the file list). Commit messages are markdown.
+
+## Workflow
+
+- Before calling a step done: `npm run fix`, `npm run check`, `npm run build` - all green - and start `npm run dev` once. The dev server runs a Vite pre-scan that the build does not, so it catches errors a green build hides (see the `.astro` comment pitfall below).
+- The owner runs the application on the default port. Use a different port for any server started here (`npx astro dev --port 4387`), and stop it afterwards by process id - killing the `npx` wrapper leaves the real `astro` process holding the port.
+- Route parity after any route change: `npm run build`, then `find dist -name index.html | sed 's|^dist||;s|index.html$||' | sort > reference/astro-routes.txt` and `diff reference/hugo-routes.txt reference/astro-routes.txt`. The only acceptable difference is the nine `/page/1/` alias pages (Hugo-only).
+- Markup parity: diff the `<main>` region of `dist/<route>/index.html` against `../klub_biolocation/public/<route>/index.html`. Only differences caused by Hugo's own HTML minifier are acceptable: a dropped `xmlns`, collapsed whitespace, rewritten SVG path data, self-closing versus explicit end tags, a dropped trailing semicolon, and the order of classes inside an attribute.
+- Visual check: serve both builds on spare ports and screenshot with headless Edge (`"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new --disable-gpu --no-sandbox --user-data-dir=<tmp> --hide-scrollbars --window-size=1280,900 --screenshot=<file>.png --virtual-time-budget=20000 <url>`). For light mode, copy both builds to a scratch directory and inject a script that sets `localStorage.theme = "light"` before the theme bootstrap; `--blink-settings=preferredColorScheme` does not work.
+- Prettier sorts Tailwind classes inside `.astro` files. That is fine: the set of classes is the contract, not their order.
+- When a TODO is done: delete the TODO comment, move the row in README "Skeleton status" into the table, and update the status columns in `MIGRATION-PLAN.md`.
+
+## Decisions and pitfalls already settled
+
+- The Hugo theme uses Tailwind 3 class names but is compiled by Tailwind 4; the rendered site is the v4 result. `tailwind.config.cjs` makes Tailwind 3 emit the same values (`shadow-sm` = `shadow`, `border` = currentColor, bare `ring`/`blur` neutralised). Do not rename classes to "fix" them.
+- Same reason, found while doing §3.2: the v4 palette is re-tuned, not just re-encoded in oklch. `blue-600` (links) is off by 17/255 and `green-600` by 22/255 against v3; greys by <= 3/255. `theme.extend.colors` now pins the 19 colours `reference/hugo-main.css` defines. v4 tree-shakes its theme, so that file lists only the colours used **today**: when a later step adds a new colour class, re-derive its value from the reference stylesheet rather than trusting the v3 default. See README, "The palette is pinned to the Tailwind 4 values".
+- Gradients are the one thing the pinned palette does not fix. Tailwind 3 and 4 build the stop list for `from-<colour> to-transparent` slightly differently, so the year badge on the list and tag pages differs by up to 3/255 per channel. Measured and accepted; see plan §9.
+- `layout:` in Markdown front matter is a reserved Astro key (it imports a layout file). It was removed from `src/content/pages/about.md`; do not add it back. Which Hugo layout a page used is therefore recorded in the Astro page instead - `about.astro` explains why it ports `about/single.html` and not `page/about.html`.
+- Hugo keeps stale pages in `public/`. Delete `public/` before rebuilding the reference, otherwise phantom routes appear.
+- Hugo renders the **English** i18n strings (`themes/void/i18n/en.toml`) because `hugo.toml` sets no `defaultContentLanguage`. They are ported in full in `src/i18n/strings.ts`; switching to Russian is a separate decision. A template that asks for a key missing from `en.toml` and supplies `| default "literal"` renders the literal - keep that literal in the component and do not invent the key.
+- Menu order is Home, Categories, Posts, Tags, About (Hugo sorts by weight, then name). It is encoded in `src/config.ts`; do not reorder.
+- Math renders client-side. The CDN tag in `Head.astro` calls `renderMathInElement` with KaTeX's default delimiters, which do **not** include single `$...$`; the theme adds that with a second call, now in `src/scripts/site.js`. `remark-math` only protects `$...$` during Markdown parsing; do not add `rehype-katex`.
+- Code blocks: Shiki `github-light`/`github-dark` (closest to the theme's Chroma styles) plus a rehype wrapper that reproduces `.code-block-container` markup - see plan §6. Footnotes need a small rehype rename plugin (Goldmark class names) - same section.
+- Dark palette is dark blue (`--page-bg: #0b1e3d`, `--panel-bg: #12294f`) with the theme's originals kept commented out in `custom.css`; `Head.astro` carries the same fallback in the anti-flash style and `theme-color`.
+- Never build a conditional class with a template literal: `class={`base${cond ? " is-active" : ""}`}` looks right, but `prettier-plugin-tailwindcss` treats the literal as a class list and eats the leading space, silently producing `baseis-active`. Use Astro's `class:list={["base", cond && "is-active"]}` instead. This cost a real bug in `Carousel.astro` - the first slide lost `is-active`, so the carousel rendered blank until the first tick.
+- `Carousel.astro` reads `public/images/carousel/` with `node:fs`, not with `import.meta.glob`, which is the idiomatic Astro way to collect a folder of files. It has to. `public/` is copied verbatim and sits outside Vite's module graph on purpose; pulling those files in through Vite - from `public/` or by moving them under `src/` - hands them to the asset pipeline, which emits hashed names such as `/_astro/01.Bx7f.jpg`, whereas the `src` attribute has to stay `/images/carousel/01.jpg` to match Hugo. That is also why `<Image />` and `astro:assets` are used nowhere in the tree. The price of the filesystem read is that Vite holds no dependency edge on the folder, so `astro dev` does not notice a new photo until it is restarted; `astro build` always sees the current contents.
+- Verbatim style and script blocks from Hugo go in as `is:inline` with `set:html={string}`. `is:inline` stops Astro scoping the CSS and bundling the script; `set:html` is the only way to keep them inside an Astro expression (`{cond && (...)}`), because raw CSS braces there are parsed as JavaScript.
+- Astro keeps whitespace around an expression as text nodes, and Prettier puts those newlines back however the source is written. Where Hugo's minified output has none - a count inside a badge, for instance - use `set:html={String(value)}` so the element's text matches exactly.
+- Hugo percent-encodes non-ASCII in the URLs it prints. Use `encodeSlug()` from `src/lib/urlize.ts` on the slug segment of any link built by hand, so `/tags/биолокация/` is emitted the way Hugo emits it.
+- Screenshot parity: the carousel photos are **progressive** JPEGs, so a short `--virtual-time-budget` captures whatever scan happened to be decoded and two runs of the same page can differ by a few units per channel. Use `--virtual-time-budget=20000` for comparisons, and warm the browser profile first.
+- Never write a backtick inside the `css` and `js` string constants in `Carousel.astro`. They are JavaScript template literals, so a backtick closes the string and the compiler starts reading CSS as code; `astro check` then reports a pile of `Cannot find name 'auto'`-style errors pointing at prose inside a CSS comment. Write those comments without backticks.
+- `element.hidden` does nothing to an inline SVG. `hidden` is defined on `HTMLElement`, and an inline `<svg>` is an `SVGElement`, so `icon.hidden = true` in a script sets an ordinary JavaScript property: measured in a headless browser, the attribute stayed absent and the computed display stayed `block`. Writing `hidden` in the markup works, because that is a content attribute. Toggle visibility from script with a class, or with `setAttribute`/`removeAttribute`. Both are in the tree: the hamburger uses a class, matching the other conditional displays around it; the carousel uses the attribute, because its markup already declares the initial state that way and the point there was to change as little of the theme's script as possible. The carousel's pause button was fixed on 2026-09-09 at the owner's request - before that it never changed its icon, on the Hugo site as much as here.
+- Watch the specificity of the element selectors in the carousel stylesheet against Tailwind utilities on the same element. `main{overflow:visible}` (0,0,1) lost to `.overflow-x-auto` (0,1,0) from `Base.astro` below 640px, which quietly made `main` a scroll container and clipped the carousel's negative top margin. It is `main.overflow-x-auto` now. Hugo has the same bug.
+- Never write a literal `script` or `style` tag inside a comment in an `.astro` file. Vite's dependency pre-scan looks for those tokens without parsing the TypeScript frontmatter, so it treats the rest of the comment as JavaScript and `astro dev` dies with `Failed to scan for dependencies from entries`. `astro build` passes, because it uses the real compiler - so `npm run build` alone does not catch this. Describe the tag in words instead ("the script block", "section#home-carousel").
+
+## Environment quirks on this machine
+
+- Windows 11, PowerShell 5.1 primary, Git Bash available. Prefer the Windows shell for process and service work; w64devkit is on PATH, so many GNU utilities are available too.
+- Bash `node -e '...'` and heredocs break on apostrophes inside the script: write the script to a file (the scratchpad) and run it, or use the Write/Edit tools.
+- PowerShell 5.1 writes UTF-8 with BOM by default; use `[IO.File]::WriteAllText(path, text, (New-Object System.Text.UTF8Encoding $false))` for files Astro reads.
+- Line-ending checks with grep/sed/tr are unreliable here; use node. Reading a file in Python text mode and writing it back converts CRLF to LF - pass through node, or restore the endings afterwards.
+- `node_modules` has gone missing between sessions at least once. If `prettier` is "not recognized" or `npx astro` starts downloading Astro 5, run `npm ci` and check `node_modules/astro/package.json` reports 4.x.
+
+## Where these rules came from
+
+The sections on scope, communication, documentation, markdown, TypeScript, Node and git were adapted on 2026-09-09 from the owner's `CLAUDE.md` in `C:\Users\ne__r\RiderProjects\SportBook`, so that the two projects are worked on the same way. Recorded here because the adaptation was not mechanical:
+
+- **Dropped as not applicable:** the React/Preact section, the C#/.NET section, the vite and yarn preferences (this project is pinned to npm and Astro), the GLSL and monorepo notes, and the SportBook-only `.gitignore` rule about `.claude/`, `.specify/` and `CLAUDE.md`.
+- **Kept but narrowed - CSS.** The source file says "no gradients, animations or transitions unless explicitly asked for, avoid `!important`, prefer smaller fonts". That cannot apply to ported markup: the theme is full of gradients and transitions, and `custom.css` needs `!important` to beat the theme's own dark-mode rules. The rule therefore applies only to CSS written from scratch here, and never overrides verbatim porting.
+- **Kept but narrowed - tables.** "Prefer lists to tables" holds for new prose. The existing route maps and status matrices stay as tables; they are genuinely tabular and are the fastest thing to read at the start of a session.
+- **Resolved conflict - `interface` versus `type`.** The source file prefers `type`. Astro's props contract is conventionally `interface Props`, and all six components already use it, so `Props` keeps `interface` and everything else uses `type`. Written up in the TypeScript section above.
+- **Resolved conflict - commit attribution.** The owner's rule (no mention of AI, no "authored by" footers) overrides the harness default of adding a `Co-Authored-By` line.
+- **Not yet applied - constant naming.** The source file says avoid `SCREAMING_SNAKE_CASE` and prefer camelCase, with app-level constants grouped in one exported object. Four module-private constants written before the rule was adopted still use the old style: `FRONT_MATTER_OFFSET_MINUTES` and `MONTHS` in `src/lib/date.ts`, `SUMMARY_LENGTH` and `TRUNCATE_AT` in `src/lib/summary.ts`. Renaming them is a refactor, which the scope rule forbids without being asked. See the question at the end of this file.
+- **Not yet applied - synchronous file reads.** The source file prefers `node:fs/promises`. `Carousel.astro` and nothing else reads a directory at build time, using `fs.readdirSync`. Astro frontmatter is async, so the change is mechanical, but it is a refactor of working code. Same question.
+
+## Open questions for the owner
+
+The third question - does "discuss before building" apply here? - was answered yes on 2026-09-09 and is now the first rule under "Working style and communication". The two below are still open; the recommendation is written down so that a later session does not have to derive it again.
+
+1. Rename the four `SCREAMING_SNAKE_CASE` constants in `src/lib/date.ts` and `src/lib/summary.ts` to camelCase? **Recommended: yes.** Neither Astro nor TypeScript settles this - both styles are common for module-private literals - so the tiebreaker is the owner's house rule, which says camelCase. All four are private to their module, so the compiler proves the rename complete. The other half of that house rule ("group app-level constants in one exported object") does **not** apply here: these are implementation details, and exporting them would widen the module surface for nothing.
+2. Switch `Carousel.astro` to `node:fs/promises`? **Recommended: yes, but the comment matters more than the call.** Astro frontmatter is async, so it is a one-line change with no behavioural difference at build time. What a reviewer would actually question is the use of `fs` at all instead of `import.meta.glob` - see the entry on that under "Decisions and pitfalls already settled", which now explains it in the file.
+
+A third question was raised in the same conversation and outranks both: **where does the parity constraint end - is Hugo's HTML the permanent specification, or a checkpoint after which the code moves to idiomatic Astro?** Several decisions hang off it (`astro:assets`, scoped styles, `import.meta.glob`, typing the ported scripts), so nothing in that area should be changed until it is answered. The owner parked it on 2026-09-09: finish the port first. Do not re-open it, and do not start any of those changes, until the remaining pages exist. `sitemap.xml` and the RSS feeds are parked with it - plan §9 already says "add them once parity is done", and that still stands.
+
+## Next steps (plan §10)
+
+1. ~~Paste the theme rules into `src/styles/main.css` (plan §3.2)~~ - done 2026-09-08. Lines 20-1238 of the Hugo `main.css` copied verbatim; Prettier only reordered the classes inside five `@apply` lists. All 41 `@apply` rules verified to compile to the same values as `reference/hugo-main.css`, which is what surfaced the palette issue above.
+2. ~~`Header.astro`, `Menu.astro`, `Carousel.astro`, `src/pages/index.astro`~~ - done 2026-09-08, plus the theme-toggle half of `site.js`. The home page is byte-identical to the Hugo one at 1280x900 in both light and dark. `@types/node` was added as a devDependency: the carousel reads `public/images/carousel/` at build time.
+3. ~~Categories, Posts, Tags and About, with the tag and category detail pages~~ - done 2026-09-09. `/`, `/about/` and `/tags/` are pixel-identical to Hugo in both themes; the rest differ only in antialiasing. `src/i18n/strings.ts` was ported in full, and `src/lib/` gained `titleize`, `date` and `summary`.
+4. `Post.astro` (`_default/single.html`). It is the last page a visitor can reach and the only one still rendering placeholder markup, but it depends on plan §6: the code-block wrapper and the footnote rename plugin have to exist first.
+5. `Footer.astro` (`partials/footer.html`), then `SocialMeta.astro`, `Callout.astro` and `Disqus.astro`.
+6. Reference screenshots of the Hugo site, light and dark (plan §2 step 3), into `reference/screenshots/`.

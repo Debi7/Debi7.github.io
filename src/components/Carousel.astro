@@ -1,0 +1,463 @@
+---
+// Port of the carousel in ../klub_biolocation/layouts/_default/home.html (the root override
+// that replaces the theme's round avatar). MIGRATION-PLAN.md §4.
+//
+// Slides are picked up from public/images/carousel/ at build time, ordered by file name -
+// the same contract as Hugo's os.ReadDir over static/images/carousel. To add or replace a
+// photo, drop the file into that folder; nothing here needs editing.
+//
+// The CSS and the JS are held as strings and injected with `set:html` into `is:inline`
+// tags. Two reasons: `is:inline` stops Astro from scoping the CSS (which would rename the
+// selectors and kill the global html/main rules) and from turning the script into a bundled
+// module, and `set:html` is the only way to keep either inside the `{slides.length > 0}`
+// guard - raw CSS braces inside an Astro expression are parsed as JavaScript. The strings
+// are therefore near-verbatim copies of the Hugo blocks and Prettier leaves them alone.
+//
+// "Near", because of one deliberate change the owner asked for on 2026-09-09: the carousel now
+// runs under the fixed header instead of starting below it, which closes the band of page
+// background that showed between the two. It is the only place where this page departs from the
+// Hugo output, so the home page is no longer pixel-identical to it - see MIGRATION-PLAN.md §9 and
+// the rule itself, which carries the reasoning.
+//
+// Do not write a literal script or style tag inside these comments: Vite's dependency
+// pre-scan looks for those tokens in .astro files without parsing the TypeScript, so it
+// would try to execute the rest of the comment as JavaScript and `astro dev` would fail.
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { site } from "../config";
+
+const dir = fileURLToPath(
+  new URL("../../public/images/carousel", import.meta.url),
+);
+const extensions = [".jpg", ".jpeg", ".png", ".webp", ".avif"];
+
+const slides = fs.existsSync(dir)
+  ? fs
+      .readdirSync(dir, { withFileTypes: true })
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          extensions.includes(path.extname(entry.name).toLowerCase()),
+      )
+      .map((entry) => entry.name)
+      .sort()
+  : [];
+
+const interval = site.carousel.interval;
+
+// Alt texts for the bundled photos; any other file falls back to "Nature, photo N".
+const alts: Record<string, string> = {
+  "01.jpg": "Waterfall in a green forest",
+  "02.jpg": "Granite cliffs and forest above a river",
+  "03.jpg": "Green hills in the mist",
+  "04.jpg": "Rocky coast and turquoise sea",
+  "05.jpg": "Red canyon at sunset",
+  "06.jpg": "Northern lights over a forest",
+};
+
+// `hidden` is a valid global HTML attribute on an inline SVG element, but Astro's
+// SVGAttributes type does not list it. Spreading the object keeps the attribute without
+// weakening the type of the rest of the element.
+const hiddenAttr = { hidden: true };
+
+const css = `
+  /* Full-bleed: the carousel is wider than the main container (max-w-4xl) and spans the whole viewport.
+     html{overflow-x:clip} suppresses horizontal page scrolling (100vw includes the scrollbar width).
+     main{overflow:visible} disables the theme's overflow-x-auto on mobile; otherwise main shows its own scrollbar. */
+  html {
+    overflow-x: clip
+  }
+
+  /* main.overflow-x-auto, not plain main, and that is a bug fix rather than a copy.
+     Base.astro gives main the utility classes overflow-x-auto sm:overflow-visible, and a class
+     selector outranks an element selector, so the Hugo original - main{overflow:visible} - lost
+     below 640px and never took effect there. Two consequences, both present in the Hugo site too:
+     overflow-x:auto forces overflow-y to compute to auto, which made main a scroll container that
+     clipped the carousel's negative top margin, so the band of background under the header came
+     back on narrow screens; and the full-bleed carousel gave main its own horizontal scrollbar
+     along the bottom of the viewport. Matching the specificity makes the rule win at every width.
+     This CSS only exists on the home page, so no other page's wide content is affected.
+     Do not write a backtick in these comments: the block is a JavaScript template literal, and a
+     backtick ends it. The compiler then reads the CSS as code and astro check fails. */
+  main.overflow-x-auto {
+    overflow: visible
+  }
+
+  /* Runs under the fixed header, which is the one change to the Hugo original.
+     Base.astro offsets the content with pt-24 (6rem) because the header is fixed, but the header
+     itself is shorter than that, so a band of page background showed between the two. Rather than
+     tune a number against a header height that changes with the viewport, the carousel starts at
+     the top of the document and the header paints over it: then there is no gap to measure.
+     margin-top:-6rem cancels the pt-24 exactly and the same 6rem goes back into the height, so the
+     carousel still occupies its original height in the flow and nothing below it moves. */
+  .void-carousel {
+    position: relative;
+    width: 100vw;
+    margin: -6rem 0 2.5rem calc(50% - 50vw);
+    height: calc(clamp(220px, 40vh, 560px) + 6rem);
+    overflow: hidden;
+    background: #e5e7eb
+  }
+
+  .dark .void-carousel {
+    background: #1f2937
+  }
+
+  .void-carousel__slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity .8s ease
+  }
+
+  .void-carousel__slide.is-active {
+    opacity: 1;
+    z-index: 1
+  }
+
+  .void-carousel__slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover
+  }
+
+  .void-carousel__btn,
+  .void-carousel__toggle {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 9999px;
+    background: rgba(0, 0, 0, .35);
+    color: #fff;
+    cursor: pointer;
+    transition: opacity .3s, background .2s
+  }
+
+  .void-carousel__btn:hover,
+  .void-carousel__toggle:hover {
+    background: rgba(0, 0, 0, .6)
+  }
+
+  /* The arrows centre on the part of the carousel the visitor can see, not on the whole element:
+     the header hides the top of it. The hidden band is exactly the header's height, which is 68px
+     at desktop widths, so half of it rounds to 2rem. An approximation on purpose - the header is a
+     little taller on narrow screens - but the arrows only appear on hover and a few pixels of drift
+     there costs nothing, whereas a visible band of background at the top did. */
+  .void-carousel__btn {
+    top: calc(50% + 2rem);
+    width: 2.75rem;
+    height: 2.75rem;
+    transform: translateY(-50%);
+    font-size: 1.9rem;
+    line-height: 1;
+    padding: 0 0 .2rem;
+    opacity: 0
+  }
+
+  .void-carousel__btn--prev {
+    left: 1rem
+  }
+
+  .void-carousel__btn--next {
+    right: 1rem
+  }
+
+  .void-carousel:hover .void-carousel__btn,
+  .void-carousel:focus-within .void-carousel__btn {
+    opacity: 1
+  }
+
+  @media (hover:none) {
+    .void-carousel__btn {
+      opacity: .85
+    }
+  }
+
+  .void-carousel__toggle {
+    right: 1rem;
+    bottom: .85rem;
+    width: 2rem;
+    height: 2rem;
+    padding: 0
+  }
+
+  .void-carousel__toggle svg {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor
+  }
+
+  .void-carousel__dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1.1rem;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    gap: .5rem;
+    pointer-events: none
+  }
+
+  .void-carousel__dot {
+    width: .6rem;
+    height: .6rem;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, .55);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: transform .2s, background .2s
+  }
+
+  .void-carousel__dot.is-active {
+    background: #fff;
+    transform: scale(1.35)
+  }
+
+  .void-carousel.is-single .void-carousel__btn,
+  .void-carousel.is-single .void-carousel__toggle,
+  .void-carousel.is-single .void-carousel__dots {
+    display: none
+  }
+
+  @media (prefers-reduced-motion:reduce) {
+    .void-carousel__slide {
+      transition: none
+    }
+  }
+`;
+
+const js = `
+  (function () {
+    var root = document.getElementById('home-carousel');
+    if (!root) return;
+    var slides = root.querySelectorAll('.void-carousel__slide');
+    var dots = root.querySelectorAll('.void-carousel__dot');
+    var toggle = root.querySelector('.void-carousel__toggle');
+    var iconPause = root.querySelector('.void-carousel__icon-pause');
+    var iconPlay = root.querySelector('.void-carousel__icon-play');
+    var n = slides.length;
+    if (n < 2) {
+      root.classList.add('is-single');
+      return;
+    }
+
+    var interval = parseInt(root.getAttribute('data-interval'), 10) || 3000;
+    var current = 0,
+      timer = null,
+      paused = false,
+      hovered = false;
+
+    function show(k) {
+      k = (k + n) % n;
+      if (k === current) return;
+      slides[current].classList.remove('is-active');
+      slides[current].setAttribute('aria-hidden', 'true');
+      dots[current].classList.remove('is-active');
+      dots[current].setAttribute('aria-selected', 'false');
+      current = k;
+      slides[current].classList.add('is-active');
+      slides[current].removeAttribute('aria-hidden');
+      dots[current].classList.add('is-active');
+      dots[current].setAttribute('aria-selected', 'true');
+    }
+
+    /* Hugo writes iconPause.hidden = paused here, which never worked: hidden is defined on
+       HTMLElement and these icons are SVGElement, so the assignment set a plain JavaScript
+       property and the pause button kept its icon forever. Measured in a headless browser -
+       the attribute stayed absent and the computed display stayed block. The attribute itself
+       is fine, which is why the markup can still declare the initial state with it; only the
+       script had to change. Fixed on 2026-09-09 at the owner's request; see MIGRATION-PLAN.md
+       section 9. Do not write a backtick in these comments - this block is a template literal. */
+    function setHidden(el, hidden) {
+      if (hidden) el.setAttribute('hidden', '');
+      else el.removeAttribute('hidden');
+    }
+
+    function next() {
+      show(current + 1);
+    }
+
+    function prev() {
+      show(current - 1);
+    }
+
+    function stop() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    function start() {
+      stop();
+      if (paused || hovered || document.hidden) return;
+      timer = setInterval(next, interval);
+    }
+
+    root.querySelector('.void-carousel__btn--next').addEventListener('click', function () {
+      next();
+      start();
+    });
+    root.querySelector('.void-carousel__btn--prev').addEventListener('click', function () {
+      prev();
+      start();
+    });
+    Array.prototype.forEach.call(dots, function (dot) {
+      dot.addEventListener('click', function () {
+        show(parseInt(dot.getAttribute('data-index'), 10));
+        start();
+      });
+    });
+    toggle.addEventListener('click', function () {
+      paused = !paused;
+      toggle.setAttribute('aria-pressed', String(paused));
+      toggle.setAttribute('aria-label', paused ? 'Resume autoplay' : 'Pause autoplay');
+      setHidden(iconPause, paused);
+      setHidden(iconPlay, !paused);
+      start();
+    });
+    root.addEventListener('mouseenter', function () {
+      hovered = true;
+      stop();
+    });
+    root.addEventListener('mouseleave', function () {
+      hovered = false;
+      start();
+    });
+    root.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight') {
+        next();
+        start();
+      } else if (e.key === 'ArrowLeft') {
+        prev();
+        start();
+      }
+    });
+    document.addEventListener('visibilitychange', start);
+
+    var touchX = null;
+    root.addEventListener('touchstart', function (e) {
+      touchX = e.touches[0].clientX;
+    }, {
+      passive: true
+    });
+    root.addEventListener('touchend', function (e) {
+      if (touchX === null) return;
+      var dx = e.changedTouches[0].clientX - touchX;
+      touchX = null;
+      if (Math.abs(dx) > 40) {
+        if (dx < 0) {
+          next();
+        } else {
+          prev();
+        }
+        start();
+      }
+    }, {
+      passive: true
+    });
+
+    start();
+  })();
+`;
+---
+
+{
+  slides.length > 0 && (
+    <Fragment>
+      <style is:inline set:html={css} />
+
+      <section
+        id="home-carousel"
+        class="void-carousel"
+        aria-roledescription="carousel"
+        aria-label="Nature photos"
+        data-interval={interval}
+      >
+        {slides.map((name, i) => (
+          <div
+            class:list={["void-carousel__slide", i === 0 && "is-active"]}
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`${i + 1} of ${slides.length}`}
+            aria-hidden={i !== 0 ? "true" : undefined}
+          >
+            <img
+              src={`/images/carousel/${name}`}
+              alt={alts[name] ?? `Nature, photo ${i + 1}`}
+              width="1600"
+              height="700"
+              decoding="async"
+              fetchpriority={i === 0 ? "high" : undefined}
+              loading={i !== 0 ? "lazy" : undefined}
+            />
+          </div>
+        ))}
+
+        <button
+          type="button"
+          class="void-carousel__btn void-carousel__btn--prev"
+          aria-label="Previous photo"
+        >
+          &#8249;
+        </button>
+        <button
+          type="button"
+          class="void-carousel__btn void-carousel__btn--next"
+          aria-label="Next photo"
+        >
+          &#8250;
+        </button>
+        <button
+          type="button"
+          class="void-carousel__toggle"
+          aria-label="Pause autoplay"
+          aria-pressed="false"
+        >
+          <svg
+            class="void-carousel__icon-pause"
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+          >
+            <rect x="3" y="2" width="4" height="12" rx="1" />
+            <rect x="9" y="2" width="4" height="12" rx="1" />
+          </svg>
+          <svg
+            class="void-carousel__icon-play"
+            viewBox="0 0 16 16"
+            aria-hidden="true"
+            {...hiddenAttr}
+          >
+            <path d="M4 2.5v11a1 1 0 0 0 1.5.87l9-5.5a1 1 0 0 0 0-1.74l-9-5.5A1 1 0 0 0 4 2.5z" />
+          </svg>
+        </button>
+        <div
+          class="void-carousel__dots"
+          role="tablist"
+          aria-label="Choose a photo"
+        >
+          {slides.map((_, i) => (
+            <button
+              type="button"
+              role="tab"
+              class:list={["void-carousel__dot", i === 0 && "is-active"]}
+              aria-label={`Photo ${i + 1}`}
+              aria-selected={i === 0 ? "true" : "false"}
+              data-index={i}
+            />
+          ))}
+        </div>
+      </section>
+
+      <script is:inline set:html={js} />
+    </Fragment>
+  )
+}

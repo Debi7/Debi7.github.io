@@ -1,0 +1,12 @@
+# Astro build output and generated types
+dist/
+.astro/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini

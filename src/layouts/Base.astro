@@ -1,0 +1,79 @@
+---
+// Port of ../klub_biolocation/themes/void/layouts/_default/baseof.html (MIGRATION-PLAN.md §4).
+// The class attributes are copied verbatim: they are the visual contract.
+import "../styles/main.css";
+// Must stay after main.css: it overrides the theme (see the Hugo README, "Colours and custom CSS").
+import "../styles/custom.css";
+import Head from "../components/Head.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import SEO from "../components/SEO.astro";
+import type { SiteConfig, PageLike } from "../lib/seo";
+import { site } from "../config";
+
+interface Props {
+  /** Page title. Omit on the home page: <title> is then the site title alone. */
+  title?: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+
+const site: SiteConfig = {
+  title: "Klub biolocation",
+  baseUrl: Astro.site?.toString() ?? "https://example.com",
+  language: "ru",
+  share: { defaultImage: "/images/default-share.png" },
+  avatar: { url: "/images/avatar.png" },
+};
+
+const page: PageLike = {
+  title: Astro.props.title,
+  description: Astro.props.description,
+  content: Astro.props.content,
+  permalink: new URL(Astro.url.pathname, Astro.site).toString(),
+  isHome: Astro.url.pathname === "/",
+  isPage: Boolean(Astro.props.isArticle),
+  publishDate: Astro.props.publishDate,
+  updatedDate: Astro.props.updatedDate,
+  tags: Astro.props.tags,
+  params: Astro.props.params ?? {},
+};
+---
+
+<!doctype html>
+<html lang={site.language} dir="ltr" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <SEO site={site} page={page} />
+    <Head title={title} description={description} />
+  </head>
+  <body class="flex flex-col bg-gray-50 font-bilingual">
+    {
+      /* The max-w-4xl wrapper that used to live here is now inside Header.astro: it carries
+      overflow-x-auto, which would clip the responsive drop-down panel, so the panel has to be
+      its sibling. The markup this renders is unchanged. */
+    }
+    <header class="fixed left-0 top-0 z-30 w-full bg-white shadow-sm">
+      <Header />
+    </header>
+
+    <div class="flex min-h-screen flex-1 flex-col pt-24">
+      <main
+        class="mx-auto w-full max-w-4xl flex-1 overflow-x-auto px-8 sm:overflow-visible sm:px-10"
+      >
+        <slot />
+      </main>
+    </div>
+
+    <footer
+      class="mx-auto w-full max-w-4xl overflow-x-auto px-6 sm:overflow-visible"
+    >
+      <Footer />
+    </footer>
+
+    <script>
+      import "../scripts/site.js";
+    </script>
+  </body>
+</html>

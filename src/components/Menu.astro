@@ -1,0 +1,90 @@
+---
+// Port of ../klub_biolocation/themes/void/layouts/partials/menu.html (MIGRATION-PLAN.md §4).
+// Class attributes in the "bar" variant are copied verbatim: they are the visual contract.
+import { site } from "../config";
+
+interface Props {
+  /**
+   * "bar" is the horizontal row in the header, which is what Hugo renders.
+   * "panel" is the stacked list inside the drop-down, added on 2026-09-09 for narrow
+   * viewports; it has no counterpart in Hugo. Both variants live here so that the
+   * aria-current rules below - which encode Hugo's semantics - have exactly one home.
+   */
+  variant?: "bar" | "panel";
+}
+
+const { variant = "bar" } = Astro.props;
+
+const path = Astro.url.pathname;
+
+// Hugo marks the entry that is the current page with IsMenuCurrent (`aria-current="page"`)
+// and the entry whose section contains the current page with HasMenuCurrent
+// (`aria-current="true"`). Checked against the Hugo build for every route: only
+// /posts/<slug>/ ever produces an ancestor match. Taxonomy term pages (/tags/hugo/,
+// /categories/blog/) mark nothing at all, so they are deliberately not handled here.
+function ariaCurrent(url: string): "page" | "true" | undefined {
+  if (path === url) return "page";
+  if (url === "/posts/" && path.startsWith("/posts/")) return "true";
+  return undefined;
+}
+
+// The Hugo partial also merges an "active font-bold" / "ancestor font-semibold" class into
+// the same link, which produces a SECOND class attribute next to the literal one:
+//   <a class="px-2 py-1 ..." aria-current="page" class="active font-bold" href="/">
+// Browsers keep the first class attribute and drop the second, and neither `.active` nor
+// `.ancestor` is styled anywhere in the theme - so on the live Hugo site the current menu
+// item is NOT bold. Merging those classes here would make this port render a bold item
+// where Hugo renders a normal one, so they are intentionally left out. See README,
+// "The active menu item is not highlighted".
+
+// Two changes to the Hugo class list in the "bar" variant, both inert at 768px and up, which
+// is where the parity screenshots are taken:
+//
+// 1. `hidden sm:flex` on the nav, so the bar disappears below 640px and the hamburger in
+//    Header.astro takes over.
+// 2. The size bumps moved from `sm:` to `md:` - `md:space-x-6` on the list, `md:text-lg` on
+//    the items, `md:px-3 md:py-2` on the links. Hugo grows the menu at 640px, but between
+//    640px and 767px the grown row plus the title plus the theme toggle no longer fit: at
+//    700px the row reached 680px against 661px of usable width, and because the header is
+//    `fixed` the excess could not even be scrolled to - the theme toggle was simply cut off.
+//    Keeping the compact sizes until 768px makes the row fit with room to spare, and at 768px
+//    and up it is exactly what Hugo renders, `md:space-x-6` included. The owner chose to keep
+//    the hamburger threshold at 640px, so this is what closes that band instead.
+const isPanel = variant === "panel";
+---
+
+{
+  isPanel ? (
+    <nav class="w-full" aria-label="Site">
+      <ul class="flex list-none flex-col">
+        {site.menu.map((item) => (
+          <li class="text-base text-gray-600 dark:text-gray-200">
+            <a
+              class="block rounded px-2 py-3 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-slate-800 dark:hover:text-white"
+              aria-current={ariaCurrent(item.url)}
+              href={item.url}
+            >
+              {item.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  ) : (
+    <nav class="hidden w-full justify-end whitespace-nowrap sm:flex">
+      <ul class="flex list-none flex-row items-center space-x-2 py-2 md:space-x-6">
+        {site.menu.map((item) => (
+          <li class="text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white md:text-lg">
+            <a
+              class="rounded px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 md:px-3 md:py-2"
+              aria-current={ariaCurrent(item.url)}
+              href={item.url}
+            >
+              {item.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}

@@ -1,0 +1,15 @@
+/
+/about/
+/categories/
+/categories/blog/
+/categories/education/
+/posts/
+/posts/article/
+/posts/radiesthesia-and-energy-fields/
+/tags/
+/tags/hugo/
+/tags/void/
+/tags/биолокация/
+/tags/радиэстезия/
+/tags/энергетика-человека/
+/tags/энергополе/

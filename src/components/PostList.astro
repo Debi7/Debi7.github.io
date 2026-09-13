@@ -1,0 +1,156 @@
+---
+// Port of ../klub_biolocation/themes/void/layouts/_default/list.html, following the
+// procedure in MIGRATION-PLAN.md §4.1. Class attributes are copied verbatim.
+//
+// This is a component rather than a page because Hugo uses the same list.html for two
+// routes: /posts/ (the Posts menu item) and /categories/<slug>/. The only difference between
+// them is the h1, so it is a prop. The tag pages look similar but are NOT this markup -
+// taxonomy/tag.html differs in the year badge, the date cell and the tag chips, so it is
+// ported separately in src/pages/tags/[slug].astro.
+//
+// HOW THE GO TEMPLATE MAPS ONTO THIS FILE
+//
+//   .Title                       -> the `title` prop.
+//   .Pages.GroupByDate "2006"    -> groupByYear() in lib/posts.ts. Years newest first.
+//   .Key                         -> group.year.
+//   .Pages.ByDate.Reverse        -> group.posts, already newest first.
+//   .RelPermalink                -> `/posts/<slug>/`.
+//   .Date.Format (i18n "date_month_day_format")
+//                                -> formatMonthDay(), i.e. Hugo's "Jan 02" layout.
+//   .Summary | plainify | truncate 140
+//                                -> summary() in lib/summary.ts; see its header for the one
+//                                   known divergence.
+//   .Params.tags                 -> post.data.tags, in front matter order, lower-cased by
+//                                   the collection schema exactly as hugo.toml's
+//                                   `tags = [":lower"]` rule does.
+//   i18n "list_read_more"        -> t.list_read_more.
+//
+// DECISIONS WORTH KNOWING
+//
+// The card is covered by an absolutely positioned anchor (`absolute inset-0 z-10`) that
+// carries the whole link, while the tag chips sit above it on `z-20` and stop the click from
+// propagating. That is the theme's own construction and it is reproduced as-is.
+//
+// The tag chip hrefs deliberately have NO trailing slash: Hugo builds them by hand as
+// `{{ "/tags/" | relLangURL }}{{ . | urlize }}`, so the live site links to `/tags/hugo`,
+// not `/tags/hugo/`. Adding the slash here would be a silent improvement over the original.
+//
+// NOT PORTED: the pagination block at the end of list.html. Hugo paginates at 10 posts per
+// page and the site has two, so `.Paginator.HasPrev` and `.HasNext` are both false and Hugo
+// emits nothing at all - there is no markup to match yet. Once a third page's worth of posts
+// exists this has to be built, and Hugo's URLs are `/posts/page/2/`; see MIGRATION-PLAN.md
+// §5.5, which already treats `/page/1/` as a Hugo-only route.
+import { groupByYear, type Post } from "../lib/posts";
+import { formatMonthDay } from "../lib/date";
+import { summary } from "../lib/summary";
+import { urlize, encodeSlug } from "../lib/urlize";
+import { t } from "../i18n/strings";
+
+interface Props {
+  /** Hugo's `.Title`: "Posts" for the section, the term title for one category. */
+  title: string;
+  posts: Post[];
+}
+
+const { title, posts } = Astro.props;
+const groups = groupByYear(posts);
+---
+
+<div class="mx-auto max-w-4xl px-4 py-8">
+  <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
+
+  <div class="space-y-16">
+    {
+      groups.map((group) => (
+        <div class="relative">
+          {/* Year indicator */}
+          <div class="mb-6 flex items-center">
+            <div class="year-indicator-badge flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
+              {group.year}
+            </div>
+            <div class="ml-4 h-px flex-grow bg-gradient-to-r from-blue-200 to-transparent dark:from-slate-600" />
+          </div>
+
+          {/* Article list */}
+          <div class="ml-8 space-y-6">
+            {group.posts.map((post) => (
+              <div class="relative">
+                <a
+                  href={`/posts/${post.slug}/`}
+                  class="absolute inset-0 z-10"
+                  aria-label={post.data.title}
+                />
+                <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
+                  <div class="p-5">
+                    <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
+                      <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
+                        {post.data.title}
+                      </h3>
+                      <time class="mt-1 flex flex-shrink-0 items-center text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="mr-1 h-4 w-4 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        {formatMonthDay(post.data.date)}
+                      </time>
+                    </div>
+
+                    {summary(post.body) && (
+                      <div class="line-clamp-2 text-sm text-gray-600 dark:text-gray-300">
+                        {summary(post.body)}
+                      </div>
+                    )}
+
+                    {post.data.tags.length > 0 && (
+                      <div class="relative z-20 mt-3 flex flex-wrap gap-2">
+                        {post.data.tags.map((tag) => (
+                          <a
+                            href={`/tags/${encodeSlug(urlize(tag))}`}
+                            class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
+                            onclick="event.stopPropagation();"
+                          >
+                            {tag}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    <div class="mt-4">
+                      <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
+                        {t.list_read_more}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="ml-1 h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"
+                          />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</div>

@@ -1,0 +1,23 @@
+<div id="disqus_thread" data-disqus-lazy></div>
+
+<script>
+  // Ленивая загрузка Disqus при появлении в viewport
+  const target = document.querySelector("[data-disqus-lazy]");
+  if (target) {
+    const observer = new IntersectionObserver(
+      (entries, obs) => {
+        if (entries[0].isIntersecting) {
+          obs.disconnect();
+          // TODO: заменить на ваш shortname
+          const d = document,
+            s = d.createElement("script");
+          s.src = "https://YOUR_SHORTNAME.disqus.com/embed.js";
+          s.setAttribute("data-timestamp", String(+new Date()));
+          (d.head || d.body).appendChild(s);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(target);
+  }
+</script>

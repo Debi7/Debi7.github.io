@@ -1,0 +1,19 @@
+---
+// The Posts menu item. Hugo renders /posts/ from
+// ../klub_biolocation/themes/void/layouts/_default/list.html; the markup lives in
+// PostList.astro because /categories/<slug>/ uses the same template. MIGRATION-PLAN.md §4.1.
+//
+// The title comes from ../klub_biolocation/content/posts/_index.md, whose front matter sets
+// `title = 'Posts'`. There is no Astro equivalent of a section index page here, so it is a
+// literal - change it in both places if the section is ever renamed.
+import Base from "../../layouts/Base.astro";
+import PostList from "../../components/PostList.astro";
+import { getPosts } from "../../lib/posts";
+
+const title = "Posts";
+const posts = await getPosts();
+---
+
+<Base title={title}>
+  <PostList title={title} posts={posts} />
+</Base>

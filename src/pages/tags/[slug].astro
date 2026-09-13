@@ -1,0 +1,186 @@
+---
+// One tag, e.g. /tags/hugo/. Port of
+// ../klub_biolocation/themes/void/layouts/taxonomy/tag.html (MIGRATION-PLAN.md §4.1).
+// Class attributes are copied verbatim.
+//
+// This looks like PostList.astro but is deliberately NOT it: tag.html has its own year badge
+// (with a decorative halo and a thicker rule), a date cell without the calendar icon, a
+// summary without `line-clamp-2`, pill-shaped tag chips that highlight the current tag, and
+// two navigation links at the foot. Sharing a component would mean parameterising all of
+// that, so the theme's second copy is kept as a second copy.
+//
+// HOW THE GO TEMPLATE MAPS ONTO THIS FILE
+//
+//   .Title                     -> term.title, title-cased by lib/titleize.ts.
+//   len .Pages                 -> term.posts.length.
+//   i18n "articles"            -> t.articles.
+//   .Pages.GroupByDate "2006"  -> groupByYear(); `.Key` is group.year.
+//   $isCurrentTag              -> `tag === term.name`. Hugo compares the raw front matter
+//                                 value against `$.Title`, which for a term page is the
+//                                 title-cased label - and since the tags are lower-case,
+//                                 that comparison is FALSE for every chip on the live site.
+//                                 See the note at the chip below.
+//   i18n "all_tags"            -> t.all_tags; the link is Hugo's `{{ "tags" | relURL }}`,
+//                                 which resolves to "/tags" without a trailing slash.
+//
+// NOT PORTED: the pagination block, for the same reason as in PostList.astro - Hugo emits
+// nothing for it until a tag has more than ten posts.
+import type { InferGetStaticPropsType } from "astro";
+import Base from "../../layouts/Base.astro";
+import { getTerms, groupByYear } from "../../lib/posts";
+import { formatMonthDay } from "../../lib/date";
+import { summary } from "../../lib/summary";
+import { urlize, encodeSlug } from "../../lib/urlize";
+import { t } from "../../i18n/strings";
+
+export async function getStaticPaths() {
+  const terms = await getTerms("tags");
+  return terms.map((term) => ({
+    params: { slug: term.slug },
+    props: { term },
+  }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { term } = Astro.props;
+const groups = groupByYear(term.posts);
+---
+
+<Base title={term.title}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <!-- Tag heading -->
+    <div class="mb-8 text-center">
+      <div class="mb-2 flex items-center justify-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="mr-2 h-5 w-5 text-blue-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+          ></path>
+        </svg>
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">
+          {term.title}
+        </h1>
+      </div>
+      <div class="text-sm text-gray-600">
+        {term.posts.length}
+        {t.articles}
+      </div>
+    </div>
+
+    <!-- Posts grouped by year -->
+    <div class="space-y-16">
+      {
+        groups.map((group) => (
+          <div class="relative">
+            {/* Year indicator */}
+            <div class="mb-8 flex items-center">
+              <div class="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-50 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
+                <span class="relative z-10">{group.year}</span>
+                {/* Decorative halo */}
+                <div class="absolute inset-0 rounded-full bg-blue-200 opacity-20 blur-sm dark:bg-slate-600" />
+              </div>
+              <div class="ml-4 h-0.5 flex-grow bg-gradient-to-r from-blue-200 via-blue-100 to-transparent" />
+            </div>
+
+            {/* Article list */}
+            <div class="ml-8 space-y-6">
+              {group.posts.map((post) => (
+                <div class="relative">
+                  <a
+                    href={`/posts/${post.slug}/`}
+                    class="absolute inset-0 z-10"
+                    aria-label={post.data.title}
+                  />
+                  <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
+                    <div class="p-5">
+                      <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
+                        <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
+                          {post.data.title}
+                        </h3>
+                        <time class="mt-1 text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
+                          {formatMonthDay(post.data.date)}
+                        </time>
+                      </div>
+
+                      {summary(post.body) && (
+                        <div class="text-sm text-gray-600 dark:text-gray-300">
+                          {summary(post.body)}
+                        </div>
+                      )}
+
+                      {post.data.tags.length > 0 && (
+                        <div class="relative z-20 mt-3 flex flex-wrap gap-2">
+                          {post.data.tags.map((tag) => (
+                            /* Hugo's `$isCurrentTag` compares the lower-case front matter
+                            tag with the title-cased page title, so it never matches and the
+                            "current tag" styling never appears. The comparison is kept
+                            faithful here rather than fixed: making it work would highlight a
+                            chip the live site leaves plain. */
+                            <a
+                              href={`/tags/${encodeSlug(urlize(tag))}`}
+                              class:list={[
+                                "tag-chip inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors",
+                                tag === term.title
+                                  ? "bg-blue-100 text-blue-700 dark:bg-slate-800 dark:text-blue-300"
+                                  : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700",
+                              ]}
+                              onclick="event.stopPropagation();"
+                            >
+                              {tag}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      <div class="mt-4">
+                        <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
+                          {t.list_read_more}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="ml-1 h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M14 5l7 7m0 0l-7 7m7-7H3"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- Navigation links -->
+    <div class="mt-8 flex justify-center space-x-8">
+      <a
+        href="/tags"
+        class="text-gray-600 transition-colors hover:text-blue-600"
+      >
+        {t.all_tags}
+      </a>
+      <a href="/" class="text-gray-600 transition-colors hover:text-blue-600">
+        {t.back_to_home}
+      </a>
+    </div>
+  </div>
+</Base>

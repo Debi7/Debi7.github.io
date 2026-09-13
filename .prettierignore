@@ -1,0 +1,10 @@
+# Generated
+/dist
+/.astro
+package-lock.json
+
+# Static assets: nothing to format
+/public
+
+# Reference output copied from the Hugo build (see MIGRATION-PLAN.md, Phase 0)
+/reference
