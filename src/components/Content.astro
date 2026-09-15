@@ -1,9 +1,9 @@
 ---
-import { getCollection } from ' 'astro:content';
-import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import { getCollection } from "astro:content";
+import ArticleLayout from "../layouts/ArticleLayout.astro";
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts');
+  const posts = await getCollection("posts");
   return posts.map((entry) => ({
     params: { slug: entry.slug },
     props: { entry, posts },
@@ -11,22 +11,18 @@ export async function getStaticPaths() {
 }
 
 const { entry, posts } = Astro.props;
-const { Content, headings } = await entry.render();
+const { headings } = await entry.render();
 
 // Сортировка для prev/next
 const sorted = posts.sort(
-  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+  (a: any, b: any) =>
+    new Date(b.data.date).getTime() - new Date(a.data.date).getTime(),
 );
-const idx = sorted.findIndex((p) => p.slug === entry.slug);
-const prev = idx > 0 ? sorted[idx - 1] : null;
-const next = idx idx < sorted.length - 1 ? sorted[idx + 1] : null;
+const id = sorted.findIndex((p: any) => p.slug === entry.slug);
+const prev = id > 0 ? sorted[id - 1] : null;
+const next = id < sorted.length - 1 ? sorted[id + 1] : null;
 ---
 
-<ArticleLayout
-  entry={entry}
-  headings={headings}
-  prev={prev}
-  next={next}
->
+<ArticleLayout entry={entry} headings={headings} prev={prev} next={next}>
   <Content />
 </ArticleLayout>
