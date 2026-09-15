@@ -108,6 +108,10 @@ A page cannot paint under a classic scrollbar; that strip is browser chrome. Col
 
 `astro dev` and `astro build` do not read `.astro` files the same way. Vite's dependency pre-scan, which only runs in dev, hunts for `script` and `style` tags with a plain text search that ignores the TypeScript frontmatter - so a literal script tag written inside a **comment** makes it parse the rest of that comment as JavaScript and the dev server fails with `Failed to scan for dependencies from entries`, while the production build stays green. `Head.astro` and `Carousel.astro` hit this; both now describe the tags in words. Run `npm run dev` as well as `npm run build` before calling a step done.
 
+## Deployment
+
+Not deployed yet. The first GitHub Pages attempt (the abandoned `github-pages` npm package, a branch named `gh-pages"` holding the source tree, no workflow) does not work; [DEPLOY.md](DEPLOY.md) explains why and gives the fix step by step. The public address is still to be decided, so that file is written against a `SITE_URL` placeholder with a decision record at the top.
+
 ## Layout
 
 ```
