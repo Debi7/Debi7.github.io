@@ -5,8 +5,8 @@ import mdx from "@astrojs/mdx";
 import remarkMath from "remark-math";
 
 export default defineConfig({
-  // Mirrors baseURL in ../klub_biolocation/hugo.toml. Set the public URL before deploying.
-  site: "http://localhost:1313/",
+  // Публичный адрес деплоя на GitHub Pages (без базового пути)
+  site: "<SITE_URL>",
 
   // Hugo emits /path/index.html for every page; keep the same URLs.
   trailingSlash: "always",
