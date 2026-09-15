@@ -6,7 +6,7 @@ import remarkMath from "remark-math";
 
 export default defineConfig({
   // Публичный адрес деплоя на GitHub Pages (без базового пути)
-  site: "<SITE_URL>",
+  site: "https://debi7.github.io/",
 
   // Hugo emits /path/index.html for every page; keep the same URLs.
   trailingSlash: "always",
