@@ -1151,3 +1151,81 @@ then takes only the `page` prop. `Base.astro` keeps its import of `site` for `ht
 
 Check: `dist/posts/article/index.html` has `og:site_name` `Radiesthesia Club` and an `og:image` ending in
 `/images/avatar.png`, and `npm run check` is green.
+
+## 10. The "addListener is deprecated" hint in site.js
+
+Added on 2026-09-16.
+
+### 10.1 What it is
+
+- VS Code crosses out `addListener` in `src/scripts/site.js`, lines 94 and 158, with the message
+  `'addListener' is deprecated. ts(6385)`.
+- It is a hint, not an error. `npm run check` is green and reports `0 errors, 0 warnings, 6 hints`; four of the six
+  hints come from these two lines. The site works.
+- Both places first call `addEventListener("change", ...)`. `addListener` is only an `else if` fallback for browsers
+  where `MediaQueryList` has no `addEventListener`: Safari before version 14, released in 2020. No current browser
+  reaches that branch.
+- TypeScript marks `addListener` as `@deprecated` in its DOM types, so the editor crosses it out wherever it is
+  written, even inside a fallback that never runs.
+
+### 10.2 What to do
+
+Remove the fallback branch in both places and call `addEventListener` directly. Keep the `try`/`catch` around it:
+in a browser without `addEventListener` the call throws, the `catch` swallows the error, and the result is the same
+as having no listener at all.
+
+Place 1, inside `themeInit`, lines 92-94. Before:
+
+```js
+      if (media && media.addEventListener)
+        media.addEventListener("change", handler);
+      else if (media && media.addListener) media.addListener(handler);
+    } catch (_) {}
+```
+
+After:
+
+```js
+      // Changed 2026-09-16: the addListener fallback was removed. It only served browsers without
+      // addEventListener on MediaQueryList (Safari before 14), and TypeScript flags it as deprecated.
+      // In such a browser this call throws and the catch below swallows it: no live theme sync.
+      media.addEventListener("change", handler);
+    } catch (_) {}
+```
+
+Place 2, inside `menuInit`, lines 157-158. Before:
+
+```js
+      if (wide.addEventListener) wide.addEventListener("change", sync);
+      else if (wide.addListener) wide.addListener(sync);
+    } catch (_) {}
+```
+
+After:
+
+```js
+      // Changed 2026-09-16: addListener fallback removed for the same reason as in themeInit above.
+      wide.addEventListener("change", sync);
+    } catch (_) {}
+```
+
+### 10.3 What changes for a visitor
+
+- In every browser from 2020 on: nothing.
+- In Safari 13 and older: the theme no longer follows a change of the system theme while the page is open, and an
+  open mobile menu is not closed when the window is widened past 640px. The look of the site does not change.
+
+### 10.4 Check
+
+Run `npm run fix`, `npm run check` and `npm run build`. Measured with this change applied:
+
+- Prettier is clean.
+- `astro check` reports `0 errors, 0 warnings, 2 hints`.
+- The build is green, 16 pages.
+- In VS Code the strikethrough in `site.js` is gone.
+
+### 10.5 The two hints that remain
+
+`'event' is deprecated` at `src/components/PostList.astro` line 120 and `src/pages/tags/[slug].astro` line 136,
+both on `onclick="event.stopPropagation();"`. This is a false alarm: inside an inline `onclick` attribute, `event` is
+the handler's own argument, not the deprecated global `window.event`. Leave these two as they are.
