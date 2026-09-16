@@ -1,4 +1,7 @@
 ---
+// Changed 2026-09-16: the two labels below read t.<key>. `t` in src/i18n/strings.ts is an
+// object, not a function, so the t("key") calls this file used to have threw "t is not a
+// function" the moment the component rendered.
 import { t } from "../i18n/strings";
 const { prev, next } = Astro.props;
 ---
@@ -26,7 +29,7 @@ const { prev, next } = Astro.props;
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            {t("pagination_previous")}
+            {t.pagination_previous}
           </div>
           <div class="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-blue-700">
             {prev.data.title}
@@ -40,7 +43,7 @@ const { prev, next } = Astro.props;
           class="group block rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:border-blue-300 hover:bg-blue-50/30 sm:col-start-2 sm:text-right"
         >
           <div class="mb-1 flex items-center text-xs text-gray-500 sm:justify-end">
-            <span class="mr-0 sm:order-1 sm:ml-1">{t("pagination_next")}</span>
+            <span class="mr-0 sm:order-1 sm:ml-1">{t.pagination_next}</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="ml-1.5 h-4 w-4 text-gray-400 sm:order-2 sm:ml-1 sm:mr-0"

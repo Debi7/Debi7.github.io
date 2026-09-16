@@ -135,7 +135,13 @@ shareText =
     </div>
   </header>
 
-  <TableOfContents headings={headings} />
+  {
+    /* Changed 2026-09-16: the "does this post have headings" check moved here from inside
+  TableOfContents.astro. Prettier parses the markup of an Astro expression as JSX, where Alpine's
+  @click attribute is a syntax error, so with the whole component wrapped in an expression
+  prettier --check failed on that file. Hugo makes the same check, in single.html. */
+  }
+  {headings.length > 0 && <TableOfContents headings={headings} />}
 
   <div
     class="article-inner article-prose prose prose-sm sm:prose lg:prose-lg max-w-none py-7"

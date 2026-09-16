@@ -15,11 +15,27 @@ interface Props {
   /** Page title. Omit on the home page: <title> is then the site title alone. */
   title?: string;
   description?: string;
+  /**
+   * The rest feed SEO.astro. Only a post sets them; every other page leaves them unset.
+   * Declared 2026-09-16: the page object below already read all six from Astro.props, which
+   * astro check reported as "Property does not exist on type Props". Type-only change.
+   */
+  content?: string;
+  isArticle?: boolean;
+  publishDate?: Date;
+  updatedDate?: Date;
+  tags?: string[];
+  params?: PageLike["params"];
 }
 
 const { title, description } = Astro.props;
 
-const site: SiteConfig = {
+// Renamed 2026-09-16 to seoSite: under its old name `site` it shadowed the import from
+// src/config.ts above, which astro check reported as a declaration conflict. The html lang
+// attribute below now reads the imported one; both carry language "ru", so the rendered page is
+// unchanged. The title here still says "Klub biolocation" where Hugo prints the site title -
+// that is part of the open head work, see ARTICLE-PAGE-FIX.md, section 7.1.
+const seoSite: SiteConfig = {
   title: "Klub biolocation",
   baseUrl: Astro.site?.toString() ?? "https://example.com",
   language: "ru",
@@ -45,7 +61,7 @@ const page: PageLike = {
 <html lang={site.language} dir="ltr" class="h-full">
   <head>
     <meta charset="utf-8" />
-    <SEO site={site} page={page} />
+    <SEO site={seoSite} page={page} />
     <Head title={title} description={description} />
   </head>
   <body class="flex flex-col bg-gray-50 font-bilingual">

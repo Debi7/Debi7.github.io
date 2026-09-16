@@ -1,4 +1,9 @@
-import type { CollectionEntry } from "astro:content";
+// Types and helpers behind src/components/SEO.astro: they resolve the social title, description,
+// share image and locale for a page. Added with SEO.astro, which duplicates the head tags that
+// Head.astro already renders; ARTICLE-PAGE-FIX.md section 7.1 tracks that.
+//
+// Changed 2026-09-16: an unused `CollectionEntry` import was removed from the top of this file,
+// which was the last astro check warning here.
 
 export interface SiteConfig {
   title: string;

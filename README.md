@@ -44,7 +44,7 @@ The build is green and every Hugo route has an Astro file. **All five menu items
 | Plan §5: one route file per Hugo route, all wired to the collection                             | `src/pages/**`                                                  |
 | Static assets copied (`static/` -> `public/`)                                                   | `public/favicon/`, `public/images/`                             |
 
-Not done (in plan order): reference screenshots (§2 step 3), the remaining `TODO(migration ...)` stubs in `src/` - footer, the single-post layout (its components exist but are not wired in; [ARTICLE-PAGE-FIX.md](ARTICLE-PAGE-FIX.md) gives the verified fix), social meta, callout, Disqus (§4, §6), the rest of `site.js` (§7), the rehype plugins for code blocks and footnotes (§6), pagination once the site passes ten posts (§9), the `/page/1/` alias decision (§5.5).
+Not done (in plan order): reference screenshots (§2 step 3), the remaining `TODO(migration ...)` stubs in `src/` - footer, the single-post layout (its components exist but are not wired into the post route; their type and formatting errors are fixed, so `npm run check` is green - [ARTICLE-PAGE-FIX.md](ARTICLE-PAGE-FIX.md) tracks what is applied and what is left), social meta, callout, Disqus (§4, §6), the rest of `site.js` (§7), the rehype plugins for code blocks and footnotes (§6), pagination once the site passes ten posts (§9), the `/page/1/` alias decision (§5.5).
 
 ### The palette is pinned to the Tailwind 4 values
 

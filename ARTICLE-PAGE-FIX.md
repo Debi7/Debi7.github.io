@@ -2,10 +2,33 @@
 
 Written on 2026-09-15 against `main` at `e68baaa` (the `src/` tree is identical to `855d46f`, "Article page"). It
 explains why the article components added in the last commits do not appear on the site, and gives a verified fix.
-Nothing described here has been applied to the repository yet.
 
 The fix keeps the components and their markup. It connects them to the post route, repairs the calls that would
 break the build, and brings the output in line with the Hugo template the components were ported from.
+
+## 0. What is already applied
+
+Updated on 2026-09-16. Everything below that is not listed here is still open.
+
+Applied, as a separate "make the checks pass" change:
+
+- Step 3, the `t("key")` calls, in `PostNav.astro`, `ShareWidget.astro` and `TableOfContents.astro`.
+- Part B, the malformed element in `Footer.astro` and the unused `busuanziScript` constant, replaced by a comment
+  that points at `Head.astro`, where the counter script is loaded exactly as Hugo loads it from `head.html`.
+- Typed props for `TableOfContents.astro`, `SEO.astro`, `SocialMeta.astro` and `Base.astro`, plus the local `site`
+  object in `Base.astro` renamed to `seoSite` because it clashed with the import. The rendered pages are unchanged.
+- The "has headings" condition for the table of contents moved into `ArticleLayout.astro`, so that Prettier can
+  parse `TableOfContents.astro` (see step 8).
+- `Content.astro` now destructures `Content` from `entry.render()`, which was the last type error in it. The file is
+  still unused and step 2 still deletes it.
+- The unused import in `src/lib/seo.ts`.
+
+After that change `npm run check` is green (0 errors, 0 warnings), `npm run build` is green, and `npm run dev`
+starts without the dependency-scan error.
+
+Still open: the wiring itself (steps 1, 2, 4 to 9), the Hugo-faithful markup of `Terms.astro` and
+`TableOfContents.astro`, the deletion of `Content.astro` and `DisqusLazy.astro`, the theme link typo in the footer
+(part B, item 3), and everything in section 7.
 
 ## 1. Summary
 
@@ -16,9 +39,9 @@ break the build, and brings the output in line with the Hugo template the compon
   defined in that file.
 - So `ArticleLayout.astro`, `PostNav.astro`, `ShareWidget.astro`, `TableOfContents.astro`, `Terms.astro` and
   `DisqusLazy.astro` are never compiled. That is also why `npm run build` and the deployment stayed green.
-- Wiring them in is not enough on its own. The build then fails with `t is not a function` (section 3, step 2), and
-  the deployment would fail with it.
-- A separate, older problem in `Footer.astro` breaks `npm run dev` and `npm run check` on `main` today (part B).
+- Wiring them in was not enough on its own: the build failed with `t is not a function`. Those calls are fixed now
+  (step 3), so the wiring is what remains.
+- A separate, older problem in `Footer.astro` broke `npm run dev` and `npm run check`. Fixed as well (part B).
 
 ## 2. Before you start
 
@@ -106,9 +129,9 @@ const { post, headings, prev, next } = Astro.props;
 
 Then delete `src/components/Content.astro`. Its job is now done by the route.
 
-### Step 3: fix the `t` calls
+### Step 3: fix the `t` calls - already applied
 
-This is the error that breaks the build as soon as the components are wired in:
+This was the error that broke the build as soon as the components were wired in:
 
 ```
 t is not a function
@@ -127,9 +150,10 @@ becomes
 {t.pagination_previous}
 ```
 
-This affects `PostNav.astro`, `ShareWidget.astro` and `TableOfContents.astro`. In `ArticleLayout.astro` the import is
-commented out and the strings are written as literals, so the page would print the raw key: `{"reading_time"}`
-renders the text `reading_time`. The full files in steps 4 to 8 already contain the fix.
+This affected `PostNav.astro`, `ShareWidget.astro` and `TableOfContents.astro`, and is done. `ArticleLayout.astro`
+still has the import commented out and the strings written as literals, so the page would print the raw key:
+`{"reading_time"}` renders the text `reading_time`. Step 4 fixes that; the full files in steps 4 to 8 all contain
+the finished form.
 
 ### Step 4: ArticleLayout.astro
 
@@ -390,8 +414,8 @@ const shareText = (
 
 ### Step 5: PostNav.astro
 
-Only the `t` calls and the typed props change; the markup already matched Hugo. Replace
-`src/components/PostNav.astro` with:
+The `t` calls are already fixed in the repository; what is left here is the header comment and the typed props. The
+markup already matched Hugo. Replace `src/components/PostNav.astro` with:
 
 ```astro
 ---
@@ -621,7 +645,9 @@ Because the posts start at h2, Hugo wraps the whole list in one empty top-level 
 is fine: `Head.astro` already loads Alpine from the CDN and `main.css` already has the `x-cloak` rule.
 
 The show/hide condition moves into `ArticleLayout.astro` (step 4 already contains it). Inside a JSX expression
-Prettier cannot parse Alpine's `@click` attribute, which is why `prettier --check` failed on this file.
+Prettier cannot parse Alpine's `@click` attribute, which is why `prettier --check` failed on this file. That move is
+already applied, and the file in the repository is typed but still renders the flat list; the version below replaces
+the list itself.
 
 Create `src/lib/toc.ts`:
 
@@ -781,28 +807,35 @@ pin. That is correct: converted from `reference/hugo-main.css`, their Tailwind 4
 Tailwind 3 defaults (`#eff6ff`, `#dbeafe`, `#f9fafb`, `#f3f4f6`, `#e5e7eb`). The other colours they use are already
 pinned. See README, "The palette is pinned to the Tailwind 4 values".
 
-## 4. Part B: the footer script tag (breaks npm run dev and npm run check today)
+## 4. Part B: the footer script tag - applied, except the link typo
 
-`src/components/Footer.astro` contains a malformed element: the `>` closes the opening tag before `src`, so the URL
-ends up as the element's text. It is the cause of three failures on `main` right now:
+`src/components/Footer.astro` contained a malformed element: the `>` closed the opening tag before `src`, so the URL
+ended up as the element's text. The browser therefore ran that text as code and stopped; the counter never loaded
+from there. It caused three failures:
 
-- `npm run dev` logs `Failed to scan for dependencies from entries ... Unexpected end of file`, pointing at
+- `npm run dev` logged `Failed to scan for dependencies from entries ... Unexpected end of file`, pointing at
   `Footer.astro`. This is the pitfall described in `CLAUDE.md`: Vite's pre-scan reads script tags as plain text.
-- `prettier --check` stops with `SyntaxError` in `Footer.astro`, so `npm run check` fails.
-- `astro check` reports `Expression expected` at `Footer.astro:125`.
+- `prettier --check` stopped with `SyntaxError` in `Footer.astro`, so `npm run check` failed.
+- `astro check` reported `Expression expected` at `Footer.astro:125`.
 
 The element is not needed. In Hugo the counter script is loaded once, from `head.html` (`footer.html` even says so
-in a comment), and `Head.astro` already ports that. Make three edits:
+in a comment), and `Head.astro` already ports that, with the same protocol-relative URL. Three edits:
 
 1. Delete the whole malformed element near the end of the file, from the line with the opening tag and `async` down to
-   the line with the closing tag.
+   the line with the closing tag. **Applied.** In its place the file now carries a comment saying where the loader
+   lives, mirroring the note Hugo keeps in `footer.html`. The broken markup itself must not be left behind as a
+   comment: a literal script tag inside a comment is what breaks the Vite pre-scan in the first place.
 2. Delete the unused constant `busuanziScript` in the frontmatter together with the comment line above it. It holds
-   the same tag inside a template literal, which is exactly what the Vite pre-scan trips over.
+   the same tag inside a template literal, which is exactly what the Vite pre-scan trips over. **Applied.**
 3. Fix the theme link: `https://github.com/Dauaucloud/hugo-theme-void` must be
-   `https://github.com/Daucloud/hugo-theme-void`, as in `footer.html`.
+   `https://github.com/Daucloud/hugo-theme-void`, as in `footer.html`. **Still open.**
 
-Then run `npx prettier --write src/components/Footer.astro`. Verified: afterwards `npm run dev` starts without the
-scan error, and `astro check` no longer reports anything in `Footer.astro`.
+The visit counter keeps working: the loader is in `Head.astro` on every page, and the two spans it fills in,
+`busuanzi_container_site_pv` and `busuanzi_value_site_pv`, are still in the footer. Checked in the built pages.
+The per-page counter, `busuanzi_container_page_pv`, lives in `ArticleLayout.astro` and appears once part A is done.
+
+Verified after the edits: `npm run dev` starts without the scan error, `prettier --check` is clean and `astro check`
+reports nothing in `Footer.astro`.
 
 The footer as a whole is still plan step 5 (`partials/footer.html` -> `Footer.astro`). When porting it, compare the
 rest against `footer.html` too; for example, the "Total visits" span is not in the Hugo footer.
@@ -823,8 +856,9 @@ Expected results, all measured on a copy of `main` with parts A and B applied:
 - `npm run fix` formats the touched files; the code above is already in Prettier's style.
 - `npm run build` is green and builds the same 15 routes as before. Route parity with
   `reference/hugo-routes.txt` differs only by the nine Hugo-only `/page/1/` aliases.
-- `npm run check`: Prettier is clean. `astro check` still reports 11 errors, all in files outside this fix:
-  3 in `SEO.astro`, 1 in `SocialMeta.astro`, 7 in `Base.astro`. See section 7.
+- `npm run check` is green: Prettier is clean, and `astro check` reports 0 errors and 0 warnings. It became green on
+  2026-09-16, when the props that `SEO.astro`, `SocialMeta.astro` and `Base.astro` were already being passed were
+  declared. The head duplication behind those errors is untouched; see section 7.
 - The dev server starts without `Failed to scan for dependencies`, and `/`, `/posts/article/` and
   `/posts/radiesthesia-and-energy-fields/` answer 200. Stop it by process id afterwards, not by closing the `npx`
   window (see `CLAUDE.md`, "Workflow").
@@ -871,8 +905,10 @@ Then `git push`, watch the "Deploy to GitHub Pages" run in the Actions tab, and 
 
 ## 7. Other problems found in the same review (not fixed by this guide)
 
-These are not needed for the article page, but `npm run check` stays red until they are fixed. The notes below are
-based on reading the code and the Hugo output; they have not been built and verified like parts A and B.
+These do not block the article page, and `npm run check` no longer fails because of them: on 2026-09-16 the type
+errors were silenced by declaring the props that were already being passed, which changed no rendered tag. The
+duplication itself is still there. The notes below are based on reading the code and the Hugo output; they have not
+been built and verified like parts A and B.
 
 ### 7.1 The head is rendered three times
 
@@ -881,8 +917,8 @@ as well. The built `/posts/article/` therefore has two `<title>` elements (the f
 `og:title`, three `description` tags, and values that differ from Hugo:
 
 - `og:site_name` is `Klub biolocation`. Hugo prints `Radiesthesia Club`, the `site.title` in `src/config.ts`.
-  `Base.astro` defines a second local `site` object with the wrong title, which is also why `astro check` reports
-  `Import declaration conflicts with local declaration of 'site'`.
+  `Base.astro` defines a second object with that wrong title; it is called `seoSite` since 2026-09-16, because under
+  its old name `site` it shadowed the import and `astro check` reported a declaration conflict.
 - `og:locale` is `ru_RU`. Hugo prints `en_US` (`social_meta.html` only switches for `zh`).
 - `og:image` points at `/images/default-share.png`, which does not exist. `hugo.toml` has no default share image, so
   Hugo falls back to the avatar: `/images/avatar.png`.
@@ -892,8 +928,9 @@ as well. The built `/posts/article/` therefore has two `<title>` elements (the f
 
 Suggested direction: port `partials/social_meta.html` verbatim into `SocialMeta.astro` (it is the plan §4 stub, and
 `Head.astro` already renders it in the right place, after `<title>`), reusing helpers from `src/lib/seo.ts` where
-they match. Then remove `<SEO>`, the local `site` and `page` objects and the extra `<meta charset>` from `Base.astro`,
-and delete `SEO.astro`. That removes all 11 remaining `astro check` errors.
+they match. Then remove `<SEO>`, the local `seoSite` and `page` objects and the extra `<meta charset>` from
+`Base.astro`, and delete `SEO.astro`. That removes the duplicate tags, and with them the props that only exist to
+feed `SEO.astro`.
 
 ### 7.2 Smaller points
 

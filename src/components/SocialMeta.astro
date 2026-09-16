@@ -7,8 +7,16 @@
 // Часто импортируется внутрь компонента SEO.astro
 
 interface Props {
-  title: string;
+  /**
+   * Changed 2026-09-16 so that astro check passes: `title` became optional because SEO.astro
+   * renders this component a second time with the page title it received, which may be
+   * undefined, and `ogImage` was already being passed but never declared. Both are type-only
+   * changes; the rendered tags are unchanged, including the empty og:title of that second copy.
+   * The duplication itself is still open - see ARTICLE-PAGE-FIX.md, section 7.1.
+   */
+  title?: string;
   description?: string;
+  ogImage?: string;
 }
 
 const { title, description, ogImage } = Astro.props;

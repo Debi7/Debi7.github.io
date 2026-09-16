@@ -17,6 +17,14 @@ import {
 interface Props {
   site: SiteConfig;
   page: PageLike;
+  /**
+   * Overrides for the two values SocialMeta.astro receives directly. Declared 2026-09-16: the
+   * component already read them from Astro.props and passed them on, which astro check reported
+   * as "Property does not exist on type Props". Nothing passes them today, so both stay
+   * optional and the rendered tags are unchanged. See ARTICLE-PAGE-FIX.md, section 7.1.
+   */
+  title?: string;
+  ogImage?: string;
 }
 
 const { site, page, title, ogImage } = Astro.props;

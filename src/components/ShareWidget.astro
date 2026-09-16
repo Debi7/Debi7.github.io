@@ -1,4 +1,7 @@
 ---
+// Changed 2026-09-16: the five labels below read t.<key>. `t` in src/i18n/strings.ts is an
+// object, not a function, so the t("key") calls this file used to have threw "t is not a
+// function" the moment the component rendered.
 import { t } from "../i18n/strings";
 const { url, title, text } = Astro.props;
 ---
@@ -8,10 +11,10 @@ const { url, title, text } = Astro.props;
   data-share-url={url}
   data-share-title={title}
   data-share-text={text}
-  data-share-label-default={t("share")}
-  data-share-label-success={t("share_copied")}
-  data-share-copy-summary-success={t("share_copy_summary_success")}
-  data-share-copy-failed={t("share_copy_failed")}
+  data-share-label-default={t.share}
+  data-share-label-success={t.share_copied}
+  data-share-copy-summary-success={t.share_copy_summary_success}
+  data-share-copy-failed={t.share_copy_failed}
 >
   <button
     type="button"
@@ -34,6 +37,6 @@ const { url, title, text } = Astro.props;
       <circle cx="6" cy="12" r="3"></circle>
       <circle cx="18" cy="19" r="3"></circle>
     </svg>
-    <span data-share-label>{t("share")}</span>
+    <span data-share-label>{t.share}</span>
   </button>
 </div>

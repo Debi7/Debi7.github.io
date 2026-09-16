@@ -11,7 +11,11 @@ export async function getStaticPaths() {
 }
 
 const { entry, posts } = Astro.props;
-const { headings } = await entry.render();
+// Changed 2026-09-16: Content is destructured here because the markup below renders <Content />.
+// Without it the file did not compile ("Cannot find name 'Content'"). The component is still
+// unused - nothing imports it, and getStaticPaths only runs under src/pages - so this is a
+// compile fix, not the wiring; see ARTICLE-PAGE-FIX.md, step 2.
+const { Content, headings } = await entry.render();
 
 // Сортировка для prev/next
 const sorted = posts.sort(

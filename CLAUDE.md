@@ -50,6 +50,7 @@ Documentation is mandatory here, not optional. The point is that a later session
 - Anything that reproduces a Hugo quirk gets a comment saying so, otherwise the next session "fixes" it. Examples already in the tree: the duplicated `class` attribute behind `Menu.astro`, the never-matching `$isCurrentTag` in `tags/[slug].astro`, the tag hrefs without a trailing slash.
 - Record verification results next to the code they describe: which pages were diffed, what the screenshot comparison gave, what residual difference was accepted.
 - A trivial re-export or one-line helper can carry a single-line comment. The bar is "explain why", not "pad every line".
+- **Every change carries a comment.** Asked by the owner on 2026-09-16: any edit to an existing file - a renamed variable, a repaired call, an added prop, a removed element - leaves a short English comment next to it saying why it was made, naming the error, the Hugo behaviour or the constraint behind it. A pure deletion with nothing left to annotate is explained in the commit message instead.
 - Use `//` comments; TSDoc `/** ... */` for exported types and functions whose parameters are not self-evident.
 
 ## Markdown and prose conventions
