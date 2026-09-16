@@ -907,37 +907,33 @@ Then `git push`, watch the "Deploy to GitHub Pages" run in the Actions tab, and 
 
 These do not block the article page, and `npm run check` no longer fails because of them: on 2026-09-16 the type
 errors were silenced by declaring the props that were already being passed, which changed no rendered tag. The
-duplication itself is still there. The notes below are based on reading the code and the Hugo output; they have not
+duplication itself is still there. The notes below are based on reading the code and the built pages; they have not
 been built and verified like parts A and B.
 
 ### 7.1 The head is rendered three times
 
 `Base.astro` renders `SEO.astro`, which renders `SocialMeta.astro` again, and `Head.astro` renders `SocialMeta.astro`
 as well. The built `/posts/article/` therefore has two `<title>` elements (the first one empty), three
-`og:title`, three `description` tags, and values that differ from Hugo:
+`og:title`, three `description` tags, and wrong values:
 
-- `og:site_name` is `Klub biolocation`. Hugo prints `Radiesthesia Club`, the `site.title` in `src/config.ts`.
-  `Base.astro` defines a second object with that wrong title; it is called `seoSite` since 2026-09-16, because under
-  its old name `site` it shadowed the import and `astro check` reported a declaration conflict.
-- `og:locale` is `ru_RU`. Hugo prints `en_US` (`social_meta.html` only switches for `zh`).
-- `og:image` points at `/images/default-share.png`, which does not exist. `hugo.toml` has no default share image, so
-  Hugo falls back to the avatar: `/images/avatar.png`.
-- `<meta name="robots">` is not in the Hugo output.
-- For posts, Hugo prints `og:type` `article` plus `article:published_time`, `article:modified_time` and one
-  `article:tag` per tag.
+- `og:site_name` is `Klub biolocation`, while the site title in `src/config.ts`, and in every `<title>`, is
+  `Radiesthesia Club`. `Base.astro` defines a second site object with that title (section 9).
+- `og:image` points at `/images/default-share.png`, which does not exist in `public/images/`.
+- `<meta name="robots" content="index, follow">` only repeats what search engines do by default and can be dropped.
+- On a post, `og:type` should be `article`, with `article:published_time`, `article:modified_time` and one
+  `article:tag` per tag. `SEO.astro` already contains that code, but the post page does not pass the data yet.
 
-Suggested direction: port `partials/social_meta.html` verbatim into `SocialMeta.astro` (it is the plan §4 stub, and
-`Head.astro` already renders it in the right place, after `<title>`), reusing helpers from `src/lib/seo.ts` where
-they match. Then remove `<SEO>`, the local `seoSite` and `page` objects and the extra `<meta charset>` from
-`Base.astro`, and delete `SEO.astro`. That removes the duplicate tags, and with them the props that only exist to
-feed `SEO.astro`.
+Revised on 2026-09-16. An earlier version of this section suggested porting the Hugo partial into
+`SocialMeta.astro` and deleting `SEO.astro`. The project now follows Astro practice rather than the Hugo layout, so
+the suggestion is the opposite: keep `SEO.astro` and delete `SocialMeta.astro`. Section 8 explains why, section 9
+covers the second site object.
 
 ### 7.2 Smaller points
 
 - `src/config.ts` gained `telegram: "@name"`, which the footer renders as `href="@name"`. The social values are still
-  the placeholders from `hugo.toml`.
-- `Base.astro` passes `content`, `isArticle`, `publishDate`, `updatedDate`, `tags` and `params`, which its `Props`
-  do not declare. They disappear with 7.1.
+  placeholders.
+- `Base.astro` declares `content`, `isArticle`, `publishDate`, `updatedDate`, `tags` and `params` for `SEO.astro`,
+  but no page passes them yet. The post page should pass them (section 8.6).
 
 ### 7.3 Project conventions that apply to all of this
 
@@ -950,3 +946,208 @@ From `CLAUDE.md`, briefly:
 - Use `encodeSlug()` on any slug segment of a hand-built link (non-ASCII tags).
 - Never write a literal script or style tag inside a comment or string in an `.astro` file (part B is that bug).
 - Before calling a step done: `npm run fix`, `npm run check`, `npm run build`, and `npm run dev` once.
+
+## 8. SEO.astro and SocialMeta.astro: one file or two
+
+Added on 2026-09-16 and revised the same day: the project now follows Astro practice, so the Hugo layout is no longer
+an argument for how these files are organised.
+
+The question: splitting the head tags into `SEO.astro` for search tags and `SocialMeta.astro` for social tags looks
+cleaner. Why keep one file?
+
+### 8.1 Short answer
+
+The number of files is not the problem. Whatever the layout, three things must hold:
+
+1. Every tag is rendered once.
+2. There is one site object, `site` from `src/config.ts` (section 9).
+3. The tags are rendered from one place.
+
+Two files can meet all three. They do not today. One file is recommended because it is simpler, not because two
+files are wrong.
+
+### 8.2 What the built page contains today
+
+Measured on `dist/posts/article/index.html`, built from `ff518fd`:
+
+- Two `meta charset` and two `title` elements, and the first title is empty. `SEO.astro` renders a title from its
+  `title` prop, and `Base.astro` never passes one. A browser uses the first title element: in headless Edge
+  `document.title` on that page is an empty string. All 16 built pages carry the empty title, so no browser tab and
+  no bookmark shows the page name.
+- `description`, `og:type`, `og:title`, `og:description` and `og:image` appear three times each, with different
+  values. `og:title` is `Hello!`, then empty, then `Hello! | Radiesthesia Club`; `og:image` is once a URL and twice
+  empty. A search engine or a messenger preview picks one of them, and which one is not up to us.
+- The wrong values listed in 7.1.
+
+Where the three copies come from:
+
+- `Base.astro` renders `SEO.astro`: title, canonical, description, robots, Open Graph, Twitter and article tags.
+- `SEO.astro` renders `SocialMeta.astro` at its end, passing the `title` that nobody set.
+- `Head.astro` renders its own title and `SocialMeta.astro` a second time.
+
+So the current two files do not separate search tags from social tags: `description`, `og:*` and `twitter:*` are
+in both. The split exists in the file names, not in the output.
+
+### 8.3 Which file has the better code
+
+`SEO.astro` together with `src/lib/seo.ts`. It covers title, canonical, description, Open Graph, Twitter and article
+tags, with typed helpers and fallbacks for the title, the description and the share image. `SocialMeta.astro` is a
+smaller set of the same tags. Both options below keep `SEO.astro` and `src/lib/seo.ts` as the base.
+
+### 8.4 Option 1: one component, SEO.astro (recommended)
+
+- `SEO.astro` renders the title, canonical, description, Open Graph, Twitter and article tags. No other file renders
+  any of them.
+- The title keeps today's text: `Hello! | Radiesthesia Club` on a post, `Radiesthesia Club` alone on the home page.
+  That formula is in `Head.astro` now and moves into `SEO.astro`.
+- `Base.astro` renders `SEO` once, inside `head`. It already has the page data that `SEO.astro` needs.
+- `Head.astro` loses its `title` and its `SocialMeta`. Everything else in it stays.
+- One `meta charset`, as the first tag in `head`: keep the one in `Base.astro`, remove the one in `Head.astro`.
+- Delete `SocialMeta.astro`.
+
+Strengths:
+
+- The shared values are computed once. `meta description`, `og:description` and `twitter:description` are the same
+  string; `canonical` and `og:url` are the same URL. Nothing is passed between files, and the tags cannot drift apart.
+- To find or change any tag that describes the page, there is one file to open.
+- It is how Astro projects usually do it. The official Astro blog starter keeps title, canonical, description, Open
+  Graph and Twitter tags in one `BaseHead.astro`, and the `astro-seo` package is one `SEO` component that takes all
+  of them as props.
+- The smallest change: most of the code already exists.
+
+Weaknesses:
+
+- About 35 lines of markup in one file; search tags and social tags are not physically separated. A comment line
+  between the groups covers most of that.
+- The file grows when JSON-LD or hreflang are added. At that point JSON-LD can become its own component.
+
+### 8.5 Option 2: two components with a strict boundary
+
+- `SEO.astro` renders the title, canonical and description.
+- `SocialMeta.astro` renders the Open Graph, Twitter and article tags.
+- `Base.astro` renders both, one after the other. Neither renders the other.
+
+Strengths:
+
+- Search tags and link-preview tags are edited and reviewed separately, and each file is short.
+- Each side can grow on its own.
+- `src/lib/seo.ts` already holds the shared logic, so neither file has to copy code.
+
+Weaknesses:
+
+- Both files need the same inputs: the description and the canonical URL are used on both sides. Either both call the
+  helpers, which gives two places to keep in sync, or `Base.astro` computes the values and passes them to both.
+- `Base.astro` passes the page data to two components instead of one.
+- The boundary is kept by hand: no tag may appear in both files. The duplication in 8.2 is what happens when that
+  slips.
+
+### 8.6 What either option has to meet
+
+- One `title`, one `meta charset`, and one each of the description, canonical, Open Graph and Twitter tags,
+  rendered from `Base.astro` only.
+- `site` from `src/config.ts` is the only site object, so `og:site_name` is `Radiesthesia Club` (section 9).
+- No link to a missing image: without an image in the front matter, the share image falls back to
+  `/images/avatar.png`.
+- No `robots` tag.
+- On a post, `og:type` is `article`, and the three `article:` tags are present. For that, `Post.astro` passes
+  `isArticle`, `publishDate` (`data.date`), `updatedDate` (`data.lastmod`, else `data.date`) and `tags` to
+  `Base.astro`.
+- Check: `dist/posts/article/index.html` contains exactly one each of `title`, `meta description`, `canonical`,
+  `og:title` and `og:image`; `npm run check` and `npm run build` are green; the browser tab on `/posts/article/`
+  reads `Hello! | Radiesthesia Club`.
+
+### 8.7 Recommendation
+
+Option 1. It computes the shared values once, matches how Astro projects usually organise head tags, and is the
+smaller change. Option 2 is also correct if 8.6 holds.
+
+## 9. Two `site` variables in Base.astro
+
+Added on 2026-09-16. The question: `src/config.ts` exports `site`, and `Base.astro` imports it. `Base.astro` also
+declared its own `site` object with slightly different data. Should there be only one, or both with one renamed?
+
+### 9.1 Short answer
+
+Keep one source of data: `site` from `src/config.ts`. The helpers in `src/lib/seo.ts` expect a different shape, so a
+second object is fine, but it must be built from `site`, not filled with its own values.
+
+The rename to `seoSite` in `ff518fd` only made `astro check` pass without changing the page. It is not the fix: the
+two objects still disagree.
+
+### 9.2 What is different
+
+- `title`: `Radiesthesia Club` in `src/config.ts`, `Klub biolocation` in `Base.astro`. Every `title` element uses
+  the first; `og:site_name` uses the second. A link preview shows a different site name than the browser tab.
+- `share.defaultImage`: only in `Base.astro`, `/images/default-share.png`. That file does not exist.
+- `avatar`: the same path in both, in a different shape: a string in `src/config.ts`, `{ url }` in `Base.astro`.
+- `language`: `ru` in both.
+- `baseUrl`: only in `Base.astro`, read from `Astro.site`, which is `site` in `astro.config.mjs`. That is not a copy:
+  it is where Astro keeps the site URL, and `Astro.site` is the documented way to build absolute URLs.
+
+So the local object adds nothing of its own that is right, and two values that are wrong.
+
+### 9.3 Option A: keep both, one renamed (the current state)
+
+Strengths:
+
+- The smallest change. It compiles, and `src/config.ts` and `src/lib/seo.ts` stay untouched.
+
+Weaknesses:
+
+- Two places hold the same data, they already disagree, and the page shows the wrong title.
+- A change in `src/config.ts`, a new title for example, never reaches the SEO tags. Nothing fails, so nobody notices.
+- The rename hides the conflict from the compiler, not from the page.
+
+### 9.4 Option B: one `site`, the SEO object built from it (recommended)
+
+```astro
+---
+import { site } from "../config";
+import type { SiteConfig } from "../lib/seo";
+
+// Built from src/config.ts, with no values of its own, so the tags always follow the config.
+// The shape differs because the helpers in src/lib/seo.ts expect SiteConfig. baseUrl comes from
+// astro.config.mjs through Astro.site. No share.defaultImage: there is no such image, so the
+// share image falls back to the avatar.
+const seoSite: SiteConfig = {
+  title: site.title,
+  baseUrl: Astro.site?.toString() ?? "",
+  language: site.language,
+  avatar: { url: site.avatar },
+};
+---
+```
+
+Strengths:
+
+- The title and the avatar are changed in one place, and the tags follow.
+- The wrong values disappear: `og:site_name` becomes `Radiesthesia Club`, and `og:image` points at
+  `/images/avatar.png` instead of a missing file.
+- `src/lib/seo.ts` does not change.
+
+Weaknesses:
+
+- There are still two variables. Without the comment above, the next reader asks why.
+- When a field is added to `SiteConfig`, the mapping needs one more line.
+
+### 9.5 Option C: one `site`, no second object
+
+The helpers in `src/lib/seo.ts` take `site` from `src/config.ts` directly, plus the base URL as a separate argument.
+
+Strengths:
+
+- Literally one variable, and no mapping.
+
+Weaknesses:
+
+- Every helper signature in `src/lib/seo.ts` changes, and so does every call.
+- `src/lib/seo.ts` becomes tied to the exact shape of `src/config.ts`.
+- A bigger change than B for the same page.
+
+### 9.6 Where the object goes
+
+With option 1 from section 8, the object from 9.4 lives inside `SEO.astro`, which imports `site` itself. `SEO.astro`
+then takes only the `page` prop. `Base.astro` keeps its import of `site` for `html lang` and builds only `page`.
+
+Check: `dist/posts/article/index.html` has `og:site_name` `Radiesthesia Club` and an `og:image` ending in
+`/images/avatar.png`, and `npm run check` is green.
