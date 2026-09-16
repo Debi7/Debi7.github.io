@@ -3,6 +3,7 @@ import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import mdx from "@astrojs/mdx";
 import remarkMath from "remark-math";
+import alpinejs from "@astrojs/alpinejs";
 
 export default defineConfig({
   // Публичный адрес деплоя на GitHub Pages (без базового пути)
@@ -14,7 +15,7 @@ export default defineConfig({
 
   // applyBaseStyles: false - the Tailwind base layer is imported by src/styles/main.css so
   // that the order (base, theme rules, custom.css) stays under our control.
-  integrations: [tailwind({ applyBaseStyles: false }), mdx()],
+  integrations: [tailwind({ applyBaseStyles: false }), mdx(), alpinejs()],
 
   markdown: {
     // remark-math only keeps $...$ / $$...$$ intact in Markdown. Rendering stays client-side

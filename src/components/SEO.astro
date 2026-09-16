@@ -4,7 +4,6 @@
 // Обычно является «родителем» (главным компонентом) для мета-тегов
 
 import type { SiteConfig, PageLike } from "../lib/seo";
-import SocialMeta from "./SocialMeta.astro";
 
 import {
   resolveSocialTitle,
@@ -19,7 +18,7 @@ interface Props {
   page: PageLike;
 }
 
-const { site, page, title, ogImage } = Astro.props;
+const { site, page } = Astro.props;
 
 const socialTitle = resolveSocialTitle(page, site);
 const description = resolveDescription(page, site);
@@ -34,10 +33,8 @@ const modifiedTime = toIso(page.updatedDate);
 const tags = page.tags ?? [];
 ---
 
-<title>{title}</title>
 <link rel="canonical" href={canonicalURL} />
 <meta name="description" content={description} />
-<meta name="robots" content="index, follow" />
 
 <meta property="og:site_name" content={site.title} />
 <meta property="og:type" content={ogType} />
@@ -69,5 +66,3 @@ const tags = page.tags ?? [];
   page.isPage &&
     tags.map((tag) => <meta property="article:tag" content={tag} />)
 }
-
-<SocialMeta title={title} description={description} ogImage={ogImage} />

@@ -1,43 +1,56 @@
 ---
-import { t } from '../i18n/strings';
-const { headings } = Astro.props;
+import type { MarkdownHeading } from "astro";
+import { t } from "../i18n/strings";
+import { tocHtml } from "../lib/toc";
 
-// Оставляем h2/h3, отфильтровываем пустые
-const items = headings.filter((h) => h.depth >= 2 && h.depth <= 3 && h.text);
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+const toc = tocHtml(headings);
 ---
 
-{items.length > 0 && (
-  <div class="article-inner pt-6" x-data="{ open: false }">
-    <button
-      class="w-full flex items-center justify-between text-sm text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700 rounded-md px-4 py-2 transition-colors"
-      @click="open = !open"
-      aria-controls="toc-content"
-      :aria-expanded="open.toString()"
+<div class="article-inner pt-6" x-data="{ open: false }">
+  <button
+    class="flex w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+    @click="open = !open"
+    aria-controls="toc-content"
+    :aria-expanded="open.toString()"
+  >
+    <span>{t.table_of_contents}</span>
+    <svg
+      x-show="!open"
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-4 w-4"
+      viewBox="0 0 20 20"
+      fill="currentColor"
     >
-      <span>{t('table_of_contents')}</span>
-      <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-      </svg>
-      <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M5 9a1 1 0 000 2h10a1 1 0 100-2H5z" clip-rule="evenodd" />
-      </svg>
-    </button>
-    <div
-      id="toc-content"
-      x-cloak
+      <path
+        fill-rule="evenodd"
+        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+        clip-rule="evenodd"></path>
+    </svg>
+    <svg
       x-show="open"
-      x-transition
-      class="mt-3 border border-gray-100 rounded-md bg-white p-4 text-sm leading-relaxed"
+      xmlns="http://www.w3.org/2000/svg"
+      class="h-4 w-4"
+      viewBox="0 0 20 20"
+      fill="currentColor"
     >
-      <ul class="space-y-1">
-        {items.map((h) => (
-          <li class={h.depth === 3 ? 'pl-4' : ''}>
-            <a href={`#${h.slug}`} class="text-gray-700 hover:text-blue-600">
-              {h.text}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
+      <path
+        fill-rule="evenodd"
+        d="M5 9a1 1 0 000 2h10a1 1 0 100-2H5z"
+        clip-rule="evenodd"></path>
+    </svg>
+  </button>
+  <div
+    id="toc-content"
+    x-cloak
+    x-show="open"
+    x-transition
+    class="mt-3 rounded-md border border-gray-100 bg-white p-4 text-sm leading-relaxed"
+  >
+    <div class="prose prose-sm max-w-none" set:html={toc} />
   </div>
-)}
+</div>

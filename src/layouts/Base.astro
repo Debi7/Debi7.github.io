@@ -1,43 +1,55 @@
 ---
-// Port of ../klub_biolocation/themes/void/layouts/_default/baseof.html (MIGRATION-PLAN.md §4).
-// The class attributes are copied verbatim: they are the visual contract.
 import "../styles/main.css";
-// Must stay after main.css: it overrides the theme (see the Hugo README, "Colours and custom CSS").
 import "../styles/custom.css";
+
 import Head from "../components/Head.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SEO from "../components/SEO.astro";
+
 import type { SiteConfig, PageLike } from "../lib/seo";
 import { site } from "../config";
 
 interface Props {
-  /** Page title. Omit on the home page: <title> is then the site title alone. */
   title?: string;
   description?: string;
+  content?: string;
+  isArticle?: boolean;
+  publishDate?: Date;
+  updatedDate?: Date;
+  tags?: string[];
+  params?: Record<string, any>;
 }
 
-const { title, description } = Astro.props;
+const {
+  title,
+  description,
+  content,
+  isArticle,
+  publishDate,
+  updatedDate,
+  tags,
+  params,
+} = Astro.props;
 
-const site: SiteConfig = {
-  title: "Klub biolocation",
-  baseUrl: Astro.site?.toString() ?? "https://example.com",
-  language: "ru",
-  share: { defaultImage: "/images/default-share.png" },
-  avatar: { url: "/images/avatar.png" },
+const seoSite: SiteConfig = {
+  title: site.title,
+  baseUrl: Astro.site?.toString() ?? "",
+  language: site.language,
+  avatar: { url: site.avatar },
 };
 
 const page: PageLike = {
-  title: Astro.props.title,
-  description: Astro.props.description,
-  content: Astro.props.content,
+  title,
+  description,
+  content,
   permalink: new URL(Astro.url.pathname, Astro.site).toString(),
   isHome: Astro.url.pathname === "/",
-  isPage: Boolean(Astro.props.isArticle),
-  publishDate: Astro.props.publishDate,
-  updatedDate: Astro.props.updatedDate,
-  tags: Astro.props.tags,
-  params: Astro.props.params ?? {},
+  isPage: Boolean(isArticle),
+  publishDate,
+  updatedDate,
+  tags,
+  params: params ?? {},
 };
 ---
 
@@ -45,7 +57,7 @@ const page: PageLike = {
 <html lang={site.language} dir="ltr" class="h-full">
   <head>
     <meta charset="utf-8" />
-    <SEO site={site} page={page} />
+    <SEO site={seoSite} page={page} />
     <Head title={title} description={description} />
   </head>
   <body class="flex flex-col bg-gray-50 font-bilingual">

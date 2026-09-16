@@ -3,36 +3,39 @@ import ShareWidget from "../components/ShareWidget.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import PostNav from "../components/PostNav.astro";
 import Terms from "../components/Terms.astro";
-import DisqusLazy from "../components/DisqusLazy.astro";
-// import { t } from "../i18n/strings";
+import { site } from "../config";
+import { t } from "../i18n/strings";
+import { formatDateTime, formatIsoDate } from "../lib/date";
+import { readingTime, type Post } from "../lib/posts";
+import { encodeSlug, urlize } from "../lib/urlize";
+import type { MarkdownHeading } from "astro";
+
+interface Props {
+  entry: Post;
+  headings: MarkdownHeading[];
+  prev: Post | null;
+  next: Post | null;
+}
 
 const { entry, headings, prev, next } = Astro.props;
 const { data, body } = entry;
 
-// Дата
-const dateMachine = new Date(data.date).toISOString();
-const dateHuman = new Date(data.date).toISOString().slice(0, 10);
+const dateMachine = formatDateTime(data.date);
+const dateHuman = formatIsoDate(data.date);
+const readingMinutes = readingTime(body);
+const updatedHuman = formatIsoDate(data.lastmod ?? data.date);
 
-// Время чтения (~200 слов/мин)
-const wordCount = (body ?? "").split(/\s+/).filter(Boolean).length;
-const readingMinutes = Math.max(1, Math.round(wordCount / 200));
-
-// Обновлено: frontmatter.lastmod ?? data.date
-const updated = data.lastmod ? new Date(data.lastmod) : new Date(data.date);
-const updatedHuman = updated.toISOString().slice(0, 10);
-
-// Share-текст
 const shareTitle = data.share_title ?? data.title;
-let shareText =
-  data.share_description ?? data.description ?? data.summary ?? "";
-shareText =
-  shareText
-    .replace(/<[^>]*>/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 120) ||
-  Astro.site?.toString() ||
-  "";
+const shareText = (
+  data.share_description ??
+  data.description ??
+  data.summary ??
+  site.title
+)
+  .replace(/<[^>]*>/g, "")
+  .replace(/\s+/g, " ")
+  .trim()
+  .slice(0, 120);
 ---
 
 <article
@@ -41,10 +44,10 @@ shareText =
   <header class="relative border-b border-gray-100">
     <div class="article-inner py-8">
       {
-        data.categories?.length > 0 && (
+        data.categories.length > 0 && (
           <div class="mb-3 flex">
             <a
-              href={`/categories/${data.categories[0].toLowerCase().replace(/\s+/g, "-")}/`}
+              href={`/categories/${encodeSlug(urlize(data.categories[0]))}`}
               class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-600 transition-colors hover:bg-blue-100"
             >
               {data.categories[0]}
@@ -93,7 +96,7 @@ shareText =
               d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           {readingMinutes}
-          {"reading_time"}
+          {t.reading_time}
         </span>
 
         <span
@@ -119,23 +122,21 @@ shareText =
             ></path>
           </svg>
           <span class="whitespace-nowrap">
-            {"page_views"}
+            {t.page_views}
             <span id="busuanzi_value_page_pv"></span>
           </span>
         </span>
 
-        <div class="sm:ml-auto">
-          <ShareWidget
-            url={new URL(Astro.url.pathname, Astro.site).toString()}
-            title={shareTitle}
-            text={shareText}
-          />
-        </div>
+        <ShareWidget
+          url={new URL(Astro.url.pathname, Astro.site).toString()}
+          title={shareTitle}
+          text={shareText}
+        />
       </div>
     </div>
   </header>
 
-  <TableOfContents headings={headings} />
+  {headings.length > 0 && <TableOfContents headings={headings} />}
 
   <div
     class="article-inner article-prose prose prose-sm sm:prose lg:prose-lg max-w-none py-7"
@@ -158,13 +159,13 @@ shareText =
         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
       ></path>
     </svg>
-    {"last_updated"}
+    {t.last_updated}
     {updatedHuman}
   </div>
 
   <footer class="border-t border-gray-100 bg-gray-50 py-6">
     <div class="article-inner">
-      <Terms tags={data.tags ?? []} />
+      <Terms tags={data.tags} />
 
       <PostNav prev={prev} next={next} />
 
@@ -186,7 +187,7 @@ shareText =
               stroke-width="2"
               d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
           </svg>
-          {"back_to_home"}
+          {t.back_to_home}
         </a>
       </div>
     </div>
@@ -195,7 +196,6 @@ shareText =
 
 <div
   class="theme-card mx-auto mt-8 max-w-4xl overflow-hidden rounded-lg bg-white shadow-md"
-  style="--tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-links: #2563eb; --tw-prose-links-hover: #1d4ed8; --tw-prose-code-bg: # #f3f4f6; color: #374151;"
+  style="--tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-links: #2563eb; --tw-prose-links-hover: #1d4ed8; --tw-prose-code-bg: #f3f4f6; color: #374151;"
 >
-  <DisqusLazy />
 </div>

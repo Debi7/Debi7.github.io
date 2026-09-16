@@ -1,9 +1,4 @@
 ---
-// TODO (миграция §4): порт ../klub_biolocation/themes/void/layouts/partials/footer.html 
-// (значки социальных сетей из site.social в src/config.ts; сохраните логику «подсчитайте ссылки, выберите 
-// класс макета»). Оберточный элемент <footer> находится в src/layouts/Base.astro.
-
-// Footer component - порт из Hugo (themes/void/layouts/partials/footer.html)
 import { site } from "../config";
 
 // Получаем социальные ссылки из конфигурации
@@ -16,11 +11,6 @@ const socialCount = socialLinks.length;
 // Определяем класс для контейнера соц. ссылок
 const socialContainerClass =
   socialCount === 1 ? "flex justify-center" : "flex justify-center space-x-8";
-
-// Скрипт для счетчика посещений
-const busuanziScript = `
-  <script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-`;
 ---
 
 <div class="mt-10 border-t border-gray-200 bg-gray-50 py-8 shadow-inner">
@@ -117,12 +107,6 @@ const busuanziScript = `
         | Total visits: <span id="busuanzi_value_site_pv" class="text-gray-600"
         ></span>
       </span>
-
-      <script
-      async
-        type="text/javascript" is:inline>
-        src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"
-      ></script>
     </div>
   </div>
 </div>
