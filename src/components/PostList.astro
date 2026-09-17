@@ -113,7 +113,7 @@ const groups = groupByYear(posts);
 
                     {post.data.tags.length > 0 && (
                       <div class="relative z-20 mt-3 flex flex-wrap gap-2">
-                        {post.data.tags.map((tag) => (
+                        {post.data.tags.map((tag: any) => (
                           <a
                             href={`/tags/${encodeSlug(urlize(tag))}`}
                             class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"

@@ -89,9 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
           apply(theme);
         }
       };
-      if (media && media.addEventListener)
-        media.addEventListener("change", handler);
-      else if (media && media.addListener) media.addListener(handler);
+      media.addEventListener("change", handler);
     } catch (_) {}
   })();
 
@@ -154,8 +152,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const sync = function () {
         if (wide.matches && isOpen()) setOpen(false);
       };
-      if (wide.addEventListener) wide.addEventListener("change", sync);
-      else if (wide.addListener) wide.addListener(sync);
+      wide.addEventListener("change", sync);
     } catch (_) {}
   })();
 });

@@ -1,4 +1,11 @@
 ---
+// TODO Подключить счетчик посещений (например, Яндекс.Метрику или Google
+// Analytics) в Astro можно двумя основными способами: обычным добавлением скрипта
+// в базовый шаблон (Layout) или с помощью оптимизации через библиотеку Partytown,
+// чтобы внешние скрипты не замедляли загрузку сайта.
+// Существуют сторонние комьюнити-компоненты, такие как astro-yandex-metrika,
+// позволяющие вынести ID счетчика в переменные окружения (import.meta.env)
+
 import { site } from "../config";
 
 // Получаем социальные ссылки из конфигурации
@@ -108,25 +115,5 @@ const socialContainerClass =
         ></span>
       </span>
     </div>
-    {
-      /* busuanzi loader now lives in Head.astro, as in the Hugo theme: partials/footer.html
-    carries the same note, and head.html loads it early so the page view counter renders without
-    a delay. The counter itself is the two spans above, which the loader fills in.
-    Changed 2026-09-16: the loader element that used to sit here had its opening tag closed
-    before the src attribute, so the URL became the element text and nothing was ever loaded; it
-    also broke the Vite pre-scan and Prettier. The unused busuanziScript constant in the
-    frontmatter, which held the same tag in a template literal, went with it. The broken markup
-    is deliberately not kept as a comment: a literal script tag inside a comment is what breaks
-    the pre-scan.
-    Changed 2026-09-17: this was an HTML comment, which is sent to every visitor; it is an Astro
-    comment now, like the other comments added to the markup. */
-    }
   </div>
 </div>
-
-<!-- TODO Подключить счетчик посещений (например, Яндекс.Метрику или Google
-Analytics) в Astro можно двумя основными способами: обычным добавлением скрипта
-в базовый шаблон (Layout) или с помощью оптимизации через библиотеку Partytown,
-чтобы внешние скрипты не замедляли загрузку сайта.
-Существуют сторонние комьюнити-компоненты, такие как astro-yandex-metrika, 
-позволяющие вынести ID счетчика в переменные окружения (import.meta.env) -->
