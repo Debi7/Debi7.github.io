@@ -1,12 +1,30 @@
 ---
 // Компонент принимает два обязательных параметра: URL страницы и её уникальный ID (обычно слаг/slug поста)
 import { site } from "../config";
-interface DisqusConfig {
-  page: {
-    url: string;
-    identifier: string;
-  };
-}
+
+// Changed 2026-09-17: the comments never appeared on a post. The callback in the is:inline block
+// below was written as
+//
+//   var disqus_config = function (this: DisqusConfig) {
+//
+// which is TypeScript. An is:inline block is copied into the page exactly as written, Astro does
+// not compile it, so the browser stopped at that line with "Uncaught SyntaxError: Unexpected
+// token 'this'" - measured in headless Edge on the built page. The block never ran, embed.js was
+// never added to the page, and the container below stayed empty. The fix is the same callback
+// without the annotation.
+//
+// The interface it referred to is kept here, commented out rather than deleted, because nothing
+// else uses it and because an is:inline block cannot carry types at all:
+//
+// interface DisqusConfig {
+//   page: {
+//     url: string;
+//     identifier: string;
+//   };
+// }
+//
+// This note sits in the frontmatter on purpose: comments written inside the block below are sent
+// to every visitor with the page.
 export interface Props {
   url: string;
   identifier: string;
@@ -18,7 +36,8 @@ const { url = site.social.github, identifier = "my-post" } = Astro.props;
 <div id="disqus_thread" class="mt-10 w-full"></div>
 
 <script is:inline define:vars={{ url, identifier }}>
-  var disqus_config = function (this: DisqusConfig) {
+  // Plain JavaScript only, no types: Astro copies this block into the page as written.
+  var disqus_config = function () {
     this.page.url = url; // Полный URL страницы
     this.page.identifier = identifier; // Уникальный ID (например, 'my-post')
   };
