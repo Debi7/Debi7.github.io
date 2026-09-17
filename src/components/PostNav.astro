@@ -3,6 +3,13 @@
 // object, not a function, so the t("key") calls this file used to have threw "t is not a
 // function" the moment the component rendered.
 import { t } from "../i18n/strings";
+import type { Post } from "../lib/posts";
+
+interface Props {
+  prev: Post | null;
+  next: Post | null;
+}
+
 const { prev, next } = Astro.props;
 ---
 

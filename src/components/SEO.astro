@@ -4,7 +4,6 @@
 // Обычно является «родителем» (главным компонентом) для мета-тегов
 
 import type { SiteConfig, PageLike } from "../lib/seo";
-import SocialMeta from "./SocialMeta.astro";
 
 import {
   resolveSocialTitle,
@@ -17,17 +16,12 @@ import {
 interface Props {
   site: SiteConfig;
   page: PageLike;
-  /**
-   * Overrides for the two values SocialMeta.astro receives directly. Declared 2026-09-16: the
-   * component already read them from Astro.props and passed them on, which astro check reported
-   * as "Property does not exist on type Props". Nothing passes them today, so both stay
-   * optional and the rendered tags are unchanged. See ARTICLE-PAGE-FIX.md, section 7.1.
-   */
-  title?: string;
-  ogImage?: string;
+  // Merged 2026-09-17: the optional title and ogImage props, declared on 2026-09-16 only to be
+  // passed on to SocialMeta.astro, are gone. my-saved-work deleted SocialMeta.astro and stopped
+  // reading both props here; the title element lives in Head.astro alone.
 }
 
-const { site, page, title, ogImage } = Astro.props;
+const { site, page } = Astro.props;
 
 const socialTitle = resolveSocialTitle(page, site);
 const description = resolveDescription(page, site);
@@ -42,10 +36,8 @@ const modifiedTime = toIso(page.updatedDate);
 const tags = page.tags ?? [];
 ---
 
-<title>{title}</title>
 <link rel="canonical" href={canonicalURL} />
 <meta name="description" content={description} />
-<meta name="robots" content="index, follow" />
 
 <meta property="og:site_name" content={site.title} />
 <meta property="og:type" content={ogType} />
@@ -77,5 +69,3 @@ const tags = page.tags ?? [];
   page.isPage &&
     tags.map((tag) => <meta property="article:tag" content={tag} />)
 }
-
-<SocialMeta title={title} description={description} ogImage={ogImage} />

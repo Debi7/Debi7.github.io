@@ -1,11 +1,4 @@
 ---
-// Port of ../klub_biolocation/layouts/partials/head.html (the root override, which wins over
-// the theme's own head.html) plus the font links from themes/void/layouts/partials/head/css.html
-// and the third-party script tags from head/js.html. Copied as-is where possible.
-// Do not write a literal script or style tag inside these comments: Vite's dependency
-// pre-scan looks for those tokens in .astro files without parsing the TypeScript, so it
-// would try to execute the rest of the comment as JavaScript and `astro dev` would fail.
-import SocialMeta from "./SocialMeta.astro";
 import { site } from "../config";
 
 interface Props {
@@ -13,18 +6,14 @@ interface Props {
   description?: string;
 }
 
-const { title, description } = Astro.props;
+const { title } = Astro.props;
 const pageTitle = title ? `${title} | ${site.title}` : site.title;
 ---
 
-<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width" />
 <title>{pageTitle}</title>
-<SocialMeta title={pageTitle} description={description} />
 
-<!-- Prevent theme flash: set dark class ASAP and background color before CSS loads -->
 <meta name="color-scheme" content="light dark" />
-<!-- Keep in sync with --page-bg (html.dark) in src/styles/custom.css. Previous value: #0b1220 -->
 <meta
   name="theme-color"
   media="(prefers-color-scheme: dark)"
@@ -43,9 +32,6 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
   })();
 </script>
 <style is:inline>
-  /* Minimal pre-CSS paint to avoid a white flash on dark. The final colour comes from
-     --page-bg in src/styles/custom.css (html.dark block); the literal below is only the
-     fallback used before that file is applied. Previous value: #0b1220 */
   html.dark,
   html.dark body {
     background-color: var(--page-bg, #0b1e3d);
@@ -63,7 +49,9 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-<!-- Speed up Busuanzi counter load -->
+<!-- Speed up Busuanzi counter load 
+? нужно заменить на Google Analytics / Yandex Metrika
+(для глубокой аналитики, но без красивого публичного счетчика на страницу) -->
 <link rel="dns-prefetch" href="//busuanzi.ibruce.info" />
 <link rel="preconnect" href="https://busuanzi.ibruce.info" crossorigin />
 
@@ -94,11 +82,12 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
   rel="stylesheet"
 />
 
-<!-- Third-party libraries (head/js.html): same URLs and versions as the Hugo theme -->
-<script
-  is:inline
-  defer
-  src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+{
+  /* Changed 2026-09-17: the CDN tag for Alpine.js that stood here was removed. Alpine now comes
+  from npm through the @astrojs/alpinejs integration in astro.config.mjs, which bundles it into
+  every page; with both, each page loaded Alpine twice and alpine:init fired twice (measured in
+  headless Edge). See README, section on @astrojs/alpinejs being pinned to 0.4.9. */
+}
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"

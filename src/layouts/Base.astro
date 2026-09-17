@@ -1,24 +1,24 @@
 ---
-// Port of ../klub_biolocation/themes/void/layouts/_default/baseof.html (MIGRATION-PLAN.md §4).
-// The class attributes are copied verbatim: they are the visual contract.
 import "../styles/main.css";
-// Must stay after main.css: it overrides the theme (see the Hugo README, "Colours and custom CSS").
 import "../styles/custom.css";
+
 import Head from "../components/Head.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SEO from "../components/SEO.astro";
+
 import type { SiteConfig, PageLike } from "../lib/seo";
 import { site } from "../config";
 
 interface Props {
-  /** Page title. Omit on the home page: <title> is then the site title alone. */
   title?: string;
   description?: string;
   /**
    * The rest feed SEO.astro. Only a post sets them; every other page leaves them unset.
    * Declared 2026-09-16: the page object below already read all six from Astro.props, which
    * astro check reported as "Property does not exist on type Props". Type-only change.
+   * Merged 2026-09-17: params keeps the PageLike type rather than Record<string, any> from
+   * my-saved-work, because the project does not allow `any` and PageLike is what it feeds.
    */
   content?: string;
   isArticle?: boolean;
@@ -28,32 +28,43 @@ interface Props {
   params?: PageLike["params"];
 }
 
-const { title, description } = Astro.props;
+const {
+  title,
+  description,
+  content,
+  isArticle,
+  publishDate,
+  updatedDate,
+  tags,
+  params,
+} = Astro.props;
 
-// Renamed 2026-09-16 to seoSite: under its old name `site` it shadowed the import from
-// src/config.ts above, which astro check reported as a declaration conflict. The html lang
-// attribute below now reads the imported one; both carry language "ru", so the rendered page is
-// unchanged. The title here still says "Klub biolocation" where Hugo prints the site title -
-// that is part of the open head work, see ARTICLE-PAGE-FIX.md, section 7.1.
+// Named seoSite, not site: under that name it shadowed the import from src/config.ts above,
+// which astro check reported as a declaration conflict (renamed 2026-09-16).
+// Changed in my-saved-work, merged 2026-09-17: the object is built from src/config.ts and has
+// no values of its own, so the tags follow the config. It used to say "Klub biolocation" and
+// point at /images/default-share.png, which does not exist. The shape differs because the
+// helpers in src/lib/seo.ts expect SiteConfig; baseUrl comes from astro.config.mjs through
+// Astro.site. Without share.defaultImage the share image falls back to the avatar.
+// See ARTICLE-PAGE-FIX.md, section 9.
 const seoSite: SiteConfig = {
-  title: "Klub biolocation",
-  baseUrl: Astro.site?.toString() ?? "https://example.com",
-  language: "ru",
-  share: { defaultImage: "/images/default-share.png" },
-  avatar: { url: "/images/avatar.png" },
+  title: site.title,
+  baseUrl: Astro.site?.toString() ?? "",
+  language: site.language,
+  avatar: { url: site.avatar },
 };
 
 const page: PageLike = {
-  title: Astro.props.title,
-  description: Astro.props.description,
-  content: Astro.props.content,
+  title,
+  description,
+  content,
   permalink: new URL(Astro.url.pathname, Astro.site).toString(),
   isHome: Astro.url.pathname === "/",
-  isPage: Boolean(Astro.props.isArticle),
-  publishDate: Astro.props.publishDate,
-  updatedDate: Astro.props.updatedDate,
-  tags: Astro.props.tags,
-  params: Astro.props.params ?? {},
+  isPage: Boolean(isArticle),
+  publishDate,
+  updatedDate,
+  tags,
+  params: params ?? {},
 };
 ---
 

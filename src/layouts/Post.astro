@@ -1,20 +1,21 @@
 ---
-// TODO(migration §4): port ../klub_biolocation/themes/void/layouts/_default/single.html
-// (date, reading time, tags, TOC built from `headings`, article body, Disqus placeholder).
-// Helpers ready for it: readingTime() in src/lib/posts.ts, strings in src/i18n/strings.ts.
 import Base from "./Base.astro";
+import ArticleLayout from "./ArticleLayout.astro";
+import type { MarkdownHeading } from "astro";
 import type { Post } from "../lib/posts";
 
 interface Props {
   post: Post;
+  headings: MarkdownHeading[];
+  prev: Post | null;
+  next: Post | null;
 }
 
-const { post } = Astro.props;
+const { post, headings, prev, next } = Astro.props;
 ---
 
 <Base title={post.data.title} description={post.data.description}>
-  <article>
-    <h1>{post.data.title}</h1>
+  <ArticleLayout entry={post} headings={headings} prev={prev} next={next}>
     <slot />
-  </article>
+  </ArticleLayout>
 </Base>

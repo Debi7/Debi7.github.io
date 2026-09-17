@@ -3,11 +3,19 @@
 // object, not a function, so the t("key") calls this file used to have threw "t is not a
 // function" the moment the component rendered.
 import { t } from "../i18n/strings";
+
+interface Props {
+  url: string;
+  title: string;
+  text: string;
+}
+
 const { url, title, text } = Astro.props;
 ---
 
 <div
-  class="share-widget"
+  class="sm:ml-auto"
+  data-share-widget
   data-share-url={url}
   data-share-title={title}
   data-share-text={text}
