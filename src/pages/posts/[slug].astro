@@ -3,7 +3,8 @@ import type { InferGetStaticPropsType } from "astro";
 import Post from "../../layouts/Post.astro";
 import { getPosts } from "../../lib/posts";
 import Disqus from "../../components/Disqus.astro";
-import { site } from "../../config";
+// Changed 2026-09-17: this import is no longer needed here, see the note above postUrl below.
+// import { site } from "../../config";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -20,7 +21,14 @@ const { Content, headings } = await post.render();
 
 // Формируем полный URL для Disqus.
 // Astro.site берется из настройки site в astro.config.mjs
-const postUrl = `${site.social.github}/posts/${post.slug}`;
+//
+// Changed 2026-09-17: the address was built from site.social.github, the link shown in the
+// footer, so the built page carried https://debi7.github.io//posts/article - a double slash and
+// no trailing slash. Disqus keys a thread by this URL, so it has to be the page's own address,
+// the same one the canonical link carries. The previous line is kept here:
+//
+// const postUrl = `${site.social.github}/posts/${post.slug}`;
+const postUrl = new URL(`/posts/${post.slug}/`, Astro.site).toString();
 const postIdentifier = post.slug;
 ---
 
