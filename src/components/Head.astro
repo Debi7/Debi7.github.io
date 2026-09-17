@@ -82,10 +82,12 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
   rel="stylesheet"
 />
 
-<script
-  is:inline
-  defer
-  src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+{
+  /* Changed 2026-09-17: the CDN tag for Alpine.js that stood here was removed. Alpine now comes
+  from npm through the @astrojs/alpinejs integration in astro.config.mjs, which bundles it into
+  every page; with both, each page loaded Alpine twice and alpine:init fired twice (measured in
+  headless Edge). See README, section on @astrojs/alpinejs being pinned to 0.4.9. */
+}
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"

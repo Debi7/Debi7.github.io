@@ -108,6 +108,34 @@ A page cannot paint under a classic scrollbar; that strip is browser chrome. Col
 
 `astro dev` and `astro build` do not read `.astro` files the same way. Vite's dependency pre-scan, which only runs in dev, hunts for `script` and `style` tags with a plain text search that ignores the TypeScript frontmatter - so a literal script tag written inside a **comment** makes it parse the rest of that comment as JavaScript and the dev server fails with `Failed to scan for dependencies from entries`, while the production build stays green. `Head.astro` and `Carousel.astro` hit this; both now describe the tags in words. Run `npm run dev` as well as `npm run build` before calling a step done.
 
+### `@astrojs/alpinejs` is pinned to 0.4.9
+
+Alpine.js comes from npm through the official `@astrojs/alpinejs` integration: `alpinejs()` in `astro.config.mjs`, with the `alpinejs` and `@types/alpinejs` packages next to it. The integration is pinned to exactly `0.4.9`, without a caret, on purpose. Do not upgrade it while the project is on Astro 4. `package.json` carries a short note to the same effect under its `"//"` key, because JSON has no comments.
+
+**What broke.** Version 1.0.0 was installed first, and every page of `npm run dev` failed with `__vite_ssr_import_0__.createComponent is not a function`; the browser showed a page titled `TypeError`. `npm run build` stayed green, so only the dev server showed it.
+
+**Why.** The integration adds a small Vite plugin that serves one virtual module, `virtual:@astrojs/alpinejs/entrypoint`. In 1.0.0 that plugin says "only for this module" through Vite hook filters (`resolveId` and `load` written as objects with a `filter`). Vite 5.4, the version Astro 4 ships, does not know hook filters and silently ignores them. The plugin therefore answered for every module in the project and replaced each one with its one-line stub, `export const setup = () => {}` - Astro's own runtime included, which is where `createComponent` should have come from. Version 0.4.9 checks the module id inside the hook itself; that is the only difference between the code of the two versions.
+
+**Which version goes with which Astro.**
+
+- `@astrojs/alpinejs` 0.4.9: Astro 4. Verified here.
+- `@astrojs/alpinejs` 1.0.0: Astro 7. Its own development dependencies are Astro 7.0.0 and Vite 8. It was not tried on Astro 5 or 6, so do not assume it works there.
+- The Alpine library itself does not depend on this choice: `alpinejs` 3.17.3 is the latest version and works with both.
+
+**What moving to 1.x would take.** Read from the npm registry on 2026-09-17, not tried. The hard constraints in `CLAUDE.md` (Node 20, Astro 4, Tailwind 3.4) rule this out for now; the list is here so that the cost is known when that decision comes up.
+
+- Node 22.12 or newer. Astro 7, `@astrojs/mdx` 8 and `prettier-plugin-astro` 1.0 all require it. That means changing `engines` in `package.json` (`.npmrc` enforces it with `engine-strict=true`), `node-version` in `.github/workflows/deploy.yml`, and `@types/node` from 20 to 22.
+- `astro` from 4.16 to 7.x (latest 7.3.3, with Vite 8). Three major versions: the code has to go through the upgrade guides for Astro 5, 6 and 7 one by one.
+- `@astrojs/mdx` from 3.1 to 8.x (latest 8.0.1). It requires `astro` ^7.2.6 and two new peer packages, `@astrojs/markdown-remark` and `@astrojs/markdown-satteri`.
+- `@astrojs/tailwind` has no version for Astro 7: its latest, 6.0.2, supports Astro 3 to 5 and Tailwind 3 only. The supported route on Astro 7 is `@tailwindcss/vite`, which is Tailwind 4 and would undo the Tailwind 3 palette work described above. Keeping Tailwind 3 through a plain PostCSS config instead of the integration may be possible; not tried.
+- `prettier-plugin-astro` from 0.14 to 1.0.
+- `@astrojs/check` 0.9.10 is the latest; whether it supports Astro 7 was not checked.
+- `@astrojs/alpinejs` to 1.0.0, `alpinejs` and `@types/alpinejs` unchanged.
+
+**Measured on 2026-09-17:** with 1.0.0, `/` returned 500; with the integration removed from the config, 200; with 0.4.9, `npm run dev` answers 200 on `/`, `/posts/article/` and `/tags/` with no errors, `npm run build` builds 16 pages, and `astro check` reports 0 errors.
+
+**Alpine is loaded once.** Until 2026-09-17 `Head.astro` also carried the CDN tag for Alpine, so every page loaded two copies and `alpine:init` fired twice (the toggle still worked). The tag was removed; a comment in `Head.astro` marks the spot. Measured afterwards in headless Edge on `/posts/article/`, with a temporary heading added so that the table of contents renders: `Alpine.version` is 3.17.3, the npm package; `alpine:init` fires once; the table of contents opens on the first click and closes on the second; the console shows no errors. The owner saw the same in a browser. No post has headings yet, so no page renders an Alpine element today.
+
 ## Layout
 
 ```
