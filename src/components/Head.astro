@@ -49,9 +49,15 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-<!-- Speed up Busuanzi counter load 
-? нужно заменить на Google Analytics / Yandex Metrika
-(для глубокой аналитики, но без красивого публичного счетчика на страницу) -->
+<!-- Speed up Busuanzi counter load -->
+{
+  /* Changed 2026-09-17: the note below was moved here out of the HTML comment above. An HTML
+  comment is sent to every visitor with the page; an Astro comment is not.
+  The note: consider replacing Busuanzi with Google Analytics or Yandex Metrika - deeper
+  analytics, but no public view counter on the page.
+  ? нужно заменить на Google Analytics / Yandex Metrika
+  (для глубокой аналитики, но без красивого публичного счетчика на страницу) */
+}
 <link rel="dns-prefetch" href="//busuanzi.ibruce.info" />
 <link rel="preconnect" href="https://busuanzi.ibruce.info" crossorigin />
 
@@ -83,10 +89,12 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
 />
 
 {
-  /* Changed 2026-09-17: the CDN tag for Alpine.js that stood here was removed. Alpine now comes
-  from npm through the @astrojs/alpinejs integration in astro.config.mjs, which bundles it into
-  every page; with both, each page loaded Alpine twice and alpine:init fired twice (measured in
-  headless Edge). See README, section on @astrojs/alpinejs being pinned to 0.4.9. */
+  /* Do not add the Alpine.js CDN tag back here. Alpine comes from npm through the
+  @astrojs/alpinejs integration in astro.config.mjs, which already bundles it into every page.
+  The CDN tag stood here until 2026-09-17; with both, every page loaded Alpine twice and
+  alpine:init fired twice (measured in headless Edge). Checked after the removal: Alpine 3.17.3
+  starts once and the table of contents opens and closes. The integration is pinned to 0.4.9 -
+  see README, section on @astrojs/alpinejs being pinned to 0.4.9. */
 }
 <link
   rel="stylesheet"
