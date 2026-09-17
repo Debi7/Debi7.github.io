@@ -2,7 +2,7 @@ export const site = {
   title: "Radiesthesia Club",
   language: "ru",
   social: {
-    github: "https://github.com/yourusername",
+    github: "https://debi7.github.io/",
     email: "your.email@example.com",
     telegram: "@name",
   },
