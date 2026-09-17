@@ -1,27 +1,4 @@
 ---
-// Port of the carousel in ../klub_biolocation/layouts/_default/home.html (the root override
-// that replaces the theme's round avatar). MIGRATION-PLAN.md §4.
-//
-// Slides are picked up from public/images/carousel/ at build time, ordered by file name -
-// the same contract as Hugo's os.ReadDir over static/images/carousel. To add or replace a
-// photo, drop the file into that folder; nothing here needs editing.
-//
-// The CSS and the JS are held as strings and injected with `set:html` into `is:inline`
-// tags. Two reasons: `is:inline` stops Astro from scoping the CSS (which would rename the
-// selectors and kill the global html/main rules) and from turning the script into a bundled
-// module, and `set:html` is the only way to keep either inside the `{slides.length > 0}`
-// guard - raw CSS braces inside an Astro expression are parsed as JavaScript. The strings
-// are therefore near-verbatim copies of the Hugo blocks and Prettier leaves them alone.
-//
-// "Near", because of one deliberate change the owner asked for on 2026-09-09: the carousel now
-// runs under the fixed header instead of starting below it, which closes the band of page
-// background that showed between the two. It is the only place where this page departs from the
-// Hugo output, so the home page is no longer pixel-identical to it - see MIGRATION-PLAN.md §9 and
-// the rule itself, which carries the reasoning.
-//
-// Do not write a literal script or style tag inside these comments: Vite's dependency
-// pre-scan looks for those tokens in .astro files without parsing the TypeScript, so it
-// would try to execute the rest of the comment as JavaScript and `astro dev` would fail.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,7 +23,6 @@ const slides = fs.existsSync(dir)
 
 const interval = site.carousel.interval;
 
-// Alt texts for the bundled photos; any other file falls back to "Nature, photo N".
 const alts: Record<string, string> = {
   "01.jpg": "Waterfall in a green forest",
   "02.jpg": "Granite cliffs and forest above a river",

@@ -1,4 +1,3 @@
-// See MIGRATION-PLAN.md, section 3.1.
 import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import mdx from "@astrojs/mdx";

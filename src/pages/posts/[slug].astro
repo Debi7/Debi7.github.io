@@ -2,6 +2,8 @@
 import type { InferGetStaticPropsType } from "astro";
 import Post from "../../layouts/Post.astro";
 import { getPosts } from "../../lib/posts";
+import Disqus from "../../components/Disqus.astro";
+import { site } from "../../config";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -15,8 +17,15 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
 const { post, prev, next } = Astro.props;
 const { Content, headings } = await post.render();
+
+// Формируем полный URL для Disqus.
+// Astro.site берется из настройки site в astro.config.mjs
+const postUrl = `${site.social.github}/posts/${post.slug}`;
+const postIdentifier = post.slug;
 ---
 
 <Post post={post} headings={headings} prev={prev} next={next}>
   <Content />
+  <hr class="my-8 border-gray-200" />
+  <Disqus url={postUrl} identifier={postIdentifier} />
 </Post>
