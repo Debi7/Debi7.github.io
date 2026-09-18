@@ -1,9 +1,10 @@
 ---
 // Компонент принимает два обязательных параметра: URL страницы и её уникальный ID (обычно слаг/slug поста)
 
-// Changed 2026-09-18: the import is gone because the props no longer have defaults - see the
-// section "The defaults" below. It is kept here, commented out rather than deleted.
-// import { site } from "../config";
+// Changed 2026-09-18: the import was dropped when the props lost their defaults (see "The
+// defaults" below), and is back for a different reason - the Disqus shortname now comes from
+// src/config.ts instead of being written into this component. The props are still required.
+import { site } from "../config";
 
 // ------------------------------------------------------------------------------------------
 // The history of this component, kept next to the code so that a later session does not have to
@@ -69,6 +70,13 @@
 // measured on 2026-09-18. It is still not caught by "npm run build", which does not type-check at
 // all - which is why the check belongs in the workflow before a commit, not only in the editor.
 // src/pages/posts/[slug].astro, the only caller, passes both props already.
+//
+// 2026-09-18, the shortname: moved to src/config.ts.
+//
+// It used to be written into the embed URL in this file. The colleague had already sketched the
+// idea here, in the two lines kept commented out further down, which named a SHORTNAME constant.
+// It is one site-wide value rather than a per-page one, so the config is where it belongs: a
+// second component needing comments now reads the same value instead of repeating the string.
 // ------------------------------------------------------------------------------------------
 
 export interface Props {
@@ -77,29 +85,36 @@ export interface Props {
 }
 
 const { url, identifier } = Astro.props;
+
+// The Disqus site all threads belong to. Site-wide, so it comes from the config; the per-page
+// values are the two props above.
+const { shortname } = site.disqus;
 ---
 
 {
-  /* Disqus replaces this container with the widget. The script below needs the post URL and the
-  identifier, and a bundled script cannot take them from define:vars, so they travel on the
-  element as data attributes instead. */
+  /* Disqus replaces this container with the widget. The script below needs the page URL, the
+  identifier and the shortname, and a bundled script cannot take them from define:vars, so all
+  three travel on the element as data attributes instead. */
 }
 <div
   id="disqus_thread"
   class="mt-10 w-full"
   data-disqus-url={url}
   data-disqus-identifier={identifier}
+  data-disqus-shortname={shortname}
 >
 </div>
 
 <script>
-  // Step 1. Read the two values back off the container. The attribute names map as
+  // Step 1. Read the three values back off the container. The attribute names map as
   //   data-disqus-url        -> dataset.disqusUrl
   //   data-disqus-identifier -> dataset.disqusIdentifier
-  // Both are string | undefined at this point, which is what the check in step 2 is for.
+  //   data-disqus-shortname  -> dataset.disqusShortname
+  // All three are string | undefined at this point, which is what the check in step 2 is for.
   const thread = document.getElementById("disqus_thread");
   const url = thread?.dataset.disqusUrl;
   const identifier = thread?.dataset.disqusIdentifier;
+  const shortname = thread?.dataset.disqusShortname;
 
   // Step 2. Publish the callback that embed.js reads.
   //
@@ -109,9 +124,9 @@ const { url, identifier } = Astro.props;
   // the callback with its own configuration object as `this`, which is also why the callback may
   // not be an arrow function - an arrow function would take `this` from this module instead.
   //
-  // The condition also guards against the container being missing, and narrows both values from
-  // string | undefined to string, so the assignments below need no further checks.
-  if (url && identifier) {
+  // The condition also guards against the container being missing, and narrows all three values
+  // from string | undefined to string, so nothing below needs a further check.
+  if (url && identifier && shortname) {
     window.disqus_config = function (this: DisqusPageConfig) {
       this.page.url = url; // Полный URL страницы
       this.page.identifier = identifier; // Уникальный ID (например, 'my-post')
@@ -120,11 +135,13 @@ const { url, identifier } = Astro.props;
     // Step 3. Load the widget. embed.js reads the global set above while it starts, so it is
     // appended last, never before step 2.
     //
-    // Kept from the original implementation, where these two lines were commented out as well:
+    // The shortname names the Disqus site and comes from src/config.ts, by way of the data
+    // attribute above. The colleague sketched the same idea in the original implementation, in
+    // two lines that were commented out there:
     // const SHORTNAME = "biolocation-club";
     // embed.src = "https://" + SHORTNAME + "://";
     const embed = document.createElement("script");
-    embed.src = "https://biolocation-club.disqus.com/embed.js";
+    embed.src = `https://${shortname}.disqus.com/embed.js`;
     embed.setAttribute("data-timestamp", new Date().toString());
     (document.head || document.body).appendChild(embed);
   }

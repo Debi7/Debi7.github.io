@@ -16,12 +16,15 @@ The component in full:
 
 ```astro
 ---
+import { site } from "../config";
+
 export interface Props {
   url: string;
   identifier: string;
 }
 
 const { url, identifier } = Astro.props;
+const { shortname } = site.disqus;
 ---
 
 <div
@@ -29,6 +32,7 @@ const { url, identifier } = Astro.props;
   class="mt-10 w-full"
   data-disqus-url={url}
   data-disqus-identifier={identifier}
+  data-disqus-shortname={shortname}
 >
 </div>
 ```
@@ -39,15 +43,16 @@ Its script block, shown without the tag lines:
 const thread = document.getElementById("disqus_thread");
 const url = thread?.dataset.disqusUrl;
 const identifier = thread?.dataset.disqusIdentifier;
+const shortname = thread?.dataset.disqusShortname;
 
-if (url && identifier) {
+if (url && identifier && shortname) {
   window.disqus_config = function (this: DisqusPageConfig) {
     this.page.url = url;
     this.page.identifier = identifier;
   };
 
   const embed = document.createElement("script");
-  embed.src = "https://biolocation-club.disqus.com/embed.js";
+  embed.src = `https://${shortname}.disqus.com/embed.js`;
   embed.setAttribute("data-timestamp", new Date().toString());
   (document.head || document.body).appendChild(embed);
 }
@@ -80,10 +85,16 @@ post's own, stable values: the identifier is the slug, the URL is the page's can
 
 ### 2.2 The values travel to the browser on the container
 
-They are written onto the container as `data-disqus-url` and `data-disqus-identifier`, and the script reads them back
-as `dataset.disqusUrl` and `dataset.disqusIdentifier`. The dash-to-camelCase conversion is the DOM's own.
+Three values are written onto the container, as `data-disqus-url`, `data-disqus-identifier` and
+`data-disqus-shortname`, and the script reads them back as `dataset.disqusUrl`, `dataset.disqusIdentifier` and
+`dataset.disqusShortname`. The dash-to-camelCase conversion is the DOM's own.
 
-Both reads are `string | undefined`: `getElementById` can return `null`, and an absent attribute reads as
+The first two are the props. The third is the Disqus site the threads belong to, and it is site-wide rather than
+per-page, so it comes from `site.disqus.shortname` in `src/config.ts`. Before 2026-09-18 it was written into the
+component, which put the one site-wide setting inside a component and would have made a second component repeat the
+string.
+
+All three reads are `string | undefined`: `getElementById` can return `null`, and an absent attribute reads as
 `undefined`. That is what the `if` below is for.
 
 ### 2.3 The callback is published on `window`
@@ -217,7 +228,83 @@ window.disqus_config = () => {
 An arrow function has no `this` of its own; it takes the one from the place where it is written, which here is the
 module. `this.page` would then be undefined and Disqus would get no configuration.
 
-## 4. What the tools catch, and what they do not
+## 4. The two kinds of script block, side by side
+
+Astro has exactly two, and picking one is a trade rather than a matter of taste. Sections 3.1 and 3.2 say why this
+component ended up on one of them; this section is the general picture, for the next time the question comes up.
+
+### 4.1 A compiled block: no directive at all
+
+This is what the component uses. Astro hands the block to the compiler and Vite bundles the result.
+
+What it gives:
+
+- TypeScript is allowed, and `npm run check` reads it. A type error, a misspelt property, a wrong argument all show
+  up in the terminal before anything reaches a browser.
+- Imports work, both npm packages and project modules, so the code can be shared instead of copied.
+- The output is bundled once for the whole site and minified. A component used on fifty pages adds its code once,
+  and the file is cached after the first page.
+- Nothing from the block reaches the page source. Comments in it are for the project, not for the visitor.
+- Astro emits one script even when the component renders several times on the same page. Measured on 2026-09-18:
+  two instances on one page produced one script tag.
+
+What it costs:
+
+- `define:vars` is unavailable, so values from the frontmatter have to cross on `data-` attributes. Everything
+  arrives as a string, and anything structured has to be written as JSON and parsed back.
+- The block is a module and therefore deferred: it runs after the HTML is parsed. It cannot do anything that must
+  happen before the first paint.
+- A module has its own scope, so anything a third-party script must see has to be assigned to `window` by hand.
+- One more request for the bundle, cached from then on.
+- A vendor snippet that has to stay exactly as given does not belong here, because the compiler will rewrite it.
+
+### 4.2 An `is:inline` block
+
+Astro copies the block into the page exactly as written and does nothing else to it.
+
+What it gives:
+
+- It runs synchronously, in document order, where it sits. That is the only way to do work before the first paint.
+  The anti-flash theme script in `Head.astro` is exactly that case: it adds the `dark` class before anything is
+  drawn, and it has to stay inline.
+- `define:vars` works, so frontmatter values land in the block directly, with their types intact and no detour
+  through the DOM.
+- A vendor snippet can be pasted verbatim, which is how vendors document them. `Carousel.astro` keeps the Hugo
+  theme's own script that way.
+- Nothing to bundle and no extra request. For two or three lines it is genuinely the lighter option.
+
+What it costs:
+
+- No TypeScript. Any type syntax is a syntax error in the browser, and one such error kills the entire block - that
+  is the defect described in section 3.1.
+- No imports, neither npm packages nor project modules.
+- Nothing is bundled or minified. The whole text, comments included, is copied into every page that renders the
+  component.
+- With `define:vars` the block is wrapped in a function, so a top-level `var` or `function` is not global. The
+  wrapper is invisible in the source, which makes this easy to miss.
+- `astro check` still reads the block as JavaScript and reports what that allows. Measured on this project: it
+  flagged TypeScript syntax as `ts(8010)` and an unused variable as `ts(6133)`. What it cannot give is anything at
+  the type level, because there are no types in a block the browser reads verbatim.
+
+### 4.3 How to choose
+
+Inline when at least one of these is true:
+
+- the code must run before the first paint;
+- it is a vendor snippet that has to stay exactly as given;
+- it is two or three lines with no logic worth checking.
+
+Compiled otherwise, and in particular whenever the block carries types, imports, or values from the frontmatter.
+
+Both kinds are in this project, and each is where it belongs:
+
+- `src/components/Head.astro` - inline, and it has to be: it runs before the first paint.
+- `src/components/Carousel.astro` - inline, because it is the theme's own script kept verbatim.
+- `src/pages/categories/index.astro` - inline by choice rather than necessity; the accordion script would work as a
+  compiled block too. Noted for the picture; this document does not ask for it to be changed.
+- `src/components/Disqus.astro` and `src/components/DisqusLazy.astro` - compiled.
+
+## 5. What the tools catch, and what they do not
 
 Measured on 2026-09-18, each case put into a throwaway `.astro` file and run through `astro check`:
 
@@ -233,9 +320,9 @@ Two conclusions follow:
 
 1. `npm run build` never type-checks and caught none of these. `npm run check` is the tool that does.
 2. Not even the checker sees a wrong thread key, because a wrong key is valid code. That one is found only by loading
-   the page and looking at what the widget asked for - see section 7.
+   the page and looking at what the widget asked for - see section 8.
 
-## 5. Where it stays dangerous
+## 6. Where it stays dangerous
 
 Typing removes a class of mistakes. It does not remove these.
 
@@ -256,7 +343,7 @@ would silently overwrite the configuration. The component is currently the only 
 **`embed.js` is a third-party script with full access to the page.** That is what a comments widget is; it is listed
 here so the choice stays visible.
 
-## 6. Rules for this kind of code
+## 7. Rules for this kind of code
 
 - Treat an `is:inline` block as source code for the browser, not for the project. Nothing that needs checking belongs
   in it, and everything in it, comments included, reaches the visitor.
@@ -265,7 +352,7 @@ here so the choice stays visible.
 - For this component the acceptance test is the thread key, because that is the part that cannot be undone: the
   widget frame must carry `t_i=<slug>` and `t_u=<canonical url>`.
 
-## 7. Running it locally, and what you should see
+## 8. Running it locally, and what you should see
 
 ```
 npm run dev
@@ -299,3 +386,40 @@ The full set of checks, all green on the same day:
 - `npm run check` - 0 errors, 0 warnings.
 - `npm run build` - 16 pages.
 - `npm run dev` - starts clean and serves the post page.
+
+## 9. Adding comments to another page
+
+The whole recipe:
+
+```astro
+---
+import Disqus from "../components/Disqus.astro";
+
+const url = new URL(Astro.url.pathname, Astro.site).toString();
+---
+
+<Disqus url={url} identifier="about" />
+```
+
+`Astro.url.pathname` is the current route, so that line is the same on every page and there is no path literal to
+keep in step with the route. The post route builds its URL from the slug instead, because one route there renders
+many pages.
+
+Two things have to be right.
+
+**One widget per page.** `id="disqus_thread"` is required by Disqus: `embed.js` looks for exactly that id, and the
+service does not support two embeds on one page. Two instances of the component would produce a duplicated id, and
+only the first would be configured. Measured on 2026-09-18: a page rendering it twice emitted one script tag and two
+containers with the same id, so the second container stayed empty.
+
+**The identifier is permanent.** It keys the thread, so it has to be a short, stable word that is never changed
+afterwards: renaming it leaves the existing comments filed under the old key, and moving them is manual work in the
+Disqus admin. It also has to be unique across the site, and the post route already uses post slugs, so a page
+identifier must not collide with one.
+
+The shortname needs no attention: the component reads it from `src/config.ts`.
+
+One component is not ready for this. `src/components/DisqusLazy.astro`, the loader that waits until the block
+scrolls into view, is a sketch and is wired nowhere. It still carries a `YOUR_SHORTNAME` placeholder, it never
+publishes `disqus_config`, so it would load a thread with no configuration at all, and it uses the same
+`id="disqus_thread"`, so it cannot share a page with `Disqus.astro`.

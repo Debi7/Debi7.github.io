@@ -145,7 +145,7 @@ Not deployed yet. The first GitHub Pages attempt (the abandoned `github-pages` n
 ```
 astro.config.mjs        Astro config (trailing slashes, Tailwind, MDX, Shiki themes)
 tailwind.config.cjs     Tailwind 3 config tuned to match the Tailwind 4 rendering
-src/config.ts           Site title, menu, social links, avatar (was hugo.toml)
+src/config.ts           Site title, menu, social links, avatar, Disqus shortname (was hugo.toml)
 src/content/            posts/ and pages/ collections, schema in config.ts
 src/layouts/            Base.astro (page frame), Post.astro (single post)
 src/components/         Head, Header, Menu, ThemeToggle, Carousel, Footer, Callout, Disqus
