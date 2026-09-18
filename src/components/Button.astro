@@ -1,0 +1,36 @@
+---
+// В этом блоке можно описать пропсы, если они понадобятся в будущем
+---
+
+<div class="my-6 flex flex-col items-center">
+  <button
+    id="toggle-disqus-btn"
+    class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
+  >
+    Показать комментарии
+  </button>
+
+  <!-- Контейнер для Disqus (по умолчанию скрыт через Tailwind-класс hidden) -->
+  <div class="disqus-container mt-4 hidden w-full">
+    <slot />
+  </div>
+</div>
+
+<script>
+  // Скрипт выполнится на клиенте автоматически
+  const toggleBtn = document.getElementById("toggle-disqus-btn");
+  const disqusContainer = document.querySelector(".disqus-container");
+
+  if (toggleBtn && disqusContainer) {
+    toggleBtn.addEventListener("click", () => {
+      // Переключаем видимость блока со слотом
+      disqusContainer.classList.toggle("hidden");
+
+      // Меняем текст кнопки в зависимости от состояния
+      const isHidden = disqusContainer.classList.contains("hidden");
+      toggleBtn.textContent = isHidden
+        ? "Показать комментарии"
+        : "Скрыть комментарии";
+    });
+  }
+</script>
