@@ -13,7 +13,7 @@ const { shortname } = site.disqus;
 
 <div
   id="disqus_thread"
-  class="mt-10 w-full"
+  class="mt-10 hidden w-full"
   data-disqus-url={url}
   data-disqus-identifier={identifier}
   data-disqus-shortname={shortname}
@@ -21,40 +21,49 @@ const { shortname } = site.disqus;
 </div>
 
 <script>
-  // Выполняется один раз при загрузке страницы.
-  // Регистрируем глобальную функцию, которую вызовет кнопка.
-  window.__loadDisqus = function () {
-    const thread = document.getElementById("disqus_thread");
-    if (!thread) return;
+  const thread = document.getElementById("disqus_thread");
+  const toggleBtn = document.getElementById("toggle-disqus-btn");
 
-    // Уже загружен — не грузим повторно
-    if (window.__disqusLoaded) return;
-    window.__disqusLoaded = true;
-
+  if (!thread || !toggleBtn) {
+    // ничего не делаем, если элементов нет
+  } else {
     const url = thread.dataset.disqusUrl;
     const identifier = thread.dataset.disqusIdentifier;
     const shortname = thread.dataset.disqusShortname;
-    if (!url || !identifier || !shortname) return;
 
-    window.disqus_config = function () {
-      this.page.url = url;
-      this.page.identifier = identifier;
-    };
+    let disqusLoaded = false;
 
-    const embed = document.createElement("script");
-    embed.src = `https://${shortname}.disqus.com/embed.js`;
-    embed.setAttribute("data-timestamp", new Date().toString());
-    (document.head || document.body).appendChild(embed);
-  };
+    function loadDisqus() {
+      if (disqusLoaded || !url || !identifier || !shortname) return;
+      disqusLoaded = true;
+
+      (window as any).disqus_config = function (this: any) {
+        this.page.url = url;
+        this.page.identifier = identifier;
+      };
+
+      const embed = document.createElement("script");
+      embed.src = `https://${shortname}.disqus.com/embed.js`;
+      embed.setAttribute("data-timestamp", new Date().toString());
+      (document.head || document.body).appendChild(embed);
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      const isHidden = thread.classList.contains("hidden");
+
+      if (isHidden) {
+        thread.classList.remove("hidden");
+        toggleBtn.textContent = "Скрыть комментарии";
+        loadDisqus();
+      } else {
+        thread.classList.add("hidden");
+        toggleBtn.textContent = "Показать комментарии";
+      }
+    });
+  }
 </script>
 
 <noscript>
   Please enable JavaScript to view the
   <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
 </noscript>
-
-{
-  // ? Добавьте #disqus_thread к href-атрибуту в ваших ссылках. Это укажет Disqus, какие ссылки
-  // искать и возвращать количество комментариев. Например:
-  // <a href="http://foo.com/bar.html#disqus_thread">Link</a>. */
-}

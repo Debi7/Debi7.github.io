@@ -3,7 +3,6 @@ import type { InferGetStaticPropsType } from "astro";
 import Post from "../../layouts/Post.astro";
 import { getPosts } from "../../lib/posts";
 import Disqus from "../../components/Disqus.astro";
-import Button from "../../components/Button.astro";
 
 export async function getStaticPaths() {
   const posts = await getPosts();
@@ -24,8 +23,15 @@ const postIdentifier = post.slug;
 
 <Post post={post} headings={headings} prev={prev} next={next}>
   <Content />
-  <Button>
-    <hr class="my-8 border-gray-200" />
-    <Disqus url={postUrl} identifier={postIdentifier} />
-  </Button>
+  <hr class="my-8 border-gray-200" />
+
+  <div id="disqus_loader_container" class="my-6 flex flex-col items-center">
+    <button
+      id="toggle-disqus-btn"
+      class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
+    >
+      Показать комментарии
+    </button>
+  </div>
+  <Disqus url={postUrl} identifier={postIdentifier} />
 </Post>
