@@ -25,7 +25,7 @@ const { shortname } = site.disqus;
   const toggleBtn = document.getElementById("toggle-disqus-btn");
 
   if (!thread || !toggleBtn) {
-    // ничего не делаем, если элементов нет
+    return;
   } else {
     const url = thread.dataset.disqusUrl;
     const identifier = thread.dataset.disqusIdentifier;

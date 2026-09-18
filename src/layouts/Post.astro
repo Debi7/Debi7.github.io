@@ -18,4 +18,34 @@ const { post, headings, prev, next } = Astro.props;
   <ArticleLayout entry={post} headings={headings} prev={prev} next={next}>
     <slot />
   </ArticleLayout>
+
+  <!-- Динамическое оглавление (Sidebar) -->
+  {
+    headings && headings.length > 0 && (
+      <aside
+        class="toc-sidebar hidden w-64 lg:block"
+        aria-label="Table of Contents"
+      >
+        <div class="toc-sidebar-title text-fg-faint mb-2 text-xs font-semibold uppercase tracking-wide">
+          Table of Contents
+        </div>
+        <nav id="TableOfContents-side" class="toc-nav text-sm">
+          <ul class="space-y-2">
+            {headings.map((heading) => (
+              <li
+                class={`depth-${heading.depth} ${heading.depth > 2 ? "pl-4" : ""}`}
+              >
+                <a
+                  href={`#${heading.slug}`}
+                  class="text-gray-600 transition-colors hover:text-gray-900"
+                >
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+    )
+  }
 </Base>
