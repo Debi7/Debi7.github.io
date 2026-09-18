@@ -1,3 +1,13 @@
 {
-  "extends": "astro/tsconfigs/strict"
+  // Added 2026-09-18. The Astro presets set compilerOptions only: no include, no exclude. TypeScript
+  // then falls back to its default, which is everything under the project root except node_modules,
+  // and allowJs from the preset pulls in .js files as well. The built bundles in dist/ were therefore
+  // type-checked on every run. Measured on this project: 21 of the 28 hints astro check reported came
+  // from two minified files there, and the editor's language server loaded the same files, the largest
+  // of them 54 KB of minified code. "exclude" keeps the build out of the program; "include" is what
+  // Astro's own templates generate, so the content-collection types in .astro/ are always part of it.
+  // See DISQUS-FIX.md for the measurements and the editor side of the same problem.
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"]
 }
