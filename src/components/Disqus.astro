@@ -1,67 +1,173 @@
 ---
 // Компонент принимает два обязательных параметра: URL страницы и её уникальный ID (обычно слаг/slug поста)
+
+// Changed 2026-09-18: the import was dropped when the props lost their defaults (see "The
+// defaults" below), and is back for a different reason - the Disqus shortname now comes from
+// src/config.ts instead of being written into this component. The props are still required.
 import { site } from "../config";
 
-// Changed 2026-09-17: the comments never appeared on a post. The callback in the is:inline block
-// below was written as
+// ------------------------------------------------------------------------------------------
+// The history of this component, kept next to the code so that a later session does not have to
+// re-derive it. DISQUS-FIX.md carries the long form, with the measurements.
+//
+// 2026-09-17: the comments never appeared on a post.
+//
+// The callback lived in a block marked is:inline and was written as
 //
 //   var disqus_config = function (this: DisqusConfig) {
 //
-// which is TypeScript. An is:inline block is copied into the page exactly as written, Astro does
-// not compile it, so the browser stopped at that line with "Uncaught SyntaxError: Unexpected
-// token 'this'" - measured in headless Edge on the built page. The block never ran, embed.js was
-// never added to the page, and the container below stayed empty. The fix is the same callback
-// without the annotation.
+// which is TypeScript. Astro copies an is:inline block into the page exactly as written and never
+// compiles it, so the browser stopped on that line with "Uncaught SyntaxError: Unexpected token
+// 'this'". A syntax error kills the whole block, including the lines below it that load embed.js,
+// so the container stayed empty on every post.
 //
-// The interface it referred to is kept here, commented out rather than deleted, because nothing
-// else uses it and because an is:inline block cannot carry types at all:
+// For the record, because it decides where such a mistake gets caught: "npm run build" was green,
+// since the build never parses such a block, but "npm run check" did report it, as the error
+// ts(8010) "Type annotations can only be used in TypeScript files". Measured again on 2026-09-18
+// on the pre-fix file taken out of git.
 //
-// interface DisqusConfig {
-//   page: {
-//     url: string;
-//     identifier: string;
-//   };
-// }
+// The interface that annotation referred to was
 //
-// This note sits in the frontmatter on purpose: comments written inside the block below are sent
-// to every visitor with the page.
+//   interface DisqusConfig {
+//     page: {
+//       url: string;
+//       identifier: string;
+//     };
+//   }
+//
+// It is not needed any more: the same shape is declared once for the whole project, as
+// DisqusPageConfig in src/env.d.ts, where it also types the global that Disqus reads.
+//
+// 2026-09-18, this rewrite: the block is no longer is:inline.
+//
+// It is now an ordinary Astro script block: compiled to JavaScript, bundled by Vite, and
+// type-checked by "npm run check". The two values reach it through data attributes on the
+// container instead of define:vars, which is what Astro documents for this exact case and is the
+// shape DisqusLazy.astro already uses. What it buys:
+//
+//   - "this: DisqusPageConfig" is written in the code itself, and the whole block is type-checked,
+//     so a misspelt dataset key becomes an error in the terminal rather than a silent undefined in
+//     the browser;
+//   - the script is bundled once and cached across posts instead of being repeated inside every
+//     page, and comments in it no longer reach the visitor.
+//
+// 2026-09-18, the defaults: removed, so that the props are required.
+//
+// They used to be
+//
+//   const { url = site.social.github, identifier = "my-post" } = Astro.props;
+//
+// Disqus keys a comment thread by the identifier and the url. A page that rendered this component
+// without props would therefore have filed its comments under a thread called "my-post", together
+// with every other such page. Nothing reported that, because it is not a build error: it is wrong
+// data in a third party's database, and moving a thread afterwards is manual work in the Disqus
+// admin.
+//
+// With the defaults gone, the same mistake is caught by "npm run check" as
+//
+//   ts(2322): Type '{}' is missing the following properties from type 'Props': url, identifier
+//
+// measured on 2026-09-18. It is still not caught by "npm run build", which does not type-check at
+// all - which is why the check belongs in the workflow before a commit, not only in the editor.
+// src/pages/posts/[slug].astro, the only caller, passes both props already.
+//
+// 2026-09-18, the shortname: moved to src/config.ts.
+//
+// It used to be written into the embed URL in this file. The colleague had already sketched the
+// idea here, in the two lines kept commented out further down, which named a SHORTNAME constant.
+// It is one site-wide value rather than a per-page one, so the config is where it belongs: a
+// second component needing comments now reads the same value instead of repeating the string.
+// ------------------------------------------------------------------------------------------
+
 export interface Props {
   url: string;
   identifier: string;
 }
 
-const { url = site.social.github, identifier = "my-post" } = Astro.props;
+const { url, identifier } = Astro.props;
+
+// The Disqus site all threads belong to. Site-wide, so it comes from the config; the per-page
+// values are the two props above.
+const { shortname } = site.disqus;
 ---
 
-<div id="disqus_thread" class="mt-10 w-full"></div>
+{
+  /* Disqus replaces this container with the widget. The script below needs the page URL, the
+  identifier and the shortname, and a bundled script cannot take them from define:vars, so all
+  three travel on the element as data attributes instead. */
+}
+<div
+  id="disqus_thread"
+  class="mt-10 w-full"
+  data-disqus-url={url}
+  data-disqus-identifier={identifier}
+  data-disqus-shortname={shortname}
+>
+</div>
 
-<script is:inline define:vars={{ url, identifier }}>
-  // Plain JavaScript only, no types: Astro copies this block into the page as written.
-  var disqus_config = function () {
-    this.page.url = url; // Полный URL страницы
-    this.page.identifier = identifier; // Уникальный ID (например, 'my-post')
-  };
+<script>
+  // Step 1. Read the three values back off the container. The attribute names map as
+  //   data-disqus-url        -> dataset.disqusUrl
+  //   data-disqus-identifier -> dataset.disqusIdentifier
+  //   data-disqus-shortname  -> dataset.disqusShortname
+  // All three are string | undefined at this point, which is what the check in step 2 is for.
+  const thread = document.getElementById("disqus_thread");
+  const url = thread?.dataset.disqusUrl;
+  const identifier = thread?.dataset.disqusIdentifier;
+  const shortname = thread?.dataset.disqusShortname;
 
-  // const SHORTNAME = "biolocation-club";
+  // Step 2. Publish the callback that embed.js reads.
+  //
+  // It has to sit on window: this block is compiled as a module, and a module has a scope of its
+  // own, so a plain declaration would stay private to it. DisqusPageConfig, declared in
+  // src/env.d.ts, types both this assignment and the `this` inside the callback: embed.js calls
+  // the callback with its own configuration object as `this`, which is also why the callback may
+  // not be an arrow function - an arrow function would take `this` from this module instead.
+  //
+  // The condition also guards against the container being missing, and narrows all three values
+  // from string | undefined to string, so nothing below needs a further check.
+  if (url && identifier && shortname) {
+    window.disqus_config = function (this: DisqusPageConfig) {
+      this.page.url = url; // Полный URL страницы
+      this.page.identifier = identifier; // Уникальный ID (например, 'my-post')
+    };
 
-  (function () {
-    var d = document,
-      s = d.createElement("script");
-    // s.src = "https://" + SHORTNAME + "://";
-    s.src = "https://biolocation-club.disqus.com/embed.js";
-    s.setAttribute("data-timestamp", new Date().toString());
-    (d.head || d.body).appendChild(s);
-  })();
+    // Step 3. Load the widget. embed.js reads the global set above while it starts, so it is
+    // appended last, never before step 2.
+    //
+    // The shortname names the Disqus site and comes from src/config.ts, by way of the data
+    // attribute above. The colleague sketched the same idea in the original implementation, in
+    // two lines that were commented out there:
+    // const SHORTNAME = "biolocation-club";
+    // embed.src = "https://" + SHORTNAME + "://";
+    const embed = document.createElement("script");
+    embed.src = `https://${shortname}.disqus.com/embed.js`;
+    embed.setAttribute("data-timestamp", new Date().toString());
+    (document.head || document.body).appendChild(embed);
+  }
 </script>
 
-<!-- <noscript>
-  Пожалуйста, включите JavaScript для просмотра
-  <a href="https://disqus.com">комментариев, работающих на Disqus.</a>
-</noscript> -->
+{
+  /* Changed 2026-09-18: the original of the block below was commented out in HTML, which sends it
+  to every visitor with the page. It is an Astro comment now, the way the note in Head.astro was
+  converted, so it stays in the source and out of the output.
+
+  <noscript>
+    Пожалуйста, включите JavaScript для просмотра
+    <a href="https://disqus.com">комментариев, работающих на Disqus.</a>
+  </noscript> */
+}
 <noscript
   >Please enable JavaScript to view the <a
     href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a
   ></noscript
 >
 
-<!-- TODO ? Добавьте #disqus_threadк href-атрибуту в ваших ссылках. Это укажет Disqus, какие ссылки искать и возвращать количество комментариев. Например: <a href="http://foo.com/bar.html#disqus_thread">Link</a>. -->
+{
+  /* Changed 2026-09-18: the note below was an HTML comment too, and is now an Astro one, for the
+  same reason. The task itself is the colleague's and is left to her.
+
+  TODO ? Добавьте #disqus_thread к href-атрибуту в ваших ссылках. Это укажет Disqus, какие ссылки
+  искать и возвращать количество комментариев. Например:
+  <a href="http://foo.com/bar.html#disqus_thread">Link</a>. */
+}
