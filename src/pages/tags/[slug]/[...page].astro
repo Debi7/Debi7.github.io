@@ -1,8 +1,8 @@
 ---
 // One tag, e.g. /tags/hugo/. Port of
 // ../klub_biolocation/themes/void/layouts/taxonomy/tag.html (MIGRATION-PLAN.md §4.1).
-// Class attributes are copied verbatim, with one exception: the pagination buttons at the foot
-// take list.html's classes, not tag.html's - see PAGINATION, below.
+// Class attributes are copied verbatim, with one exception: the pagination block at the foot is
+// the shared components/Pagination.astro, with list.html's buttons - see PAGINATION, below.
 //
 // This looks like PostList.astro but is deliberately NOT it: tag.html has its own year badge
 // (with a decorative halo and a thicker rule), a date cell without the calendar icon, a
@@ -30,9 +30,10 @@
 //
 //   .Paginator.HasPrev / .HasNext / .Prev.URL / .Next.URL
 //                              -> page.prevUrl / page.nextUrl, from paginateList() in
-//                                 lib/posts.ts. The block before the navigation links is
-//                                 tag.html's; its buttons carry list.html's classes since
-//                                 2026-09-19 (see the block).
+//                                 lib/posts.ts, rendered before the navigation links by
+//                                 components/Pagination.astro since later on 2026-09-19,
+//                                 with list.html's buttons and tag.html's arrows (see the
+//                                 note at the block).
 //
 // - This file was src/pages/tags/[slug].astro. As a rest-parameter route it renders page 1 at
 //   /tags/<slug>/ and page n at /tags/<slug>/page/<n>/, Hugo's shape, with the page links built
@@ -54,6 +55,8 @@ import { formatMonthDay } from "../../../lib/date";
 import { summary } from "../../../lib/summary";
 import { urlize, encodeSlug } from "../../../lib/urlize";
 import { t } from "../../../i18n/strings";
+// Added later on 2026-09-19: the shared Previous / numbers / Next block; see its header.
+import Pagination from "../../../components/Pagination.astro";
 
 export async function getStaticPaths() {
   const terms = await getTerms("tags");
@@ -195,118 +198,17 @@ const groups = groupByYear(page.items);
     </div>
 
     {
-      /* Added 2026-09-19: tag.html's pagination block, which was not ported before; see the
-      note at the top. Like Hugo, it renders only when there is a neighbouring page, and an
-      empty div keeps Next on the right when there is no Previous.
-
-      The numbered page links in the middle are new, asked for by the owner, and are placed
-      the same way as in PostList.astro; see the note on its pagination block. The current
-      page uses the year switcher's highlighted colours.
-
-      Changed 2026-09-19, the owner's decision after the reviewer noticed it: the buttons
-      here take the classes of list.html's pagination block, the one PostList.astro renders,
-      so that every list has the same buttons - rounded-md, and the dark-mode colours. The
-      theme's tag.html gives its buttons rounded-full and no dark: classes at all, which left
-      them bright white in dark mode; nobody saw that on the Hugo site, which never had
-      enough posts for the block to render. The theme's original class attributes, for the
-      record (the numbers, which are new, copied the shape of Previous and Next):
-        Previous: flex items-center rounded-full bg-white px-4 py-2 text-gray-700 shadow-sm
-                  transition-colors hover:bg-gray-50 sm:justify-self-start
-        Next:     the same, with sm:justify-self-end
-        number:   rounded-full bg-white px-3 py-1 text-sm text-gray-700 shadow-sm
-                  transition-colors hover:bg-gray-50
-        current:  rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm
-                  dark:bg-slate-700 dark:text-blue-300
-      The arrows stay tag.html's inline SVGs; list.html uses text arrows. */
-      (page.prevUrl || page.nextUrl) && (
-        <div class="mt-10 flex flex-wrap items-center justify-between gap-y-4 sm:grid sm:grid-cols-[1fr_auto_1fr]">
-          {page.prevUrl ? (
-            <a
-              href={page.prevUrl}
-              class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-start"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="mr-1 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              {t.pagination_previous}
-            </a>
-          ) : (
-            <div />
-          )}
-          {/* Two copies of the numbers: the full one from 640px up, the compact one below;
-          see pageNumbers() in lib/posts.ts for why. Only one is ever displayed. */}
-          {[page.numbers, page.numbersCompact].map((numbers, index) => (
-            <div
-              class:list={[
-                "order-last w-full flex-wrap justify-center gap-1 sm:order-none sm:w-auto",
-                index === 0 ? "hidden sm:flex" : "flex sm:hidden",
-              ]}
-            >
-              {numbers.map((entry) =>
-                entry.kind === "gap" ? (
-                  <span
-                    aria-hidden="true"
-                    class="px-1 py-1 text-sm text-gray-500 dark:text-gray-400"
-                  >
-                    &hellip;
-                  </span>
-                ) : entry.current ? (
-                  <span
-                    aria-current="page"
-                    class="rounded-md bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-300"
-                  >
-                    {entry.number}
-                  </span>
-                ) : (
-                  <a
-                    href={entry.url}
-                    aria-label={t.pagination_page(entry.number)}
-                    class="rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
-                  >
-                    {entry.number}
-                  </a>
-                ),
-              )}
-            </div>
-          ))}
-          {page.nextUrl ? (
-            <a
-              href={page.nextUrl}
-              class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-end"
-            >
-              {t.pagination_next}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="ml-1 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </a>
-          ) : (
-            <div />
-          )}
-        </div>
-      )
+      /* Changed 2026-09-19: tag.html's pagination block, ported earlier that day, moved into
+      Pagination.astro so that every list shares one block; see that file for the markup and
+      for tag.html's original button classes, which the reviewer's remark replaced with
+      list.html's (REVIEW-FIXES.md, section 1). mt-10 is tag.html's margin. */
     }
+    <Pagination
+      class="mt-10"
+      prevUrl={page.prevUrl}
+      nextUrl={page.nextUrl}
+      numbers={page.numbers}
+    />
 
     <!-- Navigation links -->
     <div class="mt-8 flex justify-center space-x-8">

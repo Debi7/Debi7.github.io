@@ -43,8 +43,9 @@
 //
 //   .Paginator.HasPrev / .HasNext / .Prev.URL / .Next.URL
 //                                -> page.prevUrl / page.nextUrl, from paginateList() in
-//                                   lib/posts.ts. The block at the end of this file is
-//                                   list.html's, classes verbatim.
+//                                   lib/posts.ts, rendered by Pagination.astro since later
+//                                   on 2026-09-19: list.html's block, classes verbatim, with
+//                                   tag.html's SVG arrows in place of the text arrows.
 //   i18n "pagination_previous" / "pagination_next"
 //                                -> t.pagination_previous / t.pagination_next.
 //
@@ -62,7 +63,8 @@
 //   /posts/<year>/, and the year being shown (`currentYear`) is highlighted and carries
 //   aria-current. Its button classes are the pagination buttons' classes from list.html, and
 //   the highlighted state uses the year badge's colours, so it matches the theme in both
-//   colour schemes.
+//   colour schemes. Since later on 2026-09-19 it is YearSwitcher.astro, which also decides
+//   which years to show when there are many.
 // See PAGINATION.md.
 import {
   groupByYear,
@@ -74,6 +76,10 @@ import { formatMonthDay } from "../lib/date";
 import { summary } from "../lib/summary";
 import { urlize, encodeSlug } from "../lib/urlize";
 import { t } from "../i18n/strings";
+// Added later on 2026-09-19: the shared Previous / numbers / Next block and the year switcher,
+// each a component now; see their headers.
+import Pagination from "./Pagination.astro";
+import YearSwitcher from "./YearSwitcher.astro";
 
 interface Props {
   /** Hugo's `.Title`: "Posts" for the section, the term title for one category. */
@@ -95,28 +101,12 @@ const groups = groupByYear(page.items);
   <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
 
   {
-    /* Added 2026-09-19: the year switcher; see the note at the top. The label is a literal
-    because the theme's strings, ported in full to src/i18n/strings.ts, have no key for it. */
-    years && years.length > 1 && (
-      <nav
-        aria-label="Years"
-        class="-mt-4 mb-8 flex flex-wrap justify-center gap-2"
-      >
-        {years.map((link) => (
-          <a
-            href={link.url}
-            aria-current={link.year === currentYear ? "true" : undefined}
-            class:list={[
-              "rounded-md px-3 py-1 text-sm shadow-sm transition-colors",
-              link.year === currentYear
-                ? "bg-blue-50 text-blue-700 dark:bg-slate-700 dark:text-blue-300"
-                : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800",
-            ]}
-          >
-            {link.year}
-          </a>
-        ))}
-      </nav>
+    /* Added 2026-09-19: the year switcher; see the note at the top. Later that day it moved
+    into YearSwitcher.astro, a component of its own with its own rule for many years, as the
+    owner asked; the nav's label stays a literal there because the theme's strings, ported in
+    full to src/i18n/strings.ts, have no key for it. */
+    years && currentYear && (
+      <YearSwitcher years={years} currentYear={currentYear} />
     )
   }
 
@@ -216,78 +206,15 @@ const groups = groupByYear(page.items);
   </div>
 
   {
-    /* Added 2026-09-19: list.html's pagination block, which was not ported before; see the
-    note at the top. Like Hugo, it renders only when there is a neighbouring page, and an
-    empty div keeps Next on the right when there is no Previous.
-
-    The numbered page links in the middle are new, asked for by the owner; the theme has
-    none. They come from pageNumbers() in lib/posts.ts. The classes added to the theme's own
-    - flex-wrap, items-center, gap-y-4 and the sm: grid on the container, the justify-self
-    on the two buttons - only place them: below 640px the numbers take a row of their own
-    under Previous and Next, from 640px up the three sit in one row with the numbers centred
-    whether or not both buttons are there. The number buttons use the classes of the
-    Previous and Next buttons, and the current page the year switcher's highlighted colours;
-    it is a span with aria-current, not a link. Each link is labelled "Page n" with the
-    theme's own string. */
-    (page.prevUrl || page.nextUrl) && (
-      <div class="mt-12 flex flex-wrap items-center justify-between gap-y-4 sm:grid sm:grid-cols-[1fr_auto_1fr]">
-        {page.prevUrl ? (
-          <a
-            href={page.prevUrl}
-            class="rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-start"
-          >
-            &larr; {t.pagination_previous}
-          </a>
-        ) : (
-          <div />
-        )}
-        {/* Two copies of the numbers: the full one from 640px up, the compact one below;
-        see pageNumbers() for why. Only one is ever displayed. */}
-        {[page.numbers, page.numbersCompact].map((numbers, index) => (
-          <div
-            class:list={[
-              "order-last w-full flex-wrap justify-center gap-1 sm:order-none sm:w-auto",
-              index === 0 ? "hidden sm:flex" : "flex sm:hidden",
-            ]}
-          >
-            {numbers.map((entry) =>
-              entry.kind === "gap" ? (
-                <span
-                  aria-hidden="true"
-                  class="px-1 py-1 text-sm text-gray-500 dark:text-gray-400"
-                >
-                  &hellip;
-                </span>
-              ) : entry.current ? (
-                <span
-                  aria-current="page"
-                  class="rounded-md bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-300"
-                >
-                  {entry.number}
-                </span>
-              ) : (
-                <a
-                  href={entry.url}
-                  aria-label={t.pagination_page(entry.number)}
-                  class="rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
-                >
-                  {entry.number}
-                </a>
-              ),
-            )}
-          </div>
-        ))}
-        {page.nextUrl ? (
-          <a
-            href={page.nextUrl}
-            class="rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-end"
-          >
-            {t.pagination_next} &rarr;
-          </a>
-        ) : (
-          <div />
-        )}
-      </div>
-    )
+    /* Changed 2026-09-19: list.html's pagination block, ported earlier that day and carried
+    here with its classes verbatim, moved into Pagination.astro so that every list shares one
+    block. See that file for the markup, the arrows (tag.html's chevrons now, the owner's
+    choice, where list.html has text arrows) and the numbers. mt-12 is list.html's margin. */
   }
+  <Pagination
+    class="mt-12"
+    prevUrl={page.prevUrl}
+    nextUrl={page.nextUrl}
+    numbers={page.numbers}
+  />
 </div>

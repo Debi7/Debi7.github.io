@@ -72,11 +72,18 @@ Today's pages, with 23 published posts:
 
 - Under the title of the Posts list only. The category pages use the same component but do not get the switcher, and
   the tag pages have their own markup; see section 5.
-- Shown when the posts span at least two years, one button per year, newest first.
+- Shown when the posts span at least two years, newest first.
 - Each button opens the first page of its year. The year being shown is highlighted and carries `aria-current`; on
   `/posts/` that is the newest year.
 - The buttons use the classes of the theme's own Previous and Next buttons from `list.html`; the highlighted one uses
   the colours of the year badges. So they match the theme in both colour schemes.
+- Since later on 2026-09-19 it is a component of its own, `src/components/YearSwitcher.astro`, kept separate from the
+  page buttons as the owner asked, with its own rule for many years (`yearSwitcher()` in `src/lib/posts.ts`,
+  threshold `pagination.everyYearUpTo` in `src/config.ts`, 5): up to five years every year is shown; with more, the
+  newest, the oldest and the year being shown with the year either side of it, and an ellipsis for the years hidden:
+  `2026 ... 2023 2022 2021 ... 2015`. The neighbours stay, unlike on the page numbers, because a reader browsing by
+  year moves to the year next door far more often than to the first page of a long list; that detail was left to
+  this side and is one line to change. Every year shown is a link, the current one included.
 
 ## 5. The tag and category pages
 
@@ -99,26 +106,32 @@ not posts, and are not paginated.
 
 - Shown only when there is a page to go to. Previous goes to newer posts, Next to older ones.
 - Between them, numbered links to the pages of the same list, added on 2026-09-19 at the owner's request, so that a
-  long list does not take one click per page. They show the first and the last page and the pages around the current
-  one; skipped pages become an ellipsis, and a gap that would hide a single page shows that page instead. From 640px up
-  two pages either side of the current one are shown, at most nine entries: `1 ... 8 9 10 11 12 ... 20`. Below 640px
-  nine did not fit on one line - measured at 390px, the last page number wrapped onto a line of its own - so there it is
-  one page either side, at most seven: `1 ... 9 10 11 ... 20`. The page carries both sets, and CSS shows one.
+  long list does not take one click per page. The rule is the owner's, set later the same day (`pageNumbers()` in
+  `src/lib/posts.ts`, threshold `pagination.everyNumberUpTo` in `src/config.ts`, 5): a list of up to five pages shows
+  every number, `1 2 3 4 5`; a longer one shows only the first, the current and the last page, with an ellipsis that
+  is not a link between them: `1 ... 7 ... 20`, `1 2 ... 20` on the second page, `1 ... 20` on the first and on the
+  last. Only the first and the last page are links there. Five entries at most, so one set fits every width. Until
+  then the numbers were a sliding window - two pages either side of the current one, at most nine entries, with a
+  second set of one either side for screens below 640px, where nine did not fit on one line.
 - The current page is highlighted and is not a link; it carries `aria-current`. Every other number is labelled "Page n"
-  for screen readers, with the theme's own string.
+  for screen readers, with the theme's own string; the button texts come from `src/i18n/strings.ts`, so they translate
+  with the rest of the site.
 - Below 640px the numbers take a line of their own under Previous and Next; from 640px up the three sit in one line,
   with the numbers centred whether or not both buttons are there.
 - The number buttons use the classes of the Previous and Next buttons, and the current page uses the year switcher's
   highlighted colours. The theme has no numbered links, so this markup is new.
-- The markup is the theme's own: the block at the end of `_default/list.html` for the Posts and category pages, and
-  the block in `taxonomy/tag.html` for the tag pages. It had not been ported because the Hugo site never had enough
-  posts to show it.
+- The block is one component since later on 2026-09-19, `src/components/Pagination.astro`, asked for by the owner so
+  that any list added later gets the same buttons; the Posts and category pages (`PostList.astro`) and the tag pages
+  pass it the addresses of the neighbouring pages and the numbers, plus their own top margin. Its container and
+  buttons are the block at the end of the theme's `_default/list.html`; the arrows inside the buttons are the SVG
+  chevrons of `taxonomy/tag.html`, the owner's choice over `list.html`'s text arrows - they match the Previous and
+  Next cards under an article, and a text arrow depends on the font. Neither theme block had been ported before,
+  because the Hugo site never had enough posts to show them.
 - The buttons look the same on every list since 2026-09-19: `rounded-md`, with the dark-mode colours. The theme gives
   the two blocks different buttons - `rounded-md` in `list.html`, `rounded-full` and no dark-mode classes in
   `tag.html`, so the tag pages had round buttons that stayed white in dark mode. The reviewer noticed the two shapes
-  and the owner chose one for all; the tag template now carries `list.html`'s classes on its buttons, with the
-  theme's originals kept in a comment there. This is a deviation from the Hugo output, recorded in
-  [MIGRATION-PLAN.md](MIGRATION-PLAN.md) §9.
+  and the owner chose one for all; the theme's original classes are kept in a comment in `Pagination.astro`. This is
+  a deviation from the Hugo output, recorded in [MIGRATION-PLAN.md](MIGRATION-PLAN.md) §9.
 - One thing is deliberately not like Hugo. Both theme templates loop over `.Pages`, which is every post of the list,
   and not over `.Paginator.Pages`, the posts of the current page. On the Hugo site every page of a paginated list would
   therefore show all the posts, and only the Previous and Next links would differ. That bug is not reproduced: here a
@@ -137,8 +150,11 @@ In `src/lib/posts.ts`:
   page, and the addresses of the previous and next pages. The base is `/posts/<year>/` for a year, so its links never
   leave the year.
 - `pageUrl(base, n)` and `pageParam(n, prefix)` - the address of page n, and the route parameter that produces it.
-- `pageNumbers(current, last, base, radius)` - the numbered links of one page; `paginateList()` stores the full set
-  (radius 2) and the compact one (radius 1) on every page.
+- `pageNumbers(current, last, base)` - the numbered links of one page, by the rule in section 6; `paginateList()`
+  stores them on every page. `yearSwitcher(years, currentYear)` - the entries of the year switcher, by the rule in
+  section 4. Both read their threshold from `pagination` in `src/config.ts`.
+- `src/components/Pagination.astro` renders Previous, the numbers and Next for every list, and
+  `src/components/YearSwitcher.astro` the year buttons; both since later on 2026-09-19, see sections 4 and 6.
 - `yearLinks(groups)` - the year switcher's buttons.
 
 The list routes are rest-parameter routes, one file per list:
@@ -212,6 +228,15 @@ dates follows the links between the posts: a post that another one links to is a
   and `#eff6ff`. They need no pinning.
 - Every route of the Hugo site still exists in the build except the nine `/page/1/` pages, which is the difference
   the plan already accepts, and `/posts/page/1/` among them.
+- Later on 2026-09-19 the page numbers got the owner's rule and the year switcher its own (sections 4 and 6), so the
+  two notes above on "both sets of page numbers" and on the screenshots of page 50 of 100 describe the earlier
+  window. After the change: `npm run check` 0 errors, `npm run build` 63 pages, `npm run check:pages` passed, and
+  `npm run check:pages:stress` passed with its 8 years and lists of up to 100 pages, 132 and 591 list pages walked.
+  On a copy with one post to a page and five extra years (2019 to 2023), read in headless Edge in both themes at
+  1280px and 390px: page 5 of 9 of 2024 shows `1 ... 5 ... 9` and the years `2026 2025 2024 2023 ... 2019`; the
+  first page of 2021 shows the years `2026 ... 2022 2021 2020 2019`; page 9 of 19 of the largest tag shows
+  `1 ... 9 ... 19`. Only the first and the last page, and the years shown, are links; no horizontal scrolling at
+  390px, where the numbers take one line under Previous and Next. See `REVIEW-FIXES.md`, section 2.
 
 ## 10. The check script
 
@@ -221,9 +246,10 @@ repository. It needs no dependency. Its header comment lists everything it check
 - `npm run check:pages`, right after `npm run build`, checks `dist/` of the project: every year of the Posts list,
   every tag and every category, walked from the first page to the last with Next and back with Previous, as in the
   stress test, plus `/posts/`, the pages of every published post, and the absence of any page for drafts, future posts
-  and years without published posts. It reads the page size from `src/config.ts` and the site's time zone from
-  `src/lib/date.ts`. Measured on the project today: 23 posts, 3 years, 16 tags, 2 categories, 34 list pages - all
-  checks passed.
+  and years without published posts. It reads the page size and the two thresholds of the page numbers and the year
+  switcher from `src/config.ts`, and the site's time zone from `src/lib/date.ts`; on every list page it compares the
+  page numbers and the year switcher found with the entries the rules of sections 4 and 6 give, exactly. Measured on
+  the project today: 23 posts, 3 years, 16 tags, 2 categories, 34 list pages - all checks passed.
 - `npm run check:pages:stress` makes a temporary copy of the project in the system's temporary folder, links its
   `node_modules` instead of copying it, adds the generated posts of the stress test, builds the copy with 5 posts to a
   page and with 1, and checks both builds. When everything passes it removes the copy, the link first, so that

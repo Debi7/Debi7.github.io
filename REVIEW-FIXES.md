@@ -74,3 +74,58 @@ Run `npm run dev`, open `/tags/` and choose the first tag, then go to its page 2
 now look like those on `/posts/2026/page/2/`. Switch the theme with the button in the header: the tag page's buttons
 follow it instead of staying white. Narrow the window below 640px: the numbers move to a line of their own on both
 pages.
+
+## 2. One component for the page buttons, the owner's rule for many pages, and the year switcher on its own
+
+Not a remark from the review. The owner asked for this on 2026-09-19 while the review was open, after section 1 had
+shown that the block existed twice, once per theme template.
+
+### 2.1 What the owner asked for
+
+- The page numbers between Previous and Next: a list of up to five pages shows every number; a longer one shows only
+  the first, the current and the last page, with an ellipsis between them that is not a link. Only the first and the
+  last page are links there; the current page is not a link. Previous is absent on the first page and Next on the last,
+  as before.
+- The texts of the Previous and Next buttons stay translatable.
+- One component for the block, so that any list added later gets the same buttons.
+- The year switcher separate from it, as a component of its own with its own behaviour.
+
+### 2.2 What changed
+
+- `src/components/Pagination.astro` - new. Previous, the numbers and Next, rendered for the Posts list and the
+  category pages by `PostList.astro` and for the tag pages by `pages/tags/[slug]/[...page].astro`, which both lost
+  their own copy of the block; each passes the addresses of the neighbouring pages, the numbers and its own top margin
+  (`mt-12` from `list.html`, `mt-10` from `tag.html`). The container and the buttons are `list.html`'s; the arrows are
+  the SVG chevrons of `tag.html`, the owner's choice over `list.html`'s text arrows, because they match the Previous
+  and Next cards under an article and a text arrow depends on the font. The button texts come from
+  `src/i18n/strings.ts`, as before. The theme's original `tag.html` classes are listed in the component's comment.
+- `src/lib/posts.ts` - `pageNumbers()` implements the rule; the threshold is `pagination.everyNumberUpTo` in
+  `src/config.ts`, 5. The second set of numbers for screens below 640px (`numbersCompact`) is gone: five entries fit at
+  390px, so one set does.
+- `src/components/YearSwitcher.astro` - new. The year buttons moved out of `PostList.astro`, with a rule of their own,
+  `yearSwitcher()` in `posts.ts` with `pagination.everyYearUpTo` (5): up to five years every year is shown; with more,
+  the newest, the oldest and the year being shown with the year either side of it, and an ellipsis for the years
+  hidden: `2026 ... 2023 2022 2021 ... 2015`. Keeping the neighbours is a decision made here, not asked for: a reader
+  browsing by year moves to the year next door far more often than to the first page of a list. It is one line to
+  change.
+- `scripts/check-pagination.mjs` - checks both rules exactly: the entries found on every list page against the entries
+  expected, for the numbers and for the year switcher.
+- `PAGINATION.md` sections 4, 6, 7, 9 and 10, `MIGRATION-PLAN.md` section 9 (chevrons on the Posts list, where
+  `list.html` has text arrows), `README.md` and `CLAUDE.md`.
+
+### 2.3 Checks
+
+- `npm run fix`, `npm run check` (0 errors, 0 warnings), `npm run build` (63 pages, no warnings) and
+  `npm run check:pages` (all checks passed).
+- `npm run check:pages:stress`: the copy with 159 generated posts spans 8 years, so both rules are exercised there -
+  the year switcher with an ellipsis, and lists of up to 100 pages. 132 list pages with 5 posts to a page and 591 with
+  1, all checks passed.
+- The site itself has 3 years and at most 4 pages a list, so the ellipsis does not appear on it yet. To see it, the
+  copy described under "How to see it" was built.
+
+### 2.4 How to see it
+
+On the site: `npm run dev`, then `/posts/2024/`, `/posts/2024/page/2/` and the tag pages - the buttons and numbers as
+before, the arrows now chevrons on every list. For the ellipsis, on a copy of the project: set `pageSize` to 1 in
+`src/config.ts` and add five posts dated 2019 to 2023, then `npm run build` and `npm run check:pages`; `/posts/2024/`
+then has nine pages and the year switcher eight years.

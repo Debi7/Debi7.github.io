@@ -55,10 +55,11 @@ export type ListPage<T> = {
   /** Addresses of the neighbouring pages; undefined on the first and on the last page. */
   prevUrl: string | undefined;
   nextUrl: string | undefined;
-  /** The numbered page links shown between Previous and Next from 640px up; see pageNumbers(). */
+  /** The numbered page links shown between Previous and Next; see pageNumbers(). */
   numbers: PageNumber[];
-  /** The same below 640px, with one page either side of the current one instead of two. */
-  numbersCompact: PageNumber[];
+  // `numbersCompact`, a second set with a narrower window for screens below 640px, was removed
+  // later on 2026-09-19 with the owner's new rule for the numbers: five entries at most, which
+  // fit at every width, so one set is enough. See pageNumbers().
 };
 
 /** One entry of the numbered page links: a page, or a gap drawn as an ellipsis. */
@@ -67,27 +68,29 @@ export type PageNumber =
   | { kind: "gap" };
 
 // Added 2026-09-19, asked for by the owner: numbered page links between Previous and Next, so
-// that a list with many pages does not take one click per page. Shown: the first and the last
-// page, and `radius` pages either side of the current one; a run of skipped pages becomes one
-// gap. A gap that would hide a single page shows that page instead, since the ellipsis would
-// take the same room. With the radius of 2 used from 640px up a list has at most nine entries,
-// whatever its length: "1 ... 8 9 10 11 12 ... 20". Below 640px nine did not fit in one row -
-// measured at 390px, the last page wrapped onto a row of its own - so there the radius is 1 and
-// the most is seven: "1 ... 9 10 11 ... 20". The theme has no such block; see PAGINATION.md,
-// section 6.
+// that a list with many pages does not take one click per page. The theme has no such block;
+// see PAGINATION.md, section 6.
+//
+// The rule is the owner's, set later the same day, and replaced a sliding window (the first and
+// the last page plus two pages either side of the current one, at most nine entries, with a
+// second set of one page either side for screens below 640px, where nine did not fit in a row):
+//   - a list of at most `pagination.everyNumberUpTo` pages shows every number: "1 2 3 4 5";
+//   - a longer one shows only the first, the current and the last page, and every run of
+//     skipped pages is one gap drawn as an ellipsis: "1 ... 7 ... 20", "1 2 ... 20" on the
+//     second page, "1 ... 20" on the first and on the last. A gap is a gap even when it hides a
+//     single page, because only the first and the last page are meant to be links there; the
+//     current page is never a link.
+// Five entries at most either way, which fit at every width, so the second set went with the
+// window. The rendering is Pagination.astro; scripts/check-pagination.mjs mirrors this rule.
 export function pageNumbers(
   current: number,
   last: number,
   base: string,
-  radius: number,
 ): PageNumber[] {
-  const around = Array.from(
-    { length: 2 * radius + 1 },
-    (_, i) => current - radius + i,
-  );
-  const shown = [1, ...around, last]
-    .filter((n, index, all) => n >= 1 && n <= last && all.indexOf(n) === index)
-    .sort((a, b) => a - b);
+  const shown =
+    last <= site.pagination.everyNumberUpTo
+      ? Array.from({ length: last }, (_, i) => i + 1)
+      : [...new Set([1, current, last])];
   const page = (n: number): PageNumber => ({
     kind: "page",
     number: n,
@@ -97,8 +100,7 @@ export function pageNumbers(
   const entries: PageNumber[] = [];
   let previous = 0;
   for (const n of shown) {
-    if (n - previous === 2) entries.push(page(previous + 1));
-    else if (n - previous > 2) entries.push({ kind: "gap" });
+    if (n - previous > 1) entries.push({ kind: "gap" });
     entries.push(page(n));
     previous = n;
   }
@@ -137,8 +139,8 @@ export function paginateList<T>(
       last,
       prevUrl: number > 1 ? pageUrl(base, number - 1) : undefined,
       nextUrl: number < last ? pageUrl(base, number + 1) : undefined,
-      numbers: pageNumbers(number, last, base, 2),
-      numbersCompact: pageNumbers(number, last, base, 1),
+      // One set since later on 2026-09-19; see the note in ListPage.
+      numbers: pageNumbers(number, last, base),
     };
   });
 }
@@ -154,6 +156,49 @@ export function yearLinks(groups: YearGroup[]): YearLink[] {
     year: group.year,
     url: `/posts/${group.year}/`,
   }));
+}
+
+/** One entry of the year switcher: a year, or a gap drawn as an ellipsis. */
+export type YearEntry =
+  | { kind: "year"; year: string; url: string; current: boolean }
+  | { kind: "gap" };
+
+// Added later on 2026-09-19, when the owner asked for the year switcher to be a component of
+// its own (YearSwitcher.astro) with its own rule, separate from the page numbers. Which years
+// are shown: every year while there are at most `pagination.everyYearUpTo` of them; beyond
+// that the newest, the oldest, and the year being shown with the year either side of it, and a
+// run of hidden years is one gap drawn as an ellipsis: "2026 ... 2023 2022 2021 ... 2015". The
+// neighbours stay, unlike on the page numbers, because a reader browsing by year moves to the
+// year next door far more often than to the first page of a long list; the owner left that
+// detail to this side, and it is one line to change. Every year shown is a link, the current
+// one included - it leads back to the first page of its year. `years` are newest first, as
+// yearLinks() builds them, and adjacency is in that list: 2026 sits next to 2024 when 2025 has
+// no posts. scripts/check-pagination.mjs mirrors this rule.
+export function yearSwitcher(
+  years: YearLink[],
+  currentYear: string,
+): YearEntry[] {
+  const current = years.findIndex((link) => link.year === currentYear);
+  const shown =
+    years.length <= site.pagination.everyYearUpTo
+      ? years.map((_, index) => index)
+      : [...new Set([0, current - 1, current, current + 1, years.length - 1])]
+          .filter((index) => index >= 0 && index < years.length)
+          .sort((a, b) => a - b);
+  const entries: YearEntry[] = [];
+  let previous = -1;
+  for (const index of shown) {
+    const link = years[index];
+    if (index - previous > 1) entries.push({ kind: "gap" });
+    entries.push({
+      kind: "year",
+      year: link.year,
+      url: link.url,
+      current: link.year === currentYear,
+    });
+    previous = index;
+  }
+  return entries;
 }
 
 export type Term = {
