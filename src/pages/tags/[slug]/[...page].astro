@@ -1,7 +1,8 @@
 ---
 // One tag, e.g. /tags/hugo/. Port of
 // ../klub_biolocation/themes/void/layouts/taxonomy/tag.html (MIGRATION-PLAN.md §4.1).
-// Class attributes are copied verbatim.
+// Class attributes are copied verbatim, with one exception: the pagination buttons at the foot
+// take list.html's classes, not tag.html's - see PAGINATION, below.
 //
 // This looks like PostList.astro but is deliberately NOT it: tag.html has its own year badge
 // (with a decorative halo and a thicker rule), a date cell without the calendar icon, a
@@ -30,7 +31,8 @@
 //   .Paginator.HasPrev / .HasNext / .Prev.URL / .Next.URL
 //                              -> page.prevUrl / page.nextUrl, from paginateList() in
 //                                 lib/posts.ts. The block before the navigation links is
-//                                 tag.html's, classes verbatim.
+//                                 tag.html's; its buttons carry list.html's classes since
+//                                 2026-09-19 (see the block).
 //
 // - This file was src/pages/tags/[slug].astro. As a rest-parameter route it renders page 1 at
 //   /tags/<slug>/ and page n at /tags/<slug>/page/<n>/, Hugo's shape, with the page links built
@@ -198,15 +200,30 @@ const groups = groupByYear(page.items);
       empty div keeps Next on the right when there is no Previous.
 
       The numbered page links in the middle are new, asked for by the owner, and are placed
-      the same way as in PostList.astro; see the note on its pagination block. Here they are
-      round, like this template's Previous and Next, and the current page uses the year
-      switcher's highlighted colours. */
+      the same way as in PostList.astro; see the note on its pagination block. The current
+      page uses the year switcher's highlighted colours.
+
+      Changed 2026-09-19, the owner's decision after the reviewer noticed it: the buttons
+      here take the classes of list.html's pagination block, the one PostList.astro renders,
+      so that every list has the same buttons - rounded-md, and the dark-mode colours. The
+      theme's tag.html gives its buttons rounded-full and no dark: classes at all, which left
+      them bright white in dark mode; nobody saw that on the Hugo site, which never had
+      enough posts for the block to render. The theme's original class attributes, for the
+      record (the numbers, which are new, copied the shape of Previous and Next):
+        Previous: flex items-center rounded-full bg-white px-4 py-2 text-gray-700 shadow-sm
+                  transition-colors hover:bg-gray-50 sm:justify-self-start
+        Next:     the same, with sm:justify-self-end
+        number:   rounded-full bg-white px-3 py-1 text-sm text-gray-700 shadow-sm
+                  transition-colors hover:bg-gray-50
+        current:  rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm
+                  dark:bg-slate-700 dark:text-blue-300
+      The arrows stay tag.html's inline SVGs; list.html uses text arrows. */
       (page.prevUrl || page.nextUrl) && (
         <div class="mt-10 flex flex-wrap items-center justify-between gap-y-4 sm:grid sm:grid-cols-[1fr_auto_1fr]">
           {page.prevUrl ? (
             <a
               href={page.prevUrl}
-              class="flex items-center rounded-full bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:justify-self-start"
+              class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-start"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -247,7 +264,7 @@ const groups = groupByYear(page.items);
                 ) : entry.current ? (
                   <span
                     aria-current="page"
-                    class="rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-300"
+                    class="rounded-md bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-300"
                   >
                     {entry.number}
                   </span>
@@ -255,7 +272,7 @@ const groups = groupByYear(page.items);
                   <a
                     href={entry.url}
                     aria-label={t.pagination_page(entry.number)}
-                    class="rounded-full bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+                    class="rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
                   >
                     {entry.number}
                   </a>
@@ -266,7 +283,7 @@ const groups = groupByYear(page.items);
           {page.nextUrl ? (
             <a
               href={page.nextUrl}
-              class="flex items-center rounded-full bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:justify-self-end"
+              class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-end"
             >
               {t.pagination_next}
               <svg

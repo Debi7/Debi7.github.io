@@ -108,12 +108,17 @@ not posts, and are not paginated.
   for screen readers, with the theme's own string.
 - Below 640px the numbers take a line of their own under Previous and Next; from 640px up the three sit in one line,
   with the numbers centred whether or not both buttons are there.
-- The number buttons use the classes of the Previous and Next buttons of the same template - square corners on the
-  Posts and category pages, round ones on the tag pages - and the current page uses the year switcher's highlighted
-  colours. The theme has no numbered links, so this markup is new.
+- The number buttons use the classes of the Previous and Next buttons, and the current page uses the year switcher's
+  highlighted colours. The theme has no numbered links, so this markup is new.
 - The markup is the theme's own: the block at the end of `_default/list.html` for the Posts and category pages, and
-  the block in `taxonomy/tag.html` for the tag pages, classes verbatim. It had not been ported because the Hugo site
-  never had enough posts to show it.
+  the block in `taxonomy/tag.html` for the tag pages. It had not been ported because the Hugo site never had enough
+  posts to show it.
+- The buttons look the same on every list since 2026-09-19: `rounded-md`, with the dark-mode colours. The theme gives
+  the two blocks different buttons - `rounded-md` in `list.html`, `rounded-full` and no dark-mode classes in
+  `tag.html`, so the tag pages had round buttons that stayed white in dark mode. The reviewer noticed the two shapes
+  and the owner chose one for all; the tag template now carries `list.html`'s classes on its buttons, with the
+  theme's originals kept in a comment there. This is a deviation from the Hugo output, recorded in
+  [MIGRATION-PLAN.md](MIGRATION-PLAN.md) §9.
 - One thing is deliberately not like Hugo. Both theme templates loop over `.Pages`, which is every post of the list,
   and not over `.Paginator.Pages`, the posts of the current page. On the Hugo site every page of a paginated list would
   therefore show all the posts, and only the Previous and Next links would differ. That bug is not reproduced: here a
