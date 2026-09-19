@@ -13,6 +13,11 @@ module.exports = {
     extend: {
       // Same stacks as the @theme block in themes/void/assets/css/main.css.
       // Mirrored as CSS variables in src/styles/main.css for rules that use var(--font-*).
+      colors: {
+        "bio-mint": "#f2f7f5", // Серый с легким мятным/зеленым дыханием
+        "bio-lavender": "#f4f3f7", // Серый с тончайшим лавандовым (духовным) отливом
+        "bio-warm": "#f7f6f3", // Очень мягкий, благородный серо-кремовый
+      },
       fontFamily: {
         bilingual: [
           '"Source Serif 4"',

@@ -19,8 +19,8 @@
 /* Light theme palette. These are the theme's own defaults, so light mode looks
    exactly as it did before this file existed. */
 :root {
-  --page-bg: #f9fafb; /* page background, and the footer strip */
-  --panel-bg: #ffffff; /* top header bar, post cards, About card */
+  --page-bg: #f5f5f4; /* page background, and the footer strip */
+  --panel-bg: #fafaf9; /* top header bar, post cards, About card */
 }
 
 /* Dark theme palette. Hugo puts class="dark" on the <html> element when the
