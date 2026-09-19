@@ -78,6 +78,10 @@ Hugo prints the tag chips on the cards, the "All Tags" link on a tag page and th
 
 `main` in `Base.astro` carries `isolate` since 2026-09-19 evening. The reviewer found that hovering a social icon in the footer made the text of every tag chip flicker: the icon's hover scales it with a 200 ms transition, Chromium composites the animation and, not knowing where the element will end up, re-rasterises everything painted after it - and the chips (`z-20`) and the year numbers in the badges (`z-10`) were painted after the footer, because a positive `z-index` with no stacking context between it and the root lifts the element out of the page's paint order. With `main` as a stacking context they are painted where they stand. Nothing visible changes; the Hugo site has the same flicker. `REVIEW-FIXES.md` section 8 has the measurements.
 
+### The card indent is gone on phones
+
+The theme's list templates indent the post cards under the year badge by 2rem (`ml-8`), a timeline look. With the 48px of side gap a phone already has, the first card stood 80px from the left edge and 48px from the right, which the reviewer read as "shifted right". Since 2026-09-19 evening the class is `sm:ml-8` in `PostList.astro` and in the tag route: below 640px the cards span the column, 48px on both sides; from 640px up nothing changes. Every menu item and its sub-pages were checked at 390px and 360px for anything else off-centre; nothing is. `REVIEW-FIXES.md` section 9 has the measurements and how to look at the site at a phone width.
+
 ### The carousel runs under the header, and Hugo's does not
 
 This is the one place where the port shows something different from Hugo on purpose, so do not "fix" it back.

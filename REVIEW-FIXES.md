@@ -293,3 +293,43 @@ badge, would have been four edits in two files and would have left the `z-10` sp
   the viewport that changes during the hover is the icon itself. The same measurement with `isolation: isolate`
   set from the console on the post wrappers alone had already given 0 for the chips and left the year badge
   flickering, which is what settled the choice of `main`.
+
+## 9. The post cards sat right of centre on a phone
+
+Reported by the reviewer on 2026-09-19 evening, with a phone screenshot of a tag page: on a laptop the lists look
+right, on a phone the cards are visibly pushed to the right. The owner then asked for every menu item and its
+sub-pages to be checked for the same thing at phone widths.
+
+### 9.1 The cause
+
+Both theme list templates indent the cards under the year badge by 2rem (`ml-8` in `list.html` and `tag.html`),
+so that the cards hang under the badge like a timeline. At phone widths the page already has 48px of side gap
+(`main`'s `px-8` plus the list container's `px-4`), so the first card stood 80px from the left edge and 48px from
+the right; measured in headless Edge at 390px and 360px on `/posts/2026/` and a tag page. Against the 896px column
+of a laptop the 2rem reads as the intended timeline; on a 360px screen it takes 32px out of a 296px column, and the
+eye reads the whole card as off-centre. Hugo renders the same indent at every width.
+
+### 9.2 What changed
+
+`ml-8` became `sm:ml-8` on the card list in `PostList.astro` (the Posts list and the category pages) and in the
+tag route: below 640px the cards span the column, 48px on both sides; from 640px up the indent is what it was, so
+the laptop layout and the parity screenshots at 1280px are unaffected. The year badge does not move. 640px is the
+threshold the responsive menu already uses (`MIGRATION-PLAN.md` section 9).
+
+### 9.3 Checks
+
+- `npm run fix`, `npm run check` 0 errors, `npm run build` 93 pages, `npm run check:pages` all passed,
+  `npm run dev` started once and served `/posts/2026/` with the new class. No `ml-8` without the prefix is left in
+  `dist/`.
+- Built site, first card of `/posts/2026/`, a tag page and `/categories/blog/`: 48px on both sides at 390px and
+  360px, 32px of indent from the badge at 640px and 1280px as before; no horizontal overflow on any page.
+- Every menu item and its sub-pages at 390px and 360px (`/`, `/categories/`, two category pages, `/posts/`, two
+  more year and page addresses, `/tags/`, three tag pages, `/about/`, an article, the 404 page): every visible
+  block wider than half the viewport was compared by its left and right gaps. Nothing else is off-centre. What the
+  check does list is by design: the gradient rule beside the year badge, which starts after the badge; the
+  left-aligned rows of tag chips and the bulleted list items inside an article; the theme link inside the centred
+  footer text. One reading of the 404 page, the first navigation of the run, was taken before its stylesheet had
+  loaded and came back clean on the second pass.
+- To see it without a phone: in Chrome or Edge, F12, then Ctrl+Shift+M for the device toolbar, pick a phone or type
+  390 as the width, and reload. On a real phone: `npm run dev -- --host`, then open `http://<laptop IP>:4321/`
+  on the phone over the same Wi-Fi.
