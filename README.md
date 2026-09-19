@@ -74,6 +74,10 @@ Browsers keep the first and drop the second, and neither `.active` nor `.ancesto
 
 Hugo prints the tag chips on the cards, the "All Tags" link on a tag page and the category label above an article without a trailing slash (`/tags/hugo`, `/tags`, `/categories/blog`), and the port kept that for parity. Since 2026-09-19 they end with a slash: `astro.config.mjs` sets `trailingSlash: "always"`, and under it Astro's dev and preview servers answer the slash-less address with 404, which the owner ran into. GitHub Pages redirects such an address, so the live site had only paid a redirect for every click. The addresses of the pages are unchanged; `REVIEW-FIXES.md` section 5 has the details.
 
+### The page content is its own stacking context
+
+`main` in `Base.astro` carries `isolate` since 2026-09-19 evening. The reviewer found that hovering a social icon in the footer made the text of every tag chip flicker: the icon's hover scales it with a 200 ms transition, Chromium composites the animation and, not knowing where the element will end up, re-rasterises everything painted after it - and the chips (`z-20`) and the year numbers in the badges (`z-10`) were painted after the footer, because a positive `z-index` with no stacking context between it and the root lifts the element out of the page's paint order. With `main` as a stacking context they are painted where they stand. Nothing visible changes; the Hugo site has the same flicker. `REVIEW-FIXES.md` section 8 has the measurements.
+
 ### The carousel runs under the header, and Hugo's does not
 
 This is the one place where the port shows something different from Hugo on purpose, so do not "fix" it back.

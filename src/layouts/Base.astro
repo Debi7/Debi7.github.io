@@ -85,9 +85,19 @@ const page: PageLike = {
       <Header />
     </header>
 
+    {
+      /* `isolate` on main was added on 2026-09-19 (REVIEW-FIXES.md, section 8). The tag chips
+      and the year badges carry z-10/z-20, and with no stacking context between them and the
+      root they are painted after the footer. Chromium then rasterises them again, text
+      antialiasing included, for as long as a footer icon's hover transform is animating,
+      which the reviewer saw as the chip text flickering. With main as its own stacking context
+      they are painted where they stand, before the footer. Nothing in main has to stack
+      against the header or the footer, so the class changes no picture. Hugo has the same
+      flicker. */
+    }
     <div class="flex min-h-screen flex-1 flex-col pt-24">
       <main
-        class="mx-auto w-full max-w-4xl flex-1 overflow-x-auto px-8 sm:overflow-visible sm:px-10"
+        class="isolate mx-auto w-full max-w-4xl flex-1 overflow-x-auto px-8 sm:overflow-visible sm:px-10"
       >
         <slot />
       </main>

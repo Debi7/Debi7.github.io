@@ -251,3 +251,45 @@ are recorded here so that they are not lost, and this is the place to look befor
   with its author. The typed form is a `declare global` block that adds `disqus_config` to `Window` with the shape
   Disqus documents (`page.url`, `page.identifier`), and `this: { page: { url: string; identifier: string } }` on the
   function. No behaviour would change.
+
+## 8. The chip text flickered while a footer icon was hovered
+
+Reported by the reviewer on 2026-09-19 evening, with a screenshot of a tag page: moving the mouse over any of the
+three social icons in the footer made the text of every tag chip on the page "blink". She could not see how the two
+were connected; they are, through the browser's compositor.
+
+### 8.1 The cause
+
+The footer wraps each icon in `transform transition duration-200 hover:scale-110`, so a hover animates the icon's
+transform for 200 ms, and Chromium runs such an animation on its compositor thread. While it runs the browser does
+not know where the animated element will end up, so it treats it as overlapping everything that is painted after it
+and gives that content composited layers of its own for the duration; text in such a layer is rasterised again, and
+differently - without the subpixel antialiasing the desktop uses - which is the blink. Only two kinds of element were
+painted after the footer: the tag chips (`relative z-20`, above the card's stretched link on `z-10`) and the year
+number in the year badge (`relative z-10`). A positive `z-index` stacks an element in the nearest stacking context,
+and there was none between them and the document root - `main` was not one - so they were painted after the
+footer, which comes later in the document. Measured in headless Edge at 1280x900, dark mode, on the tag page: 80 ms
+into the hover the two visible chip rows differed from the resting page in 1023 pixels each, by up to 94/255 per
+channel, and the "2025" in the year badge differed too, while nothing else outside the icon changed; with GPU
+compositing on it was 1093 pixels. The diff image shows exactly the chip text and the year. Hugo has the same markup
+and the same flicker.
+
+### 8.2 What changed
+
+`main` in `src/layouts/Base.astro` has `isolate` (`isolation: isolate`) now: the page content is one stacking
+context, every `z-index` inside it is resolved within `main`, and the chips and the badges are painted where they
+stand, before the footer. Nothing inside `main` has to stack against the header or the footer - the header is
+`fixed z-30` and comes later in the document, so it stays on top - and the class changes no picture. One class in
+one file; the comment above `main` explains it. The alternative, `isolate` on each post wrapper and each year
+badge, would have been four edits in two files and would have left the `z-10` span on the home page out.
+
+### 8.3 Checks
+
+- `npm run fix` unchanged, `npm run check` 0 errors, `npm run build` 93 pages, `npm run check:pages` all
+  passed, `npm run dev` started once and served the tag page with the class on `main`.
+- The probe: headless Edge driven over the DevTools protocol, a screenshot at rest and one 80 ms after a synthetic
+  mouse move onto the GitHub icon, compared pixel by pixel over the whole viewport. After the change: 0 differing
+  pixels in the chip rows on the tag page (two rows visible) and on `/posts/2026/` (three), and the only band of
+  the viewport that changes during the hover is the icon itself. The same measurement with `isolation: isolate`
+  set from the console on the post wrappers alone had already given 0 for the chips and left the year badge
+  flickering, which is what settled the choice of `main`.
