@@ -18,6 +18,12 @@ export const site = {
   // props. See DISQUS-FIX.md.
   disqus: { shortname: "biolocation-club" },
 
+  // Added 2026-09-19, asked for by the owner: how many posts one page of a list shows - on
+  // /posts/, /tags/<tag>/ and /categories/<category>/. Hugo's default is 10; the owner chose 5.
+  // Lowering it is also the quickest way to see several pages with only a few posts. See
+  // PAGINATION.md.
+  pagination: { pageSize: 5 },
+
   menu: [
     { name: "Home", url: "/" },
     { name: "Categories", url: "/categories/" },

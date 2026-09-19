@@ -25,7 +25,14 @@ const { shortname } = site.disqus;
   const toggleBtn = document.getElementById("toggle-disqus-btn");
 
   if (!thread || !toggleBtn) {
-    return;
+    // return;
+    //
+    // Changed 2026-09-18: the line above broke "npm run build" with "Return statement is not
+    // allowed here". This block is compiled as an ES module, and the top level of a module is not
+    // inside any function, so a bare return there is a syntax error. The else branch below already
+    // runs only when both elements exist, so an empty branch does the same job; it is what this
+    // branch held before d0dbbd1. Note that "npm run check" did not report it - only the build did.
+    // ничего не делаем, если элементов нет
   } else {
     const url = thread.dataset.disqusUrl;
     const identifier = thread.dataset.disqusIdentifier;

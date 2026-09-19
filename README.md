@@ -15,6 +15,8 @@ npm run dev        # http://localhost:4321/
 npm run build      # dist/
 npm run check      # astro check + prettier --check .
 npm run fix        # prettier --write .
+npm run check:pages          # after a build: every paginated list in dist/ (PAGINATION.md)
+npm run check:pages:stress   # a temporary copy with 159 generated posts, built and checked twice
 ```
 
 ## Skeleton status
@@ -32,8 +34,9 @@ The build is green and every Hugo route has an Astro file. **All five menu items
 | Plan §4: header, menu and theme toggle, plus a hamburger below 640px that Hugo does not have    | `Header.astro`, `Menu.astro`, `ThemeToggle.astro`               |
 | Plan §4: home page - full-bleed carousel (now meeting the header), title block, menu buttons    | `src/pages/index.astro`, `src/components/Carousel.astro`        |
 | Plan §4: Categories page (`category.terms.html`) - accordion, counts, dates, back-link          | `src/pages/categories/index.astro`                              |
-| Plan §4: Posts list (`list.html`), shared with the per-category pages                           | `src/pages/posts/index.astro`, `src/components/PostList.astro`  |
-| Plan §4: Tags page and every tag page (`tag.terms.html`, `tag.html`)                            | `src/pages/tags/index.astro`, `src/pages/tags/[slug].astro`     |
+| Plan §4: Posts list (`list.html`), shared with the per-category pages                           | `src/pages/posts/[...page].astro`, `PostList.astro`             |
+| Plan §4: Tags page and every tag page (`tag.terms.html`, `tag.html`)                            | `src/pages/tags/index.astro`, `tags/[slug]/[...page].astro`     |
+| Plan §9: pagination by year on /posts/, 5 posts a page - [PAGINATION.md](PAGINATION.md)         | `src/lib/posts.ts`, the `[...page].astro` routes                |
 | Plan §4: About page (`about/single.html`)                                                       | `src/pages/about.astro`                                         |
 | Plan §4: Hugo summary, month-day dates, year grouping                                           | `src/lib/summary.ts`, `src/lib/date.ts`, `src/lib/posts.ts`     |
 | Plan §4: i18n strings (`en.toml`), term title-casing and Hugo-compatible date formatting        | `src/i18n/strings.ts`, `src/lib/titleize.ts`, `src/lib/date.ts` |
@@ -41,10 +44,11 @@ The build is green and every Hugo route has an Astro file. **All five menu items
 | Plan §4: stubs for the remaining components and layouts, each naming its Hugo source            | `src/components/*.astro`, `src/layouts/Post.astro`              |
 | Plan §5.1-5.4: content collections, draft filter, `urlize`, reading time, site settings         | `src/content/config.ts`, `src/lib/*.ts`, `src/config.ts`        |
 | Plan §5.2: posts and About copied with YAML front matter                                        | `src/content/posts/*.md`, `src/content/pages/about.md`          |
+| Content: headings in the ported posts, 21 new posts, templates - [CONTENT.md](CONTENT.md)       | `src/content/posts/*.md`, `templates/`                          |
 | Plan §5: one route file per Hugo route, all wired to the collection                             | `src/pages/**`                                                  |
 | Static assets copied (`static/` -> `public/`)                                                   | `public/favicon/`, `public/images/`                             |
 
-Not done (in plan order): reference screenshots (§2 step 3), the remaining `TODO(migration ...)` stubs in `src/` - footer, the single-post layout (its components exist but are not wired into the post route; their type and formatting errors are fixed, so `npm run check` is green - [ARTICLE-PAGE-FIX.md](ARTICLE-PAGE-FIX.md) tracks what is applied and what is left), social meta, callout, Disqus (§4, §6), the rest of `site.js` (§7), the rehype plugins for code blocks and footnotes (§6), pagination once the site passes ten posts (§9), the `/page/1/` alias decision (§5.5).
+Not done (in plan order): reference screenshots (§2 step 3), the remaining `TODO(migration ...)` stubs in `src/` - footer, the single-post layout (its components exist but are not wired into the post route; their type and formatting errors are fixed, so `npm run check` is green - [ARTICLE-PAGE-FIX.md](ARTICLE-PAGE-FIX.md) tracks what is applied and what is left), social meta, callout, Disqus (§4, §6), the rest of `site.js` (§7), the rehype plugins for code blocks and footnotes (§6), the `/page/1/` alias decision (§5.5).
 
 ### The palette is pinned to the Tailwind 4 values
 
@@ -134,7 +138,7 @@ Alpine.js comes from npm through the official `@astrojs/alpinejs` integration: `
 
 **Measured on 2026-09-17:** with 1.0.0, `/` returned 500; with the integration removed from the config, 200; with 0.4.9, `npm run dev` answers 200 on `/`, `/posts/article/` and `/tags/` with no errors, `npm run build` builds 16 pages, and `astro check` reports 0 errors.
 
-**Alpine is loaded once.** Until 2026-09-17 `Head.astro` also carried the CDN tag for Alpine, so every page loaded two copies and `alpine:init` fired twice (the toggle still worked). The tag was removed; a comment in `Head.astro` marks the spot. Measured afterwards in headless Edge on `/posts/article/`, with a temporary heading added so that the table of contents renders: `Alpine.version` is 3.17.3, the npm package; `alpine:init` fires once; the table of contents opens on the first click and closes on the second; the console shows no errors. The owner saw the same in a browser. No post has headings yet, so no page renders an Alpine element today.
+**Alpine is loaded once.** Until 2026-09-17 `Head.astro` also carried the CDN tag for Alpine, so every page loaded two copies and `alpine:init` fired twice (the toggle still worked). The tag was removed; a comment in `Head.astro` marks the spot. Measured afterwards in headless Edge on `/posts/article/`, with a temporary heading added so that the table of contents renders: `Alpine.version` is 3.17.3, the npm package; `alpine:init` fires once; the table of contents opens on the first click and closes on the second; the console shows no errors. The owner saw the same in a browser. No post has headings yet, so no page renders an Alpine element today. (Changed 2026-09-19: every post has headings now, so every post page renders the collapsible table of contents, an Alpine element; see [POST-SIDEBAR.md](POST-SIDEBAR.md).)
 
 ## Deployment
 
@@ -145,15 +149,17 @@ Not deployed yet. The first GitHub Pages attempt (the abandoned `github-pages` n
 ```
 astro.config.mjs        Astro config (trailing slashes, Tailwind, MDX, Shiki themes)
 tailwind.config.cjs     Tailwind 3 config tuned to match the Tailwind 4 rendering
-src/config.ts           Site title, menu, social links, avatar, Disqus shortname (was hugo.toml)
+src/config.ts           Site title, menu, social links, avatar, Disqus shortname, posts per page (was hugo.toml)
 src/content/            posts/ and pages/ collections, schema in config.ts
-src/layouts/            Base.astro (page frame), Post.astro (single post)
+src/layouts/            Base.astro (page frame), Post.astro (single post, table-of-contents sidebar)
 src/components/         Head, Header, Menu, ThemeToggle, Carousel, Footer, Callout, Disqus
 src/pages/              Routes: index, about, 404, posts/, tags/, categories/
-src/lib/                getPosts / getTerms / readingTime, urlize, titleize, date
+src/lib/                getPosts (the order of posts) / getTerms / paginateList / yearLinks / readingTime, urlize, titleize, date
 src/i18n/strings.ts     Theme UI strings, ported from the theme's en.toml
 src/styles/             main.css (theme), custom.css (colour overrides, loaded last)
 src/scripts/site.js     Client-side behaviour (theme toggle, copy buttons, ...)
 public/                 Favicons and images, copied as-is
+templates/              Templates for new posts: post.md (the rules for front matter and headings) and one per existing post; the steps are in CONTENT.md
+scripts/                check-pagination.mjs, the check behind npm run check:pages (no dependencies)
 reference/              Hugo build artefacts used for parity checks; git-ignored by Prettier only
 ```

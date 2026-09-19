@@ -10,6 +10,8 @@
     "preview": "astro preview",
     "check": "astro check && prettier --check .",
     "check:astro": "astro check",
+    "check:pages": "node scripts/check-pagination.mjs",
+    "check:pages:stress": "node scripts/check-pagination.mjs --stress",
     "fix": "prettier --write ."
   },
   "engines": {
@@ -19,7 +21,8 @@
     "JSON has no comments; npm ignores this key. Changed 2026-09-17:",
     "@astrojs/alpinejs is pinned to exactly 0.4.9, without a caret, on purpose. Do not upgrade it while the project is on Astro 4.",
     "Version 1.0.0 is built for Astro 7 and Vite 8. Its Vite plugin relies on hook filters, which Vite 5.4 (shipped with Astro 4) ignores, so every page of npm run dev failed with: createComponent is not a function.",
-    "Details and measurements: README.md, section on @astrojs/alpinejs being pinned to 0.4.9."
+    "Details and measurements: README.md, section on @astrojs/alpinejs being pinned to 0.4.9.",
+    "Added 2026-09-19: check:pages checks the paginated post lists in dist/ after a build, and check:pages:stress does the same on a temporary copy with many generated posts. Both run scripts/check-pagination.mjs, which needs no dependency. See PAGINATION.md."
   ],
   "dependencies": {
     "@astrojs/alpinejs": "0.4.9",

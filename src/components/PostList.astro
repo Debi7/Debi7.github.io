@@ -6,7 +6,8 @@
 // routes: /posts/ (the Posts menu item) and /categories/<slug>/. The only difference between
 // them is the h1, so it is a prop. The tag pages look similar but are NOT this markup -
 // taxonomy/tag.html differs in the year badge, the date cell and the tag chips, so it is
-// ported separately in src/pages/tags/[slug].astro.
+// ported separately in src/pages/tags/[slug]/[...page].astro. (Path changed 2026-09-19: the
+// tag route moved there when the lists got pagination.)
 //
 // HOW THE GO TEMPLATE MAPS ONTO THIS FILE
 //
@@ -35,12 +36,40 @@
 // `{{ "/tags/" | relLangURL }}{{ . | urlize }}`, so the live site links to `/tags/hugo`,
 // not `/tags/hugo/`. Adding the slash here would be a silent improvement over the original.
 //
-// NOT PORTED: the pagination block at the end of list.html. Hugo paginates at 10 posts per
-// page and the site has two, so `.Paginator.HasPrev` and `.HasNext` are both false and Hugo
-// emits nothing at all - there is no markup to match yet. Once a third page's worth of posts
-// exists this has to be built, and Hugo's URLs are `/posts/page/2/`; see MIGRATION-PLAN.md
-// §5.5, which already treats `/page/1/` as a Hugo-only route.
-import { groupByYear, type Post } from "../lib/posts";
+// PAGINATION - changed 2026-09-19, asked for by the owner. This used to read "NOT PORTED":
+// Hugo paginates at 10 posts and the site had two, so Hugo emitted no pagination markup and
+// there was nothing to match. The owner has since asked for pages of 5 posts with Previous
+// and Next links that move a whole page. What changed, and why:
+//
+//   .Paginator.HasPrev / .HasNext / .Prev.URL / .Next.URL
+//                                -> page.prevUrl / page.nextUrl, from paginateList() in
+//                                   lib/posts.ts. The block at the end of this file is
+//                                   list.html's, classes verbatim.
+//   i18n "pagination_previous" / "pagination_next"
+//                                -> t.pagination_previous / t.pagination_next.
+//
+// - The prop is one page (`page`) instead of the whole list (`posts`), and the year groups are
+//   built from `page.items`. Hugo's list.html ranges over `.Pages`, which is every post in the
+//   section, not over `.Paginator.Pages`, the posts of the current page. So on the Hugo site
+//   every page of a paginated list would show all the posts, and only the Previous and Next
+//   links would change. That bug is not reproduced: here a page shows its own posts.
+// - On the category pages a year that continues from one page to the next gets its badge
+//   again at the top of the next page, because the groups are built per page. The Posts list
+//   is paginated per year, so each of its pages has exactly one year and one badge.
+// - The year switcher under the h1 is new, asked for by the owner; Hugo has nothing like it.
+//   It is shown only when the route passes `years` - /posts/ does, the category pages do not -
+//   and only when there are at least two years. Each link goes to the first page of its year,
+//   /posts/<year>/, and the year being shown (`currentYear`) is highlighted and carries
+//   aria-current. Its button classes are the pagination buttons' classes from list.html, and
+//   the highlighted state uses the year badge's colours, so it matches the theme in both
+//   colour schemes.
+// See PAGINATION.md.
+import {
+  groupByYear,
+  type ListPage,
+  type Post,
+  type YearLink,
+} from "../lib/posts";
 import { formatMonthDay } from "../lib/date";
 import { summary } from "../lib/summary";
 import { urlize, encodeSlug } from "../lib/urlize";
@@ -49,15 +78,47 @@ import { t } from "../i18n/strings";
 interface Props {
   /** Hugo's `.Title`: "Posts" for the section, the term title for one category. */
   title: string;
-  posts: Post[];
+  // Changed 2026-09-19: one page of the list instead of the whole list (`posts: Post[]`),
+  // for pagination; see the note at the top.
+  page: ListPage<Post>;
+  /** The year switcher's links; the switcher is shown only when this is given. */
+  years?: YearLink[];
+  /** The year the page shows, highlighted in the year switcher. */
+  currentYear?: string;
 }
 
-const { title, posts } = Astro.props;
-const groups = groupByYear(posts);
+const { title, page, years, currentYear } = Astro.props;
+const groups = groupByYear(page.items);
 ---
 
 <div class="mx-auto max-w-4xl px-4 py-8">
   <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
+
+  {
+    /* Added 2026-09-19: the year switcher; see the note at the top. The label is a literal
+    because the theme's strings, ported in full to src/i18n/strings.ts, have no key for it. */
+    years && years.length > 1 && (
+      <nav
+        aria-label="Years"
+        class="-mt-4 mb-8 flex flex-wrap justify-center gap-2"
+      >
+        {years.map((link) => (
+          <a
+            href={link.url}
+            aria-current={link.year === currentYear ? "true" : undefined}
+            class:list={[
+              "rounded-md px-3 py-1 text-sm shadow-sm transition-colors",
+              link.year === currentYear
+                ? "bg-blue-50 text-blue-700 dark:bg-slate-700 dark:text-blue-300"
+                : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800",
+            ]}
+          >
+            {link.year}
+          </a>
+        ))}
+      </nav>
+    )
+  }
 
   <div class="space-y-16">
     {
@@ -153,4 +214,80 @@ const groups = groupByYear(posts);
       ))
     }
   </div>
+
+  {
+    /* Added 2026-09-19: list.html's pagination block, which was not ported before; see the
+    note at the top. Like Hugo, it renders only when there is a neighbouring page, and an
+    empty div keeps Next on the right when there is no Previous.
+
+    The numbered page links in the middle are new, asked for by the owner; the theme has
+    none. They come from pageNumbers() in lib/posts.ts. The classes added to the theme's own
+    - flex-wrap, items-center, gap-y-4 and the sm: grid on the container, the justify-self
+    on the two buttons - only place them: below 640px the numbers take a row of their own
+    under Previous and Next, from 640px up the three sit in one row with the numbers centred
+    whether or not both buttons are there. The number buttons use the classes of the
+    Previous and Next buttons, and the current page the year switcher's highlighted colours;
+    it is a span with aria-current, not a link. Each link is labelled "Page n" with the
+    theme's own string. */
+    (page.prevUrl || page.nextUrl) && (
+      <div class="mt-12 flex flex-wrap items-center justify-between gap-y-4 sm:grid sm:grid-cols-[1fr_auto_1fr]">
+        {page.prevUrl ? (
+          <a
+            href={page.prevUrl}
+            class="rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-start"
+          >
+            &larr; {t.pagination_previous}
+          </a>
+        ) : (
+          <div />
+        )}
+        {/* Two copies of the numbers: the full one from 640px up, the compact one below;
+        see pageNumbers() for why. Only one is ever displayed. */}
+        {[page.numbers, page.numbersCompact].map((numbers, index) => (
+          <div
+            class:list={[
+              "order-last w-full flex-wrap justify-center gap-1 sm:order-none sm:w-auto",
+              index === 0 ? "hidden sm:flex" : "flex sm:hidden",
+            ]}
+          >
+            {numbers.map((entry) =>
+              entry.kind === "gap" ? (
+                <span
+                  aria-hidden="true"
+                  class="px-1 py-1 text-sm text-gray-500 dark:text-gray-400"
+                >
+                  &hellip;
+                </span>
+              ) : entry.current ? (
+                <span
+                  aria-current="page"
+                  class="rounded-md bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-300"
+                >
+                  {entry.number}
+                </span>
+              ) : (
+                <a
+                  href={entry.url}
+                  aria-label={t.pagination_page(entry.number)}
+                  class="rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
+                >
+                  {entry.number}
+                </a>
+              ),
+            )}
+          </div>
+        ))}
+        {page.nextUrl ? (
+          <a
+            href={page.nextUrl}
+            class="rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-end"
+          >
+            {t.pagination_next} &rarr;
+          </a>
+        ) : (
+          <div />
+        )}
+      </div>
+    )
+  }
 </div>

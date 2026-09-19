@@ -20,9 +20,18 @@ const toc = tocHtml(headings);
 // the post has headings). The check cannot live here: Prettier parses the markup of an Astro
 // expression as JSX, where Alpine's @click attribute is a syntax error, so wrapping everything
 // in an expression makes `prettier --check` fail on this file.
+//
+// Changed 2026-09-18: hidden from a 92rem (1472px) wide window up, by the toc-inline class and
+// the style block at the end of this file. From that width the table-of-contents sidebar in
+// src/layouts/Post.astro shows the same headings beside the article, so the page would otherwise
+// list them twice. Below it the sidebar is hidden and this one is the only table of contents, as
+// before. The newer hugo-theme-void, the reference for the sidebar, hides its inline table of
+// contents at the same width, under the same class name. It is a media query and not a Tailwind
+// class because this project's Tailwind 3 does not generate an arbitrary min-width variant in rem
+// (measured); see the note on the sidebar's style block in src/layouts/Post.astro.
 ---
 
-<div class="article-inner pt-6" x-data="{ open: false }">
+<div class="toc-inline article-inner pt-6" x-data="{ open: false }">
   <button
     class="flex w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
     @click="open = !open"
@@ -65,3 +74,12 @@ const toc = tocHtml(headings);
     <div class="prose prose-sm max-w-none" set:html={toc} />
   </div>
 </div>
+
+<style>
+  /* Added 2026-09-18: see the note in the frontmatter. */
+  @media (min-width: 92rem) {
+    .toc-inline {
+      display: none;
+    }
+  }
+</style>

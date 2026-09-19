@@ -128,7 +128,11 @@ Files that carry such literals (found with grep on 2026-09-13):
 - `src/components/Carousel.astro`: the slide `src`, built as `/images/carousel/<name>`.
 - `src/components/PostList.astro`, `src/components/PostNav.astro`, `src/components/Terms.astro`,
   `src/layouts/ArticleLayout.astro`, `src/pages/categories/index.astro`, `src/pages/tags/index.astro`,
-  `src/pages/tags/[slug].astro`: post, tag and category links.
+  `src/pages/tags/[slug]/[...page].astro`: post, tag and category links. (That last route was
+  `src/pages/tags/[slug].astro` until the lists got pagination on 2026-09-19.)
+- `src/lib/posts.ts`, `src/pages/posts/[...page].astro`, `src/pages/categories/[slug]/[...page].astro`: the
+  Previous and Next links of the paginated lists and the year switcher's links, built from `/posts/`, `/tags/` and
+  `/categories/` (added 2026-09-19; see PAGINATION.md).
 - `src/layouts/Base.astro`: `share.defaultImage`, `avatar.url`, and `isHome`, which tests
   `Astro.url.pathname === "/"`.
 - `src/components/Menu.astro`: the active-item check compares `Astro.url.pathname` with the menu URLs. Under a base

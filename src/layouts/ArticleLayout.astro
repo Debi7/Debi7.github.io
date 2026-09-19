@@ -26,16 +26,33 @@ const readingMinutes = readingTime(body);
 const updatedHuman = formatIsoDate(data.lastmod ?? data.date);
 
 const shareTitle = data.share_title ?? data.title;
+// Changed 2026-09-19, asked for by the owner: the Share button got an empty text for every
+// post without a description. The fallback chain used `??`, which only skips null and
+// undefined, and the collection schema defaults `description` to an empty string, so the chain
+// always stopped there and never reached `summary` or the site title. Now each candidate is
+// cleaned first and the first one with any text left wins; a description made only of spaces
+// or tags counts as empty as well. It was:
+//
+//   const shareText = (
+//     data.share_description ??
+//     data.description ??
+//     data.summary ??
+//     site.title
+//   )
+//     .replace(/<[^>]*>/g, "")
+//     .replace(/\s+/g, " ")
+//     .trim()
+//     .slice(0, 120);
+const cleanShareText = (text: string | undefined) =>
+  (text ?? "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 const shareText = (
-  data.share_description ??
-  data.description ??
-  data.summary ??
-  site.title
-)
-  .replace(/<[^>]*>/g, "")
-  .replace(/\s+/g, " ")
-  .trim()
-  .slice(0, 120);
+  [data.share_description, data.description, data.summary]
+    .map(cleanShareText)
+    .find(Boolean) ?? site.title
+).slice(0, 120);
 ---
 
 <article
