@@ -54,17 +54,18 @@
 //   section, not over `.Paginator.Pages`, the posts of the current page. So on the Hugo site
 //   every page of a paginated list would show all the posts, and only the Previous and Next
 //   links would change. That bug is not reproduced: here a page shows its own posts.
-// - On the category pages a year that continues from one page to the next gets its badge
-//   again at the top of the next page, because the groups are built per page. The Posts list
-//   is paginated per year, so each of its pages has exactly one year and one badge.
+// - Every page holds one year, so it has exactly one year badge: the Posts list and, since the
+//   evening of 2026-09-19, the category pages too are split by year (paginateByYear() in
+//   lib/posts.ts). For a few hours that day the category pages were paginated across years,
+//   and a year continuing from one page to the next got its badge again on the next page.
 // - The year switcher under the h1 is new, asked for by the owner; Hugo has nothing like it.
-//   It is shown only when the route passes `years` - /posts/ does, the category pages do not -
-//   and only when there are at least two years. Each link goes to the first page of its year,
-//   /posts/<year>/, and the year being shown (`currentYear`) is highlighted and carries
-//   aria-current. Its button classes are the pagination buttons' classes from list.html, and
-//   the highlighted state uses the year badge's colours, so it matches the theme in both
-//   colour schemes. Since later on 2026-09-19 it is YearSwitcher.astro, which also decides
-//   which years to show when there are many.
+//   Every route passes `years` and `currentYear` now, and the switcher renders only when there
+//   are at least two years. Each link goes to the first page of its year under the list's own
+//   address, and the year being shown is highlighted and carries aria-current. Its button
+//   classes are the pagination buttons' classes from list.html, and the highlighted state uses
+//   the year badge's colours, so it matches the theme in both colour schemes. Since later on
+//   2026-09-19 it is YearSwitcher.astro, which also decides which years to show when there are
+//   many, and ListByYear.astro places it and the page buttons around the list.
 // See PAGINATION.md.
 import {
   groupByYear,
@@ -76,10 +77,9 @@ import { formatMonthDay } from "../lib/date";
 import { summary } from "../lib/summary";
 import { urlize, encodeSlug } from "../lib/urlize";
 import { t } from "../i18n/strings";
-// Added later on 2026-09-19: the shared Previous / numbers / Next block and the year switcher,
-// each a component now; see their headers.
-import Pagination from "./Pagination.astro";
-import YearSwitcher from "./YearSwitcher.astro";
+// Added later on 2026-09-19: the year switcher and the page buttons around the list, through
+// one component shared with the tag route; see its header.
+import ListByYear from "./ListByYear.astro";
 
 interface Props {
   /** Hugo's `.Title`: "Posts" for the section, the term title for one category. */
@@ -87,10 +87,12 @@ interface Props {
   // Changed 2026-09-19: one page of the list instead of the whole list (`posts: Post[]`),
   // for pagination; see the note at the top.
   page: ListPage<Post>;
-  /** The year switcher's links; the switcher is shown only when this is given. */
-  years?: YearLink[];
-  /** The year the page shows, highlighted in the year switcher. */
-  currentYear?: string;
+  // Both required since the evening of 2026-09-19: every list is split by year, so every route
+  // passes them (they were optional while only /posts/ had the switcher).
+  /** Every year of the list, newest first, for the year switcher. */
+  years: YearLink[];
+  /** The year the page shows, highlighted in the year switcher; undefined on an empty list. */
+  currentYear: string | undefined;
 }
 
 const { title, page, years, currentYear } = Astro.props;
@@ -101,120 +103,106 @@ const groups = groupByYear(page.items);
   <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
 
   {
-    /* Added 2026-09-19: the year switcher; see the note at the top. Later that day it moved
-    into YearSwitcher.astro, a component of its own with its own rule for many years, as the
-    owner asked; the nav's label stays a literal there because the theme's strings, ported in
-    full to src/i18n/strings.ts, have no key for it. */
-    years && currentYear && (
-      <YearSwitcher years={years} currentYear={currentYear} />
-    )
+    /* Added 2026-09-19: the year switcher above the list and the page buttons below it; see
+    the note at the top. First inline here, then YearSwitcher.astro and Pagination.astro, and
+    since the evening ListByYear.astro, which places both around the list the same way on
+    every list route. The switcher's label stays a literal because the theme's strings, ported
+    in full to src/i18n/strings.ts, have no key for it. */
   }
-
-  <div class="space-y-16">
-    {
-      groups.map((group) => (
-        <div class="relative">
-          {/* Year indicator */}
-          <div class="mb-6 flex items-center">
-            <div class="year-indicator-badge flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
-              {group.year}
+  <ListByYear page={page} years={years} currentYear={currentYear}>
+    <div class="space-y-16">
+      {
+        groups.map((group) => (
+          <div class="relative">
+            {/* Year indicator */}
+            <div class="mb-6 flex items-center">
+              <div class="year-indicator-badge flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
+                {group.year}
+              </div>
+              <div class="ml-4 h-px flex-grow bg-gradient-to-r from-blue-200 to-transparent dark:from-slate-600" />
             </div>
-            <div class="ml-4 h-px flex-grow bg-gradient-to-r from-blue-200 to-transparent dark:from-slate-600" />
-          </div>
 
-          {/* Article list */}
-          <div class="ml-8 space-y-6">
-            {group.posts.map((post) => (
-              <div class="relative">
-                <a
-                  href={`/posts/${post.slug}/`}
-                  class="absolute inset-0 z-10"
-                  aria-label={post.data.title}
-                />
-                <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
-                  <div class="p-5">
-                    <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
-                      <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
-                        {post.data.title}
-                      </h3>
-                      <time class="mt-1 flex flex-shrink-0 items-center text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="mr-1 h-4 w-4 text-gray-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        {formatMonthDay(post.data.date)}
-                      </time>
-                    </div>
-
-                    {summary(post.body) && (
-                      <div class="line-clamp-2 text-sm text-gray-600 dark:text-gray-300">
-                        {summary(post.body)}
-                      </div>
-                    )}
-
-                    {post.data.tags.length > 0 && (
-                      <div class="relative z-20 mt-3 flex flex-wrap gap-2">
-                        {post.data.tags.map((tag: any) => (
-                          <a
-                            href={`/tags/${encodeSlug(urlize(tag))}`}
-                            class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
-                            onclick="event.stopPropagation();"
+            {/* Article list */}
+            <div class="ml-8 space-y-6">
+              {group.posts.map((post) => (
+                <div class="relative">
+                  <a
+                    href={`/posts/${post.slug}/`}
+                    class="absolute inset-0 z-10"
+                    aria-label={post.data.title}
+                  />
+                  <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
+                    <div class="p-5">
+                      <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
+                        <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
+                          {post.data.title}
+                        </h3>
+                        <time class="mt-1 flex flex-shrink-0 items-center text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="mr-1 h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
                           >
-                            {tag}
-                          </a>
-                        ))}
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          {formatMonthDay(post.data.date)}
+                        </time>
                       </div>
-                    )}
 
-                    <div class="mt-4">
-                      <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
-                        {t.list_read_more}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="ml-1 h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3"
-                          />
-                        </svg>
-                      </span>
+                      {summary(post.body) && (
+                        <div class="line-clamp-2 text-sm text-gray-600 dark:text-gray-300">
+                          {summary(post.body)}
+                        </div>
+                      )}
+
+                      {post.data.tags.length > 0 && (
+                        <div class="relative z-20 mt-3 flex flex-wrap gap-2">
+                          {post.data.tags.map((tag: any) => (
+                            <a
+                              href={`/tags/${encodeSlug(urlize(tag))}`}
+                              class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
+                              onclick="event.stopPropagation();"
+                            >
+                              {tag}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      <div class="mt-4">
+                        <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
+                          {t.list_read_more}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="ml-1 h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M14 5l7 7m0 0l-7 7m7-7H3"
+                            />
+                          </svg>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      ))
-    }
-  </div>
-
-  {
-    /* Changed 2026-09-19: list.html's pagination block, ported earlier that day and carried
-    here with its classes verbatim, moved into Pagination.astro so that every list shares one
-    block. See that file for the markup, the arrows (tag.html's chevrons now, the owner's
-    choice, where list.html has text arrows) and the numbers. mt-12 is list.html's margin. */
-  }
-  <Pagination
-    class="mt-12"
-    prevUrl={page.prevUrl}
-    nextUrl={page.nextUrl}
-    numbers={page.numbers}
-  />
+        ))
+      }
+    </div>
+  </ListByYear>
 </div>

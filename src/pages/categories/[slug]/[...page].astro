@@ -12,21 +12,25 @@
 // was src/pages/categories/[slug].astro. As a rest-parameter route it renders page 1 at
 // /categories/<slug>/ and page n at /categories/<slug>/page/<n>/, Hugo's shape. The page
 // links are built from the encoded slug, like every other hand-built link to a term page
-// (see encodeSlug in lib/urlize.ts). No year switcher here: the owner asked for it on /posts/
-// only. See PAGINATION.md.
+// (see encodeSlug in lib/urlize.ts).
+//
+// Changed later on 2026-09-19, asked for by the owner: the list is split by year like /posts/,
+// through the same paginateByYear() - /categories/<slug>/ is the newest year's first page,
+// /categories/<slug>/<year>/ a year, /categories/<slug>/<year>/page/<n>/ a further page of
+// it - and gets the year switcher, which until then was on /posts/ only. See PAGINATION.md.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../../layouts/Base.astro";
 import PostList from "../../../components/PostList.astro";
-import { getTerms, pageParam, paginateList } from "../../../lib/posts";
+import { getTerms, paginateByYear } from "../../../lib/posts";
 import { encodeSlug } from "../../../lib/urlize";
 
 export async function getStaticPaths() {
   const terms = await getTerms("categories");
   return terms.flatMap((term) =>
-    paginateList(term.posts, `/categories/${encodeSlug(term.slug)}/`).map(
-      (page) => ({
-        params: { slug: term.slug, page: pageParam(page.number) },
-        props: { term, page },
+    paginateByYear(term.posts, `/categories/${encodeSlug(term.slug)}/`).map(
+      (entry) => ({
+        params: { slug: term.slug, page: entry.param },
+        props: { term, ...entry },
       }),
     ),
   );
@@ -34,9 +38,9 @@ export async function getStaticPaths() {
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { term, page } = Astro.props;
+const { term, page, years, year } = Astro.props;
 ---
 
 <Base title={term.title}>
-  <PostList title={term.title} page={page} />
+  <PostList title={term.title} page={page} years={years} currentYear={year} />
 </Base>

@@ -23,9 +23,11 @@
 //     shown with its neighbours, an ellipsis for hidden years): exactly the expected entries,
 //     newest first, each year pointing at its list, the year being shown highlighted.
 //
-// It does that for every year of the Posts list, every tag and every category, and also checks
-// that /posts/ shows the newest year, that no year without published posts has a list, that
-// every published post has its page, and that drafts and future posts have none.
+// It does that for every year of every list - the Posts list, every tag and every category are
+// all split by year since the evening of 2026-09-19 - and also checks that each list's own
+// address shows its newest year and highlights it, that no year without published posts has a
+// list under /posts/, that every published post has its page, and that drafts and future posts
+// have none.
 //
 // The rules it mirrors live in src/lib/posts.ts, src/lib/urlize.ts, src/lib/date.ts and the
 // list templates. When one of them changes on purpose, change this script with it; a failure
@@ -332,6 +334,9 @@ function checkList({
   fail,
   years,
   currentYear,
+  // The list's own address, under which the year buttons must point ("/tags/hugo/"); added
+  // when every list got years, it used to be "/posts/" for all.
+  yearBase,
 }) {
   const last = Math.max(1, Math.ceil(expected.length / pageSize));
   const seen = [];
@@ -377,7 +382,7 @@ function checkList({
         );
       if (
         switcher &&
-        switcher.some((s) => !s.gap && s.url !== `/posts/${s.year}/`)
+        switcher.some((s) => !s.gap && s.url !== `${yearBase}${s.year}/`)
       )
         fail(`${where}: a year button points elsewhere`);
       if (
@@ -430,52 +435,59 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
   const years = [...byYear.keys()];
   let pages = 0;
 
-  for (const year of years) {
-    const posts = byYear.get(year);
-    pages += checkList({
-      dist,
-      base: `/posts/${year}/`,
-      expected: posts,
-      pageSize,
-      everyNumberUpTo,
-      everyYearUpTo,
-      label: `year ${year}`,
-      fail,
-      years,
-      currentYear: year,
-    });
-    log(`year ${year}: ${posts.length} posts - checked`);
-  }
-  const home = readPage(dist, "/posts/");
-  if (!home) fail("/posts/ is missing");
-  else if (
-    years.length &&
-    cardsOf(home).join() !==
-      cardsOf(readPage(dist, `/posts/${years[0]}/`) ?? "").join()
-  )
-    fail(`/posts/ does not show the first page of ${years[0]}`);
-  else if (
-    years.length > 1 &&
-    yearSwitcherOf(home)?.find((s) => s.current)?.year !== years[0]
-  )
-    fail(`/posts/ does not highlight ${years[0]}`);
+  // Every list is split by year since the evening of 2026-09-19 (paginateByYear() in
+  // src/lib/posts.ts): the Posts list, every tag and every category. Until then only the
+  // Posts list was, and the tag and category lists were walked across all years. A list is
+  // walked year by year, newest first, and its own address must show the newest year's first
+  // page and highlight that year in the switcher.
+  const checkListByYear = (base, posts, label) => {
+    const byYearHere = groupBy(posts, (p) => [yearOf(p, offsetMinutes)]);
+    const yearsHere = [...byYearHere.keys()];
+    let walked = 0;
+    for (const year of yearsHere) {
+      walked += checkList({
+        dist,
+        base: `${base}${year}/`,
+        expected: byYearHere.get(year),
+        pageSize,
+        everyNumberUpTo,
+        everyYearUpTo,
+        label: `${label} ${year}`,
+        fail,
+        years: yearsHere,
+        currentYear: year,
+        yearBase: base,
+      });
+    }
+    const own = readPage(dist, base);
+    if (!own) fail(`${base} is missing`);
+    else if (
+      yearsHere.length &&
+      cardsOf(own).join() !==
+        cardsOf(readPage(dist, `${base}${yearsHere[0]}/`) ?? "").join()
+    )
+      fail(`${base} does not show the first page of ${yearsHere[0]}`);
+    else if (
+      yearsHere.length > 1 &&
+      yearSwitcherOf(own)?.find((s) => s.current)?.year !== yearsHere[0]
+    )
+      fail(`${base} does not highlight ${yearsHere[0]}`);
+    return walked;
+  };
 
+  pages += checkListByYear("/posts/", published, "year");
+  log(`posts: ${years.length} years - checked`);
   for (const [kind, keysOf] of [
     ["tags", (p) => p.tags],
     ["categories", (p) => p.categories],
   ]) {
     const groups = groupBy(published, keysOf);
     for (const [name, posts] of groups) {
-      const base = `/${kind}/${encodeURIComponent(urlize(name))}/`;
-      pages += checkList({
-        dist,
-        base,
-        expected: posts,
-        pageSize,
-        everyNumberUpTo,
-        label: `${kind} "${name}"`,
-        fail,
-      });
+      pages += checkListByYear(
+        `/${kind}/${encodeURIComponent(urlize(name))}/`,
+        posts,
+        `${kind} "${name}"`,
+      );
     }
     log(`${kind}: ${groups.size} lists - checked`);
   }

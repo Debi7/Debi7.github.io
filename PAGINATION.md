@@ -61,6 +61,8 @@ Two behaviours to know about:
   as `/posts/<newest year>/`. Every year keeps its own addresses, so they do not change when a new year begins.
 - A year that has only drafts gets no pages on the published site.
 - Each page shows the year's badge once, above its posts, as the theme draws it.
+- Since the evening of 2026-09-19 every tag and category page is split the same way, through the same code; see
+  section 5.
 
 Today's pages, with 23 published posts:
 
@@ -87,20 +89,24 @@ Today's pages, with 23 published posts:
 
 ## 5. The tag and category pages
 
-They are not split by year. On 2026-09-19 the owner left that to judgement, and it was judged not worth it:
+Split by year like the Posts list since the evening of 2026-09-19, at the owner's request, through the same code:
+`/tags/<tag>/` is the newest year's first page, `/tags/<tag>/2025/` the first page of 2025 and
+`/tags/<tag>/2025/page/2/` its second page; the same under `/categories/<category>/`. The year switcher under the
+title lists only the years in which that tag or category has posts, and Previous, Next and the page numbers stay
+within the year. The count under a tag's title ("19 articles") stays the total across years. The overview pages
+`/tags/` and `/categories/` list tags and categories, not posts, and are not paginated.
 
-- A tag is a subject, read across time. Of the 16 tags today, 13 have five posts or fewer, and seven of those a single
-  post. Split by year they would give pages of one or two posts under a switcher of three buttons, and more clicks for
-  less. The three large tags (19, 14 and 9 posts) are served well enough by pages of five with numbered links.
-- Nothing links to a category page: the Categories page is an accordion that expands in place and links straight to
-  the posts. Those pages exist only because Hugo generates them.
+The pieces are the same for every list: `paginateByYear()` in `src/lib/posts.ts` gives a route its pages by year, and
+`ListByYear.astro` puts the year switcher above the list and the page buttons below it. The Posts list and the
+category pages render their cards through `PostList.astro`, the tag pages through their own route with `tag.html`'s
+cards; the two kinds of cards were left as they were.
 
-They are paginated across all years, five posts to a page, in the same order and with the same numbered links as the
-Posts list: `/tags/<tag>/`, `/tags/<tag>/page/2/`,
-`/categories/<category>/page/2/`, and so on. There the posts of a page are grouped by year as before; a year that
-continues from one page to the next shows its badge again at the top of the next page. The count under a tag's title
-("16 articles") stays the total for the tag. The overview pages `/tags/` and `/categories/` list tags and categories,
-not posts, and are not paginated.
+Earlier that day the tag and category pages were paginated across all years (`/tags/<tag>/page/2/`), and the
+judgement then was that splitting them was not worth it: of the 16 tags, 13 have five posts or fewer and seven a
+single post, so by year they give pages of one or two posts under a switcher of up to three buttons; and nothing links
+to a category page - the Categories page is an accordion that links straight to the posts. The owner chose the same
+navigation on every list over that, and said it may be rolled back: `git revert` of the commit that added
+`ListByYear.astro` restores the lists across years, nothing later depends on it.
 
 ## 6. Previous, Next and the page numbers
 
@@ -155,6 +161,9 @@ In `src/lib/posts.ts`:
   section 4. Both read their threshold from `pagination` in `src/config.ts`.
 - `src/components/Pagination.astro` renders Previous, the numbers and Next for every list, and
   `src/components/YearSwitcher.astro` the year buttons; both since later on 2026-09-19, see sections 4 and 6.
+- `src/components/ListByYear.astro` places the two around a list - the switcher above, the buttons below - and
+  `paginateByYear(posts, base)` gives a route the pages of a list split by year, its own address included; both from
+  the evening of 2026-09-19, when every list got years (section 5). The three list routes are a few lines each now.
 - `yearLinks(groups)` - the year switcher's buttons.
 
 The list routes are rest-parameter routes, one file per list:
@@ -248,8 +257,11 @@ repository. It needs no dependency. Its header comment lists everything it check
   stress test, plus `/posts/`, the pages of every published post, and the absence of any page for drafts, future posts
   and years without published posts. It reads the page size and the two thresholds of the page numbers and the year
   switcher from `src/config.ts`, and the site's time zone from `src/lib/date.ts`; on every list page it compares the
-  page numbers and the year switcher found with the entries the rules of sections 4 and 6 give, exactly. Measured on
-  the project today: 23 posts, 3 years, 16 tags, 2 categories, 34 list pages - all checks passed.
+  page numbers and the year switcher found with the entries the rules of sections 4 and 6 give, exactly. Every list
+  is walked year by year since the evening of 2026-09-19, and each list's own address is checked to show its newest
+  year. Measured on the project that evening: 23 posts, 3 years, 16 tags, 2 categories, 46 list pages - all checks
+  passed (34 pages while the tag and category lists were across years); the stress test then walked 148 and 591
+  list pages.
 - `npm run check:pages:stress` makes a temporary copy of the project in the system's temporary folder, links its
   `node_modules` instead of copying it, adds the generated posts of the stress test, builds the copy with 5 posts to a
   page and with 1, and checks both builds. When everything passes it removes the copy, the link first, so that
@@ -279,3 +291,5 @@ templates. When one of them changes on purpose, the script has to change with it
   ```
 
 - The `/page/1/` redirect pages, `MIGRATION-PLAN.md` §5.5.
+- Whether the tag and category pages stay split by year (section 5). The owner asked for it on 2026-09-19 and said
+  it may be rolled back after a look; the way back is `git revert` of the commit that added `ListByYear.astro`.

@@ -168,3 +168,19 @@ after it. Before the fix below, `git diff 125643b HEAD -- src/styles/custom.css 
   `rgb(250, 250, 249)` as well - `custom.css` applies `--panel-bg` to the theme's white surfaces, so the buttons
   follow the palette; the highlighted page number keeps its `blue-50`, `rgb(239, 246, 255)`. The white buttons
   measured in section 1.5 were measured before commit `125643b`.
+
+## 4. Every list split by year, through one component
+
+Not a remark from the review: the owner asked for it on 2026-09-19, after section 2, and said it may be rolled back
+after a look. The tag and category pages now have what `/posts/` has - a year switcher under the title and pages of
+five within a year: `/tags/<tag>/` (the newest year), `/tags/<tag>/2025/`, `/tags/<tag>/2025/page/2/`, and the same
+for categories. One `paginateByYear()` in `src/lib/posts.ts` gives all three routes their pages, and one
+`ListByYear.astro` puts the switcher above a list and the page buttons below it; the two kinds of cards (`list.html`'s
+in `PostList.astro`, `tag.html`'s in the tag route) are unchanged. `/tags/<tag>/page/2/`, which existed for a few
+hours, is gone; nothing linked to it. Details and the reasoning in [PAGINATION.md](PAGINATION.md), sections 3, 5 and 7. To roll back: `git revert` of the commit that added `ListByYear.astro`.
+
+Checks: `npm run check` 0 errors, `npm run build` 93 pages (the year addresses of the tags and categories are new),
+`npm run check:pages` 46 list pages walked, all passed; `npm run check:pages:stress` 148 and 591 list pages over 8
+years, all passed; `npm run dev` started once. Against the Hugo route list only the nine `/page/1/` aliases are
+missing, as before. On the built site `/tags/<first tag>/` shows the switcher `2026 2025 2024` and
+`/tags/<first tag>/2024/page/2/` exists.

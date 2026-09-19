@@ -149,13 +149,57 @@ export function paginateList<T>(
 export type YearLink = { year: string; url: string };
 
 // Added 2026-09-19, asked for by the owner: the year switcher above the Posts list. Every year
-// that has posts links to the first page of that year, /posts/<year>/. The groups come from
-// groupByYear(), so the years are newest first.
-export function yearLinks(groups: YearGroup[]): YearLink[] {
+// that has posts links to the first page of that year under `base`, "/posts/2025/" or
+// "/tags/hugo/2025/". The groups come from groupByYear(), so the years are newest first.
+// `base` was added the same evening, when every list got years; it used to be "/posts/".
+export function yearLinks(groups: YearGroup[], base: string): YearLink[] {
   return groups.map((group) => ({
     year: group.year,
-    url: `/posts/${group.year}/`,
+    url: `${base}${group.year}/`,
   }));
+}
+
+/** One page of a list split by year, in the shape getStaticPaths needs; see paginateByYear(). */
+export type YearListPage = {
+  /** The `[...page]` parameter: "2025", "2025/page/2", or undefined for the list's own address. */
+  param: string | undefined;
+  page: ListPage<Post>;
+  years: YearLink[];
+  /** The year shown, e.g. "2025"; undefined only on the own address of a list with no posts. */
+  year: string | undefined;
+};
+
+// Added 2026-09-19 evening, asked for by the owner: one way of splitting a list by year for
+// every list route - /posts/, /tags/<tag>/ and /categories/<category>/. Until then only /posts/
+// was split, and its route held this code. `base` is the list's own address with the slug
+// already encoded, "/tags/hugo/". The result: every year with posts, newest first, cut into
+// pages under `<base><year>/` (page 1 there, page n at `<base><year>/page/<n>/`), and `base`
+// itself, which shows the newest year's first page so that a link to the list always leads
+// somewhere - with no posts at all, one empty page. Every year keeps its own addresses, so they
+// do not change when a new year begins. ListByYear.astro renders one of these pages with the
+// navigation of both levels. To undo the split of the tag and category lists, revert the commit
+// that added this function; the Posts route worked the same way before it.
+export function paginateByYear(posts: Post[], base: string): YearListPage[] {
+  const groups = groupByYear(posts);
+  const years = yearLinks(groups, base);
+  const pages = groups.flatMap((group) =>
+    paginateList(group.posts, `${base}${group.year}/`).map((page) => ({
+      param: pageParam(page.number, group.year),
+      page,
+      years,
+      year: group.year,
+    })),
+  );
+  const newest = pages.at(0);
+  const own: YearListPage = newest
+    ? { ...newest, param: undefined }
+    : {
+        param: undefined,
+        page: paginateList([], base)[0],
+        years,
+        year: undefined,
+      };
+  return [own, ...pages];
 }
 
 /** One entry of the year switcher: a year, or a gap drawn as an ellipsis. */

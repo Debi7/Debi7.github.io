@@ -35,42 +35,46 @@
 //                                 with list.html's buttons and tag.html's arrows (see the
 //                                 note at the block).
 //
-// - This file was src/pages/tags/[slug].astro. As a rest-parameter route it renders page 1 at
-//   /tags/<slug>/ and page n at /tags/<slug>/page/<n>/, Hugo's shape, with the page links built
-//   from the encoded slug like every other hand-built link to a tag.
-// - The year groups are built from `page.items`, the posts of this page. tag.html ranges over
-//   `.Pages`, every post with the tag, so on the Hugo site every page would repeat the whole
-//   list; see the same note in PostList.astro. The count under the title stays the total.
-// - No year switcher: the owner asked for it on /posts/ only.
+// - This file was src/pages/tags/[slug].astro. As a rest-parameter route it renders, since the
+//   evening of 2026-09-19 when the owner asked for every list to be split by year like /posts/:
+//   /tags/<slug>/ (the newest year's first page), /tags/<slug>/<year>/ and
+//   /tags/<slug>/<year>/page/<n>/, from paginateByYear() in lib/posts.ts, with the links built
+//   from the encoded slug like every other hand-built link to a tag. For a few hours that day
+//   it was /tags/<slug>/page/<n>/ across all years.
+// - The year groups are built from `page.items`, the posts of this page - one year now.
+//   tag.html ranges over `.Pages`, every post with the tag, so on the Hugo site every page
+//   would repeat the whole list; see the same note in PostList.astro. The count under the
+//   title stays the total across years.
+// - The year switcher and the page buttons come from ListByYear.astro, the same as on /posts/;
+//   the pagination block that stood here before it (tag.html's, with list.html's buttons since
+//   the reviewer's remark, REVIEW-FIXES.md section 1) is in that component and Pagination.astro.
 // See PAGINATION.md.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../../layouts/Base.astro";
-import {
-  getTerms,
-  groupByYear,
-  pageParam,
-  paginateList,
-} from "../../../lib/posts";
+import { getTerms, groupByYear, paginateByYear } from "../../../lib/posts";
 import { formatMonthDay } from "../../../lib/date";
 import { summary } from "../../../lib/summary";
 import { urlize, encodeSlug } from "../../../lib/urlize";
 import { t } from "../../../i18n/strings";
-// Added later on 2026-09-19: the shared Previous / numbers / Next block; see its header.
-import Pagination from "../../../components/Pagination.astro";
+// Added later on 2026-09-19: the year switcher and the page buttons around the list, through
+// one component shared with PostList.astro; see its header.
+import ListByYear from "../../../components/ListByYear.astro";
 
 export async function getStaticPaths() {
   const terms = await getTerms("tags");
   return terms.flatMap((term) =>
-    paginateList(term.posts, `/tags/${encodeSlug(term.slug)}/`).map((page) => ({
-      params: { slug: term.slug, page: pageParam(page.number) },
-      props: { term, page },
-    })),
+    paginateByYear(term.posts, `/tags/${encodeSlug(term.slug)}/`).map(
+      (entry) => ({
+        params: { slug: term.slug, page: entry.param },
+        props: { term, ...entry },
+      }),
+    ),
   );
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { term, page } = Astro.props;
+const { term, page, years, year } = Astro.props;
 const groups = groupByYear(page.items);
 ---
 
@@ -103,112 +107,105 @@ const groups = groupByYear(page.items);
       </div>
     </div>
 
-    <!-- Posts grouped by year -->
-    <div class="space-y-16">
-      {
-        groups.map((group) => (
-          <div class="relative">
-            {/* Year indicator */}
-            <div class="mb-8 flex items-center">
-              <div class="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-50 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
-                <span class="relative z-10">{group.year}</span>
-                {/* Decorative halo */}
-                <div class="absolute inset-0 rounded-full bg-blue-200 opacity-20 blur-sm dark:bg-slate-600" />
+    {
+      /* Changed 2026-09-19 evening: the list sits inside ListByYear.astro, which puts the year
+      switcher above it and the page buttons below it, as on /posts/. */
+    }
+    <ListByYear page={page} years={years} currentYear={year}>
+      <!-- Posts grouped by year -->
+      <div class="space-y-16">
+        {
+          groups.map((group) => (
+            <div class="relative">
+              {/* Year indicator */}
+              <div class="mb-8 flex items-center">
+                <div class="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-50 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
+                  <span class="relative z-10">{group.year}</span>
+                  {/* Decorative halo */}
+                  <div class="absolute inset-0 rounded-full bg-blue-200 opacity-20 blur-sm dark:bg-slate-600" />
+                </div>
+                <div class="ml-4 h-0.5 flex-grow bg-gradient-to-r from-blue-200 via-blue-100 to-transparent" />
               </div>
-              <div class="ml-4 h-0.5 flex-grow bg-gradient-to-r from-blue-200 via-blue-100 to-transparent" />
-            </div>
 
-            {/* Article list */}
-            <div class="ml-8 space-y-6">
-              {group.posts.map((post) => (
-                <div class="relative">
-                  <a
-                    href={`/posts/${post.slug}/`}
-                    class="absolute inset-0 z-10"
-                    aria-label={post.data.title}
-                  />
-                  <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
-                    <div class="p-5">
-                      <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
-                        <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
-                          {post.data.title}
-                        </h3>
-                        <time class="mt-1 text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
-                          {formatMonthDay(post.data.date)}
-                        </time>
-                      </div>
-
-                      {summary(post.body) && (
-                        <div class="text-sm text-gray-600 dark:text-gray-300">
-                          {summary(post.body)}
+              {/* Article list */}
+              <div class="ml-8 space-y-6">
+                {group.posts.map((post) => (
+                  <div class="relative">
+                    <a
+                      href={`/posts/${post.slug}/`}
+                      class="absolute inset-0 z-10"
+                      aria-label={post.data.title}
+                    />
+                    <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
+                      <div class="p-5">
+                        <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
+                          <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
+                            {post.data.title}
+                          </h3>
+                          <time class="mt-1 text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
+                            {formatMonthDay(post.data.date)}
+                          </time>
                         </div>
-                      )}
 
-                      {post.data.tags.length > 0 && (
-                        <div class="relative z-20 mt-3 flex flex-wrap gap-2">
-                          {post.data.tags.map((tag) => (
-                            /* Hugo's `$isCurrentTag` compares the lower-case front matter
+                        {summary(post.body) && (
+                          <div class="text-sm text-gray-600 dark:text-gray-300">
+                            {summary(post.body)}
+                          </div>
+                        )}
+
+                        {post.data.tags.length > 0 && (
+                          <div class="relative z-20 mt-3 flex flex-wrap gap-2">
+                            {post.data.tags.map((tag) => (
+                              /* Hugo's `$isCurrentTag` compares the lower-case front matter
                             tag with the title-cased page title, so it never matches and the
                             "current tag" styling never appears. The comparison is kept
                             faithful here rather than fixed: making it work would highlight a
                             chip the live site leaves plain. */
-                            <a
-                              href={`/tags/${encodeSlug(urlize(tag))}`}
-                              class:list={[
-                                "tag-chip inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors",
-                                tag === term.title
-                                  ? "bg-blue-100 text-blue-700 dark:bg-slate-800 dark:text-blue-300"
-                                  : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700",
-                              ]}
-                              onclick="event.stopPropagation();"
-                            >
-                              {tag}
-                            </a>
-                          ))}
-                        </div>
-                      )}
+                              <a
+                                href={`/tags/${encodeSlug(urlize(tag))}`}
+                                class:list={[
+                                  "tag-chip inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors",
+                                  tag === term.title
+                                    ? "bg-blue-100 text-blue-700 dark:bg-slate-800 dark:text-blue-300"
+                                    : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700",
+                                ]}
+                                onclick="event.stopPropagation();"
+                              >
+                                {tag}
+                              </a>
+                            ))}
+                          </div>
+                        )}
 
-                      <div class="mt-4">
-                        <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
-                          {t.list_read_more}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="ml-1 h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M14 5l7 7m0 0l-7 7m7-7H3"
-                            />
-                          </svg>
-                        </span>
+                        <div class="mt-4">
+                          <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
+                            {t.list_read_more}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="ml-1 h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"
+                              />
+                            </svg>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))
-      }
-    </div>
-
-    {
-      /* Changed 2026-09-19: tag.html's pagination block, ported earlier that day, moved into
-      Pagination.astro so that every list shares one block; see that file for the markup and
-      for tag.html's original button classes, which the reviewer's remark replaced with
-      list.html's (REVIEW-FIXES.md, section 1). mt-10 is tag.html's margin. */
-    }
-    <Pagination
-      class="mt-10"
-      prevUrl={page.prevUrl}
-      nextUrl={page.nextUrl}
-      numbers={page.numbers}
-    />
+          ))
+        }
+      </div>
+    </ListByYear>
 
     <!-- Navigation links -->
     <div class="mt-8 flex justify-center space-x-8">
