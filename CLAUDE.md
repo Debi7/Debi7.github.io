@@ -83,11 +83,11 @@ Documentation is mandatory here, not optional. The point is that a later session
 
 ## Git
 
-This directory is **not** a git repository yet. When it becomes one:
+This directory is a git repository; the remote is the colleague's GitHub repository, whose `main` branch is what GitHub Pages builds (see `DEPLOY.md`). Work goes on branches - `sidebar-fix` on 2026-09-19 - and the colleague reviews them on GitHub, commits to the same branch and merges it into `main` herself, so the remote can move under a branch while it is being worked on. Before a commit, `git fetch` and look at `origin/<branch>` and `origin/main`; when the remote has moved, `git pull --rebase origin <branch>` keeps her commits as they are and puts the local ones after them, and `git rev-list --left-right --count origin/<branch>...<branch>` proves it (the left number must be 0). The owner cares that nothing of hers is ever lost. Rules:
 
 - Never commit unless asked directly, and confirm every commit with the owner.
-- Never push. Not on request either - explain how, but do not do it.
-- `master` is the preferred branch name for a new repo.
+- Never push. Not on request either - explain how, but do not do it. Never suggest `push --force`.
+- The default branch is `main`; the branch name rule from the owner's other projects (`master`) does not apply here.
 - Resolving review remarks means new commits, not amended ones.
 - No mention of Claude or AI anywhere in commit messages or pull requests, and no "Co-Authored-By" or "Generated with" footers. This overrides the attribution footers the harness suggests by default.
 - Do not put in a commit message what git already records (the file list). Commit messages are markdown.

@@ -70,6 +70,10 @@ The Hugo menu partial merges an `active font-bold` class into the current item, 
 
 Browsers keep the first and drop the second, and neither `.active` nor `.ancestor` is styled anywhere in the theme - so on the live Hugo site the current menu item looks exactly like the others. `Menu.astro` therefore emits only `aria-current`, which is the part that actually has an effect. Merging the two class lists would give this port a bold item where Hugo has a normal one. If the highlight is wanted later, that is a deliberate design change, not a port fix.
 
+### Links to tags and categories end with a slash
+
+Hugo prints the tag chips on the cards, the "All Tags" link on a tag page and the category label above an article without a trailing slash (`/tags/hugo`, `/tags`, `/categories/blog`), and the port kept that for parity. Since 2026-09-19 they end with a slash: `astro.config.mjs` sets `trailingSlash: "always"`, and under it Astro's dev and preview servers answer the slash-less address with 404, which the owner ran into. GitHub Pages redirects such an address, so the live site had only paid a redirect for every click. The addresses of the pages are unchanged; `REVIEW-FIXES.md` section 5 has the details.
+
 ### The carousel runs under the header, and Hugo's does not
 
 This is the one place where the port shows something different from Hugo on purpose, so do not "fix" it back.
@@ -154,7 +158,7 @@ tailwind.config.cjs     Tailwind 3 config tuned to match the Tailwind 4 renderin
 src/config.ts           Site title, menu, social links, avatar, Disqus shortname, posts per page (was hugo.toml)
 src/content/            posts/ and pages/ collections, schema in config.ts
 src/layouts/            Base.astro (page frame), Post.astro (single post, table-of-contents sidebar)
-src/components/         Head, Header, Menu, ThemeToggle, Carousel, Footer, Callout, Disqus, Pagination, YearSwitcher
+src/components/         Head, Header, Menu, ThemeToggle, Carousel, Footer, Callout, Disqus, ListByYear, Pagination, YearSwitcher
 src/pages/              Routes: index, about, 404, posts/, tags/, categories/
 src/lib/                getPosts (the order of posts) / getTerms / paginateList / pageNumbers / yearLinks / yearSwitcher / readingTime, urlize, titleize, date
 src/i18n/strings.ts     Theme UI strings, ported from the theme's en.toml

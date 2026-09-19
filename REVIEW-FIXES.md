@@ -188,7 +188,8 @@ missing, as before. On the built site `/tags/<first tag>/` shows the switcher `2
 ## 5. "All Tags", the tag chips and the category label led to a 404 on the dev server
 
 Reported by the owner on 2026-09-19 evening, with a screenshot: on `npm run dev`, "All Tags" at the foot of a tag
-page opened the 404 page.
+page opened the 404 page. The reviewer then reported the same for the tag chips on the cards of `/posts/2026/`; it is
+the same cause and the same fix.
 
 ### 5.1 The cause
 

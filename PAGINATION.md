@@ -17,6 +17,12 @@ The owner's requests, in the order they came on 2026-09-19:
 - Then: numbered page links; a post dated in the future stays hidden until its date, as on the Hugo site; and the
   Share button must not get an empty text (that fix is described in [POST-SIDEBAR.md](POST-SIDEBAR.md), section 5).
   Whether the tag and category pages should be split by year as well was left to judgement; see section 5.
+- In the evening, while the branch was under review: one style of button on every list (a reviewer's remark, see
+  `REVIEW-FIXES.md`); the page numbers by the owner's rule - every number up to five pages, then only the first, the
+  current and the last with an ellipsis - in one component for every list, with the year switcher as a separate
+  component; then every list split by year, the tag and category pages included, with one component that puts the
+  year switcher above a list and the page buttons below it. The owner said the last change may be rolled back after a
+  look; sections 5 and 11 say how.
 
 ## 2. The order of posts
 
