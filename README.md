@@ -58,7 +58,7 @@ Tailwind 4 did not just re-encode the Tailwind 3 palette in `oklch`, it re-tuned
 
 Two additions since (commit `125643b`, 2026-09-19). The light palette in `custom.css` is no longer the theme's: the page is `#f5f5f4` (Tailwind `stone-100`) and the panels `#fafaf9` (`stone-50`) instead of `gray-50` and white; dark mode is unchanged, and plan §9 records the departure. And `theme.extend.colors` holds three candidate light tints, `bio-mint`, `bio-lavender` and `bio-warm`, that no class uses yet; they were added as a second `colors` key, which JavaScript resolves to the last one, so they had no effect until they were moved into the pinned block. The original lines are kept as a comment there.
 
-### The active menu item is not highlighted
+### The active menu item is highlighted
 
 The Hugo menu partial merges an `active font-bold` class into the current item, but it does so next to a class attribute that is already there, so the rendered link carries **two** `class` attributes:
 
@@ -68,7 +68,7 @@ The Hugo menu partial merges an `active font-bold` class into the current item, 
 >
 ```
 
-Browsers keep the first and drop the second, and neither `.active` nor `.ancestor` is styled anywhere in the theme - so on the live Hugo site the current menu item looks exactly like the others. `Menu.astro` therefore emits only `aria-current`, which is the part that actually has an effect. Merging the two class lists would give this port a bold item where Hugo has a normal one. If the highlight is wanted later, that is a deliberate design change, not a port fix.
+Browsers keep the first and drop the second, and neither `.active` nor `.ancestor` is styled anywhere in the theme - so on the live Hugo site the current menu item looks exactly like the others, and until 2026-09-19 `Menu.astro` emitted only `aria-current` to render the same. That evening the owner asked for the highlight, so the classes are merged into the one attribute now: the current page's entry is bold (`active font-bold`), and the entry of the section the page belongs to is semibold (`ancestor font-semibold`) - what the theme's author wrote and never saw. The weight alone was too subtle to notice, so both also take the colours of the year switcher's highlighted button: `bg-blue-50 text-blue-700`, and `bg-slate-700 text-blue-300` in dark mode. The section match is wider than Hugo's: Posts covers the year pages and the articles, Tags every tag page and Categories every category page, where Hugo marked nothing; Home matches only the home page. The hamburger panel gets the same. Recorded as a design departure in plan §9.
 
 ### Links to tags and categories end with a slash
 

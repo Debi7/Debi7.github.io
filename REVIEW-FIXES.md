@@ -215,3 +215,22 @@ change.
 - In the built site no `href` to `/tags`, `/tags/<tag>` or `/categories/<category>` is left without the slash
   (searched `dist/`), and on the dev server the path tag page -> "All Tags" -> `/tags/` answers 200, as does a tag
   chip and the category label.
+
+## 6. The menu highlights the item of the page being read
+
+Asked for by the owner on 2026-09-19 evening, not a remark from the review. The theme's menu partial meant to mark
+the current page's entry with `active font-bold` and its section's entry with `ancestor font-semibold`, but it emits
+them as a second `class` attribute on the link, which browsers drop - so no item was ever bold on the Hugo site, and
+`Menu.astro` had left the classes out to render the same (`README.md`, "The active menu item is highlighted", has the
+markup). The classes are merged into the one attribute now, in the header row and in the hamburger panel.
+
+The section match is wider than Hugo's: every entry but Home is the ancestor of the pages under its address, so Posts
+is semibold on the year pages and on an article, Tags on a tag page and Categories on a category page, where Hugo
+marked nothing; Home matches only the home page. The theme's weights alone turned out too subtle - the owner did not
+notice them - so the highlighted entry also takes the colours of the year switcher's highlighted button, the site's
+existing "you are here" look: `bg-blue-50 text-blue-700`, and `bg-slate-700 text-blue-300` in dark mode.
+
+Checks: `npm run check` 0 errors, `npm run build` 93 pages, `npm run check:pages` all passed, `npm run dev` started
+once. On the built site every kind of page carries exactly one highlighted entry, the right one: `/`, `/posts/`,
+`/tags/`, `/categories/` and `/about/` their own entry in bold; `/posts/2026/` and an article Posts in semibold;
+`/tags/hugo/` Tags and `/categories/blog/` Categories in semibold. Screenshot of the header on `/posts/2026/` taken.
