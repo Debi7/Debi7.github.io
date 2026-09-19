@@ -164,7 +164,9 @@ Differences from the Hugo template found by comparing the built page with `../kl
 - The reading time was `1 min read`; Hugo prints `0 min read`. Hugo does not clamp the value, and
   `readingTime()` in `src/lib/posts.ts` already ports its formula, so use it instead of `Math.max(1, ...)`.
 - The category link had a trailing slash. Hugo prints `/categories/blog` without one (string concatenation, the same
-  quirk as the tag links on the list pages).
+  quirk as the tag links on the list pages). **Superseded on 2026-09-19 evening:** the slash is back, on this link and
+  on the tag links, because Astro's dev and preview servers answer the slash-less address with 404 and the owner
+  reported it; see `REVIEW-FIXES.md` section 5.
 - The share widget was wrapped in an extra `div` (step 6).
 - The Disqus block was rendered. `hugo.toml` sets no Disqus shortname, so Hugo leaves the `theme-card` div empty and
   loads no script. `DisqusLazy.astro` requested `YOUR_SHORTNAME.disqus.com` instead. Delete
@@ -200,6 +202,8 @@ Replace `src/layouts/ArticleLayout.astro` with:
 // Decisions that look like mistakes but match Hugo:
 // - The category link has no trailing slash (/categories/blog). Hugo concatenates the string,
 //   exactly as for the tag links on the list pages. Do not add the slash.
+//   (Superseded on 2026-09-19 evening: the slash was added after all, because the slash-less
+//   address is a 404 on Astro's dev and preview servers; REVIEW-FIXES.md, section 5.)
 // - The reading time can be 0 ("0 min read"). Hugo does not clamp it.
 // - shareText is cut with slice(0, 120). Hugo's truncate also avoids splitting a word and adds an
 //   ellipsis; the result is identical for every current post, all shorter than 120 characters.

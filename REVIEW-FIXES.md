@@ -184,3 +184,33 @@ Checks: `npm run check` 0 errors, `npm run build` 93 pages (the year addresses o
 years, all passed; `npm run dev` started once. Against the Hugo route list only the nine `/page/1/` aliases are
 missing, as before. On the built site `/tags/<first tag>/` shows the switcher `2026 2025 2024` and
 `/tags/<first tag>/2024/page/2/` exists.
+
+## 5. "All Tags", the tag chips and the category label led to a 404 on the dev server
+
+Reported by the owner on 2026-09-19 evening, with a screenshot: on `npm run dev`, "All Tags" at the foot of a tag
+page opened the 404 page.
+
+### 5.1 The cause
+
+Four kinds of link were built without a trailing slash, exactly as Hugo builds them: "All Tags" (`/tags`, from
+`{{ "tags" | relURL }}`), the tag chips on the cards of the Posts, category and tag pages (`/tags/hugo`, a string
+concatenation in the theme), and the category label above an article (`/categories/blog`). They were kept that way
+on purpose, for parity with the Hugo output; `ARTICLE-PAGE-FIX.md` had even removed a slash from the category link.
+But `astro.config.mjs` sets `trailingSlash: "always"`, and Astro's dev and preview servers answer a slash-less
+address with 404 - measured on both: `/tags` 404 and `/tags/` 200, the same for `/tags/hugo` and `/categories/blog`.
+GitHub Pages redirects `/tags` to `/tags/`, so the live site never showed it; every such click there cost a redirect.
+
+### 5.2 What changed
+
+The four hrefs end with `/` now - `PostList.astro`, the tag route (chips and "All Tags") and `ArticleLayout.astro` -
+which is the address the pages are built at. The comments that explained the missing slash as deliberate were
+rewritten to say why it is there now; `CLAUDE.md`'s list of reproduced quirks and `MIGRATION-PLAN.md` section 9 record
+it, and `ARTICLE-PAGE-FIX.md` carries a note at the place that removed the slash. The addresses of the pages did not
+change.
+
+### 5.3 Checks
+
+- `npm run check` 0 errors, `npm run build` 93 pages, `npm run check:pages` all passed.
+- In the built site no `href` to `/tags`, `/tags/<tag>` or `/categories/<category>` is left without the slash
+  (searched `dist/`), and on the dev server the path tag page -> "All Tags" -> `/tags/` answers 200, as does a tag
+  chip and the category label.

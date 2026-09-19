@@ -32,9 +32,13 @@
 // carries the whole link, while the tag chips sit above it on `z-20` and stop the click from
 // propagating. That is the theme's own construction and it is reproduced as-is.
 //
-// The tag chip hrefs deliberately have NO trailing slash: Hugo builds them by hand as
-// `{{ "/tags/" | relLangURL }}{{ . | urlize }}`, so the live site links to `/tags/hugo`,
-// not `/tags/hugo/`. Adding the slash here would be a silent improvement over the original.
+// The tag chip hrefs had NO trailing slash until the evening of 2026-09-19, because Hugo
+// builds them by hand as `{{ "/tags/" | relLangURL }}{{ . | urlize }}` and the live Hugo site
+// links to `/tags/hugo`, not `/tags/hugo/`. The owner reported it as broken: with
+// `trailingSlash: "always"` Astro's dev and preview servers answer such an address with 404
+// (GitHub Pages redirects it, so nobody saw it live). The chips now link to `/tags/hugo/`, the
+// address the page is built at; the same change was made to the chips of the tag route, its
+// "All Tags" link and the category label in ArticleLayout.astro. REVIEW-FIXES.md, section 5.
 //
 // PAGINATION - changed 2026-09-19, asked for by the owner. This used to read "NOT PORTED":
 // Hugo paginates at 10 posts and the site had two, so Hugo emitted no pagination markup and
@@ -166,7 +170,7 @@ const groups = groupByYear(page.items);
                         <div class="relative z-20 mt-3 flex flex-wrap gap-2">
                           {post.data.tags.map((tag: any) => (
                             <a
-                              href={`/tags/${encodeSlug(urlize(tag))}`}
+                              href={`/tags/${encodeSlug(urlize(tag))}/`}
                               class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
                               onclick="event.stopPropagation();"
                             >
