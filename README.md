@@ -56,6 +56,8 @@ Tailwind 4 did not just re-encode the Tailwind 3 palette in `oklch`, it re-tuned
 
 `theme.extend.colors` in `tailwind.config.cjs` therefore pins the 19 colours that differ to the Hugo values. Because Tailwind 4 tree-shakes its theme, `reference/hugo-main.css` only defines the colours the site uses **today**: when a later step introduces a colour class that is not in that table, re-derive it from the reference stylesheet instead of trusting the Tailwind 3 default. With the table in place all 41 `@apply` rules in `main.css` compile to values identical to the Hugo build.
 
+Two additions since (commit `125643b`, 2026-09-19). The light palette in `custom.css` is no longer the theme's: the page is `#f5f5f4` (Tailwind `stone-100`) and the panels `#fafaf9` (`stone-50`) instead of `gray-50` and white; dark mode is unchanged, and plan §9 records the departure. And `theme.extend.colors` holds three candidate light tints, `bio-mint`, `bio-lavender` and `bio-warm`, that no class uses yet; they were added as a second `colors` key, which JavaScript resolves to the last one, so they had no effect until they were moved into the pinned block. The original lines are kept as a comment there.
+
 ### The active menu item is not highlighted
 
 The Hugo menu partial merges an `active font-bold` class into the current item, but it does so next to a class attribute that is already there, so the rendered link carries **two** `class` attributes:

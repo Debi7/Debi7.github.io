@@ -129,3 +129,42 @@ On the site: `npm run dev`, then `/posts/2024/`, `/posts/2024/page/2/` and the t
 before, the arrows now chevrons on every list. For the ellipsis, on a copy of the project: set `pageSize` to 1 in
 `src/config.ts` and add five posts dated 2019 to 2023, then `npm run build` and `npm run check:pages`; `/posts/2024/`
 then has nine pages and the year switcher eight years.
+
+## 3. The light-theme colours of commit 125643b: brought in unchanged, with one fix
+
+Commit `125643b change light-theme colors` was pushed to `sidebar-fix`, and merged into `main`, on 2026-09-19 while
+the two changes above were being made locally. The local branch was brought up to date with `git pull --rebase`, so
+that commit is in the history exactly as pushed - same hash, same author, same content - and the commits above come
+after it. Before the fix below, `git diff 125643b HEAD -- src/styles/custom.css tailwind.config.cjs` was empty.
+
+### 3.1 What the commit does
+
+- `src/styles/custom.css`: the light palette. The page background goes from `#f9fafb` (the theme's `gray-50`) to
+  `#f5f5f4` (Tailwind `stone-100`), and the panels - the header bar, the post cards, the About card - from white to
+  `#fafaf9` (`stone-50`). The rules in that file apply the two variables with `!important`, so the whole light theme
+  follows. Dark mode is untouched.
+- `tailwind.config.cjs`: three new colours, `bio-mint` `#f2f7f5`, `bio-lavender` `#f4f3f7` and `bio-warm` `#f7f6f3`,
+  written as a second `colors` key inside `theme.extend`.
+
+### 3.2 What was adapted
+
+- The second `colors` key. A JavaScript object literal keeps only the last of two equal keys, and the pinned palette
+  further down in the same `extend` object is the last one, so Tailwind never saw the three colours: loading the file
+  in node listed five colour keys and no `bio-*`. They were moved, unchanged, to the top of the pinned block; the
+  original lines stay where they were, commented out, with a note saying why. Loading the file again lists them, so
+  `bg-bio-mint` and the like now exist. No page uses them yet, so the built CSS is the same as before the move.
+- The comment above the light palette in `custom.css` still said the values were the theme's own defaults. A dated
+  note after the block says they are not any more, and what the theme's were.
+- Documentation: `MIGRATION-PLAN.md` section 9 records the palette as a departure from the Hugo colours, `README.md`
+  (the palette section) and `CLAUDE.md` describe it, so that a later session does not "restore" the theme's grey.
+
+### 3.3 Checks
+
+- `npm run fix`, `npm run check` (0 errors, 0 warnings), `npm run build` (63 pages, no warnings) and
+  `npm run check:pages` (all checks passed) after the change; `npm run dev` started once.
+- Loading `tailwind.config.cjs` in node: before the move 5 colour keys and no `bio-*`; after it 8, the three present.
+- Light mode, measured in headless Edge on `/posts/2024/page/2/` at 1280px: the page background `rgb(245, 245, 244)`,
+  the header bar and a post card `rgb(250, 250, 249)`, and the Previous, Next, page-number and year buttons
+  `rgb(250, 250, 249)` as well - `custom.css` applies `--panel-bg` to the theme's white surfaces, so the buttons
+  follow the palette; the highlighted page number keeps its `blue-50`, `rgb(239, 246, 255)`. The white buttons
+  measured in section 1.5 were measured before commit `125643b`.
