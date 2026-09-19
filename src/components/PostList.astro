@@ -168,7 +168,11 @@ const groups = groupByYear(page.items);
 
                       {post.data.tags.length > 0 && (
                         <div class="relative z-20 mt-3 flex flex-wrap gap-2">
-                          {post.data.tags.map((tag: any) => (
+                          {/* Changed 2026-09-19: the parameter was annotated `any`, which the
+                          house rules forbid and which nothing needed - the collection schema
+                          declares `tags` as string[], so `tag` is inferred as string, as in the
+                          tag route's copy of these chips. */}
+                          {post.data.tags.map((tag) => (
                             <a
                               href={`/tags/${encodeSlug(urlize(tag))}/`}
                               class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
