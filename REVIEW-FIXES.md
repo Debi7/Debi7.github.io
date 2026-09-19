@@ -234,3 +234,20 @@ Checks: `npm run check` 0 errors, `npm run build` 93 pages, `npm run check:pages
 once. On the built site every kind of page carries exactly one highlighted entry, the right one: `/`, `/posts/`,
 `/tags/`, `/categories/` and `/about/` their own entry in bold; `/posts/2026/` and an article Posts in semibold;
 `/tags/hugo/` Tags and `/categories/blog/` Categories in semibold. Screenshot of the header on `/posts/2026/` taken.
+
+## 7. Noticed on the way, not done
+
+Two things seen while the sections above were being worked on. Neither was asked for, so neither was changed; they
+are recorded here so that they are not lost, and this is the place to look before touching them.
+
+- **The 404 page is a placeholder.** `src/pages/404.astro` renders a bare "404" heading and a "Home" link inside the
+  base layout, nothing more: no text, no styling of its own. It has no Hugo source to port - the theme has no
+  `404.html`, so the Hugo site relied on GitHub Pages' own error page - which is why it is not among the
+  `TODO(migration ...)` stubs. Astro builds it as `dist/404.html`, which GitHub Pages serves for any missing address,
+  so it is what a reader sees after a mistyped link or a renamed post. What it needs is a design decision: a short
+  text in the site's language and, probably, the card look of the other pages.
+- **`any` in `Disqus.astro`.** Line 47 reads `(window as any).disqus_config = function (this: any) {...}`; the house
+  rules forbid `any`. The component is the Disqus work described in `DISQUS-FIX.md`, so the change should be agreed
+  with its author. The typed form is a `declare global` block that adds `disqus_config` to `Window` with the shape
+  Disqus documents (`page.url`, `page.identifier`), and `this: { page: { url: string; identifier: string } }` on the
+  function. No behaviour would change.
