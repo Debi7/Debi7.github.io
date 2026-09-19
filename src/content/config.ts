@@ -29,4 +29,16 @@ const pages = defineCollection({
   }),
 });
 
-export const collections = { posts, pages };
+// Добавляем новую коллекцию для видео
+const videos = defineCollection({
+  type: "content",
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    pubDate: z.coerce.date(),
+    videoUrl: z.string(), // Ссылка на YouTube/Vimeo или локальный файл
+    heroImage: z.string().optional(),
+  }),
+});
+
+export const collections = { posts, pages, videos };

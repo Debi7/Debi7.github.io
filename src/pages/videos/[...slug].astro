@@ -1,0 +1,53 @@
+---
+import { type CollectionEntry, getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Header from "../../components/Header.astro";
+import Footer from "../../components/Footer.astro";
+
+export async function getStaticPaths() {
+  const videos = await getCollection("videos");
+  return videos.map((video) => ({
+    params: { slug: video.slug },
+    props: video,
+  }));
+}
+type Props = CollectionEntry<"videos">;
+
+const video = Astro.props;
+const { Content } = await video.render();
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <Base title={video.data.title} description={video.data.description} />
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <Header />
+    <main class="mx-auto max-w-4xl px-4 py-8">
+      <article class="rounded-xl bg-white p-6 shadow-sm md:p-8">
+        <h1 class="mb-4 text-3xl font-bold md:text-4xl">{video.data.title}</h1>
+        <div class="mb-6 text-gray-500"></div>
+
+        {/* Контейнер для адаптивного видео-плеера (Tailwind CSS v3) */}
+        {
+          video.data.videoUrl && (
+            <div class="mb-8 aspect-video w-full overflow-hidden rounded-lg shadow-lg">
+              <iframe
+                src={video.data.videoUrl}
+                class="h-full w-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              />
+            </div>
+          )
+        }
+
+        <div class="prose max-w-none">
+          <Content />
+        </div>
+      </article>
+    </main>
+    <Footer />
+  </body>
+</html>

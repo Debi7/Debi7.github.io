@@ -13,15 +13,9 @@ import { site } from "../config";
 interface Props {
   title?: string;
   description?: string;
-  /**
-   * The rest feed SEO.astro. Only a post sets them; every other page leaves them unset.
-   * Declared 2026-09-16: the page object below already read all six from Astro.props, which
-   * astro check reported as "Property does not exist on type Props". Type-only change.
-   * Merged 2026-09-17: params keeps the PageLike type rather than Record<string, any> from
-   * my-saved-work, because the project does not allow `any` and PageLike is what it feeds.
-   */
   content?: string;
   isArticle?: boolean;
+  isVideo?: boolean;
   publishDate?: Date;
   updatedDate?: Date;
   tags?: string[];
@@ -33,6 +27,7 @@ const {
   description,
   content,
   isArticle,
+  isVideo,
   publishDate,
   updatedDate,
   tags,

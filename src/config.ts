@@ -28,6 +28,7 @@ export const site = {
     { name: "Home", url: "/" },
     { name: "Categories", url: "/categories/" },
     { name: "Posts", url: "/posts/" },
+    { name: "Videos", url: "/videos/" },
     { name: "Tags", url: "/tags/" },
     { name: "About", url: "/about/" },
   ],
