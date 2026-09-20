@@ -25,8 +25,8 @@ export type ListPage<T> = {
   items: T[];
   number: number;
   last: number;
-  prevUrl: string | undefined;
-  nextUrl: string | undefined;
+  prevUrl?: string;
+  nextUrl?: string;
   numbers: PageNumber[];
   numbersCompact: PageNumber[];
 };
@@ -103,6 +103,19 @@ export function yearLinks(groups: YearGroup[]): YearLink[] {
   }));
 }
 
+export type YearGroup = { year: string; videos: Video[] };
+
+export function groupByYear(videos: Video[]): YearGroup[] {
+  const groups: YearGroup[] = [];
+  for (const video of videos) {
+    const year = formatYear(video.data.date);
+    const last = groups[groups.length - 1];
+    if (last && last.year === year) last.videos.push(video);
+    else groups.push({ year, videos: [video] });
+  }
+  return groups;
+}
+
 export type Term = {
   name: string;
   title: string;
@@ -125,19 +138,6 @@ export async function getTerms(kind: "tags" | "categories"): Promise<Term[]> {
       videos,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-export type YearGroup = { year: string; videos: Video[] };
-
-export function groupByYear(videos: Video[]): YearGroup[] {
-  const groups: YearGroup[] = [];
-  for (const video of videos) {
-    const year = formatYear(video.data.date);
-    const last = groups[groups.length - 1];
-    if (last && last.year === year) last.videos.push(video);
-    else groups.push({ year, videos: [video] });
-  }
-  return groups;
 }
 
 export function readingTime(body: string): number {

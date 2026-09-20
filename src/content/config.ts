@@ -1,7 +1,5 @@
 import { defineCollection, z } from "astro:content";
 
-// Mirrors the Hugo front matter (../klub_biolocation/archetypes/posts.md) and the
-// `tags = [":lower"]` front matter rule from hugo.toml. See MIGRATION-PLAN.md §5.1.
 const posts = defineCollection({
   type: "content",
   schema: z.object({
@@ -21,7 +19,6 @@ const posts = defineCollection({
   }),
 });
 
-// Stand-alone pages with a dedicated route (about.md -> src/pages/about.astro).
 const pages = defineCollection({
   type: "content",
   schema: z.object({
@@ -29,14 +26,22 @@ const pages = defineCollection({
   }),
 });
 
-// Добавляем новую коллекцию для видео
 const videos = defineCollection({
   type: "content",
   schema: z.object({
     title: z.string(),
-    description: z.string(),
-    pubDate: z.coerce.date(),
-    videoUrl: z.string(), // Ссылка на YouTube/Vimeo или локальный файл
+    date: z.coerce.date(),
+    draft: z.boolean().default(false),
+    description: z.string().default(""),
+    tags: z
+      .array(z.string())
+      .default([])
+      .transform((tags) => tags.map((t) => t.toLowerCase())),
+    categories: z.array(z.string()).default([]),
+    youtubeId: z.string().optional(),
+    videoUrl: z.string().optional(),
+    thumbnail: z.string().optional(),
+    duration: z.string().optional(),
     heroImage: z.string().optional(),
   }),
 });
