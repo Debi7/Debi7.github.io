@@ -25,10 +25,9 @@
 
 /* Dark theme palette. Hugo puts class="dark" on the <html> element when the
    visitor switches the theme with the sun/moon button in the header.
-
    Currently set to dark blue. The theme's own defaults are kept commented out
    inside the block: to go back, comment the two active lines and uncomment the
-   two below them. */
+   two below them.*/
 html.dark {
   --page-bg: #0b1e3d;
   --panel-bg: #12294f;
