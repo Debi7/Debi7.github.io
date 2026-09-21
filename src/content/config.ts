@@ -26,7 +26,7 @@ const pages = defineCollection({
   }),
 });
 
-const videos = defineCollection({
+const video = defineCollection({
   type: "content",
   schema: z.object({
     title: z.string(),
@@ -38,12 +38,13 @@ const videos = defineCollection({
       .default([])
       .transform((tags) => tags.map((t) => t.toLowerCase())),
     categories: z.array(z.string()).default([]),
-    youtubeId: z.string().optional(),
+    videoId: z.string().optional(),
     videoUrl: z.string().optional(),
     thumbnail: z.string().optional(),
     duration: z.string().optional(),
     heroImage: z.string().optional(),
+    videoPlatform: z.string().default("youtube"), // youtube, vk, rutube и т.д.
   }),
 });
 
-export const collections = { posts, pages, videos };
+export const collections = { posts, pages, video };

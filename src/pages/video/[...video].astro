@@ -1,0 +1,49 @@
+---
+import type { InferGetStaticPropsType } from "astro";
+import Base from "../../layouts/Base.astro";
+import PostList from "../../components/PostList.astro";
+import {
+  getPosts,
+  groupByYear,
+  pageParam,
+  paginateList,
+  yearLinks,
+} from "../../lib/posts";
+
+import { getCollection } from "astro:content";
+const videos = await getCollection("video");
+
+const title = "Video";
+
+export async function getStaticPaths() {
+  const groups = groupByYear(await getPosts());
+  const years = yearLinks(groups);
+  const yearPages = groups.flatMap((group) =>
+    paginateList(group.posts, `/video/${group.year}/`).map((page) => ({
+      params: { page: pageParam(page.number, group.year) },
+      props: { page, years, year: group.year },
+    })),
+  );
+
+  const newest = yearPages.at(0);
+  const home = newest
+    ? { params: { page: undefined }, props: newest.props }
+    : {
+        params: { page: undefined },
+        props: {
+          page: paginateList([], "/video/")[0],
+          years,
+          year: undefined,
+        },
+      };
+  return [home, ...yearPages];
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { page, years, year } = Astro.props;
+---
+
+<Base title={title}>
+  <PostList title={title} page={page} years={years} currentYear={year} />
+</Base>

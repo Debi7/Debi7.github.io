@@ -1,0 +1,48 @@
+---
+import type { InferGetStaticPropsType } from "astro";
+import Post from "../../layouts/Post.astro";
+import { getPosts } from "../../lib/posts";
+import Disqus from "../../components/Disqus.astro";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { slug: post.slug },
+    props: { post, next: posts[i - 1] ?? null, prev: posts[i + 1] ?? null },
+  }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { post, prev, next } = Astro.props;
+const { Content, headings } = await post.render();
+
+const postUrl = new URL(`/video/${post.slug}/`, Astro.site).toString();
+const postIdentifier = post.slug;
+---
+
+<Post post={post} headings={headings} prev={prev} next={next}>
+  {
+    /* тут можно закрыть доступ к конкретным лекциям: если пользователь не оплатил, вместо iframe от YouTube будет показываться красивая заглушка «Купить курс за ХХХ рублей», а если оплатил — будет рендериться сам плеер */
+  }
+  <div class="video-wrapper mb-8">
+    <iframe
+      class="aspect-video w-full rounded-xl shadow-lg"
+      src={`https://youtube.com{post.data.videoId}`}
+      title={post.data.title}
+      allowfullscreen></iframe>
+  </div>
+
+  <Content />
+  <hr class="my-8 border-gray-200" />
+
+  <div id="disqus_loader_container" class="my-6 flex flex-col items-center">
+    <button
+      id="toggle-disqus-btn"
+      class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
+    >
+      Показать комментарии
+    </button>
+  </div>
+  <Disqus url={postUrl} identifier={postIdentifier} />
+</Post>
