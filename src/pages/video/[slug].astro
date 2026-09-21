@@ -1,27 +1,31 @@
 ---
 import type { InferGetStaticPropsType } from "astro";
-import Post from "../../layouts/Post.astro";
-import { getPosts } from "../../lib/posts";
+import Video from "../../layouts/Post.astro";
+import { getVideo } from "../../lib/video";
 import Disqus from "../../components/Disqus.astro";
 
 export async function getStaticPaths() {
-  const posts = await getPosts();
-  return posts.map((post, i) => ({
-    params: { slug: post.slug },
-    props: { post, next: posts[i - 1] ?? null, prev: posts[i + 1] ?? null },
+  const videoArr = await getVideo();
+  return videoArr.map((videoItem, i) => ({
+    params: { slug: videoItem.slug },
+    props: {
+      videoItem,
+      next: videoArr[i - 1] ?? null,
+      prev: videoArr[i + 1] ?? null,
+    },
   }));
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { post, prev, next } = Astro.props;
-const { Content, headings } = await post.render();
+const { videoItem, prev, next } = Astro.props;
+const { Content, headings } = await videoItem.render();
 
-const postUrl = new URL(`/video/${post.slug}/`, Astro.site).toString();
-const postIdentifier = post.slug;
+const videoUrl = new URL(`/video/${videoItem.slug}/`, Astro.site).toString();
+const videoId = videoItem.slug;
 ---
 
-<Post post={post} headings={headings} prev={prev} next={next}>
+<Video post={videoItem} headings={headings} prev={prev} next={next}>
   {
     /* тут можно закрыть доступ к конкретным лекциям: если пользователь не оплатил, вместо iframe от YouTube будет показываться красивая заглушка «Купить курс за ХХХ рублей», а если оплатил — будет рендериться сам плеер */
   }
@@ -29,8 +33,10 @@ const postIdentifier = post.slug;
     <iframe
       class="aspect-video w-full rounded-xl shadow-lg"
       src={`https://youtube.com{post.data.videoId}`}
-      title={post.data.title}
-      allowfullscreen></iframe>
+      title={videoItem.data.title}
+      allowfullscreen
+    >
+    </iframe>
   </div>
 
   <Content />
@@ -44,5 +50,5 @@ const postIdentifier = post.slug;
       Показать комментарии
     </button>
   </div>
-  <Disqus url={postUrl} identifier={postIdentifier} />
-</Post>
+  <Disqus url={videoUrl} identifier={videoId} />
+</Video>

@@ -1,9 +1,9 @@
 ---
-title: "Введение в биолокацию и работу с маятником"
-description: "На этом видео-уроке мы разберем базовые понятия биоэнергетики, научимся калибровать маятник и делать первые замеры."
-date: "2026-09-19"
+title: "Лекция первая"
+description: "На этом видео-уроке мы разберем..."
+date: "2026-08-17"
 videoUrl: "https://youtube.com"
-videoId: "dQww4w9WgXcQ"
+videoId: "dQw4wgXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "биолокация", "маятник", "новичкам"]
 categories: ["education video"]

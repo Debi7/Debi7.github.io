@@ -3,12 +3,12 @@ import Base from "./Base.astro";
 import ArticleLayout from "./ArticleLayout.astro";
 import type { MarkdownHeading } from "astro";
 import type { Post } from "../lib/posts";
-
+import type { Video } from "../lib/video";
 interface Props {
-  post: Post;
+  post: Post | Video;
   headings: MarkdownHeading[];
-  prev: Post | null;
-  next: Post | null;
+  prev: Post | Video | null;
+  next: Post | Video | null;
 }
 
 const { post, headings, prev, next } = Astro.props;

@@ -4,10 +4,11 @@
 // function" the moment the component rendered.
 import { t } from "../i18n/strings";
 import type { Post } from "../lib/posts";
+import type { Video } from "../lib/video";
 
 interface Props {
-  prev: Post | null;
-  next: Post | null;
+  prev: Post | Video | null;
+  next: Post | Video | null;
 }
 
 const { prev, next } = Astro.props;

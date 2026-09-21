@@ -1,25 +1,25 @@
 ---
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../layouts/Base.astro";
-import PostList from "../../components/PostList.astro";
+import VideoList from "../../components/VideoList.astro";
 import {
-  getPosts,
+  getVideo,
   groupByYear,
   pageParam,
   paginateList,
   yearLinks,
-} from "../../lib/posts";
+} from "../../lib/video";
 
 import { getCollection } from "astro:content";
-const videos = await getCollection("video");
+const video = await getCollection("video");
 
 const title = "Video";
 
 export async function getStaticPaths() {
-  const groups = groupByYear(await getPosts());
+  const groups = groupByYear(await getVideo());
   const years = yearLinks(groups);
   const yearPages = groups.flatMap((group) =>
-    paginateList(group.posts, `/video/${group.year}/`).map((page) => ({
+    paginateList(group.videoArr, `/video/${group.year}/`).map((page) => ({
       params: { page: pageParam(page.number, group.year) },
       props: { page, years, year: group.year },
     })),
@@ -45,5 +45,5 @@ const { page, years, year } = Astro.props;
 ---
 
 <Base title={title}>
-  <PostList title={title} page={page} years={years} currentYear={year} />
+  <VideoList title={title} page={page} years={years} currentYear={year} />
 </Base>

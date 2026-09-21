@@ -7,14 +7,16 @@ import { site } from "../config";
 import { t } from "../i18n/strings";
 import { formatDateTime, formatIsoDate } from "../lib/date";
 import { readingTime, type Post } from "../lib/posts";
+import { type Video } from "../lib/video";
+
 import { encodeSlug, urlize } from "../lib/urlize";
 import type { MarkdownHeading } from "astro";
 
 interface Props {
-  entry: Post;
+  entry: Post | Video;
   headings: MarkdownHeading[];
-  prev: Post | null;
-  next: Post | null;
+  prev: Post | Video | null;
+  next: Post | Video | null;
 }
 
 const { entry, headings, prev, next } = Astro.props;
