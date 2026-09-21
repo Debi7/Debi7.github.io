@@ -29,8 +29,11 @@
    inside the block: to go back, comment the two active lines and uncomment the
    two below them.*/
 html.dark {
-  --page-bg: #0b1e3d;
-  --panel-bg: #12294f;
+  /* --page-bg: #0b1e3d;
+  --panel-bg: #12294f; */
+
+  --page-bg: #071429;
+  --panel-bg: #11213b;
 
   /* Previous values (void theme defaults, near-black navy):
   --page-bg: #0b1220;
