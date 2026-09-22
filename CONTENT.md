@@ -304,6 +304,18 @@ What it searches, in order of weight: the title, the tags, the description or su
 entry. A word found in the title counts for more than the same word in the text, and the text counts once however
 often the word appears, so a long article cannot outrank a page that is really about the subject.
 
+**The search starts at the third character.** One or two letters match almost everything on the site, so until there
+are three the page says so and leaves the list alone. The filters on the left work at any time, with or without
+anything typed.
+
+**A result may be found by its tag.** The search looks in the tags as well as in the title and the text, so a lecture
+whose text says nothing about pendulums still answers a search for one when it is tagged `маятник`. When that is why
+an entry is in the list, the card says "Found in tags:" and names them, so a result is never there for a reason you
+cannot see.
+
+**The whole card is a link.** Clicking anywhere on a result opens the entry; the tags printed on it are text, not
+links.
+
 ### What to add so it appears in the filters
 
 Nothing is registered anywhere, and there is no list of filters to edit. The three lists are built from the entries

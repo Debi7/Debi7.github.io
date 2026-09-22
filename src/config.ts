@@ -39,6 +39,14 @@ export const site = {
   // the menu item of that name.
   searchSections: { posts: "Posts", video: "Video" },
 
+  // Added 2026-09-22 after the reviewer asked for it: how many characters have to be typed before
+  // /search/ looks anything up. One or two letters match almost every entry on the site, so the
+  // page used to redraw the whole list on the first keystroke and show a result count that meant
+  // nothing. Below this length the text is ignored - the filters on the left still work, and the
+  // status line says what is missing. Both the script and the wording of that line read this, so
+  // the number is written once.
+  search: { minQuery: 3 },
+
   // Added 2026-09-22 with the tag cloud under the carousel (src/components/TagCloud.astro): the
   // tags that cloud leaves out. These three are leftovers from the skeleton's test posts and say
   // nothing to a reader. "video" is deliberately not among them - the owner keeps it in the cloud

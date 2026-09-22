@@ -115,12 +115,26 @@ const isPanel = variant === "panel";
     </nav>
   ) : (
     <nav class="hidden w-full justify-end whitespace-nowrap sm:flex">
-      <ul class="flex list-none flex-row items-center space-x-1 py-2 lg:space-x-6">
+      {/* Changed 2026-09-22, the reviewer's remark that the items stand too far apart and the
+        owner's instruction to halve it: from 1024px the gap was Hugo's space-x-6 (24px) and is
+        space-x-3 (12px) now, and the links below lost lg:px-3 (12px a side) for the px-1.5 (6px)
+        they already carry under that width. Five gaps and six links, so the row is about 132px
+        narrower at desktop widths. That is a visible departure from Hugo, which is why it is in
+        MIGRATION-PLAN.md section 9.
+
+        The band from 640px to 1024px is deliberately left as it was, space-x-1 and px-1.5: those
+        values are not a choice but the result of fitting six items, the title, the logo and the
+        theme switch into one row, and halving 4px gives words that touch. */}
+      <ul class="flex list-none flex-row items-center space-x-1 py-2 lg:space-x-3">
         {site.menu.map((item) => (
           <li class="text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg">
             <a
               class:list={[
-                "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 lg:px-3 lg:py-2",
+                // lg:px-3 dropped 2026-09-22 with the gap above: half of it is the px-1.5 this
+                // line already sets, so the padding is now one value at every width. lg:py-2
+                // stays - the reviewer measured the horizontal distance, and the height of the
+                // bar is what decides where the carousel meets the header.
+                "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 lg:py-2",
                 ...currentClasses(ariaCurrent(item.url)),
               ]}
               aria-current={ariaCurrent(item.url)}

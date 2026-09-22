@@ -281,6 +281,12 @@ How it matches, so that a change to the ranking is a decision rather than a gues
 - Results are sorted by score, then by the site's own order, which the index is already in.
 - The snippet is a window of the body around the first match, and the matched words are wrapped in `<mark>` - by building text nodes, never `innerHTML`, because the index carries whatever an author wrote.
 
+Three things changed on 2026-09-22 after the reviewer read the page, and each is a decision worth keeping:
+
+- **It waits for the third character.** `site.search.minQuery` is 3, and below it the text is not looked up at all - the filters still are, and the status line says what is missing. One Russian letter matches nearly every entry on the site, so the first keystroke used to redraw the whole list and report "42 result(s) for м", which answers nothing and hides the list the reader was looking at. The number is in the config because the page prints it in that line and the script obeys it; two copies of it would drift.
+- **A result says why it is in the list.** The reviewer searched "мая", got "Лекция шестая" and could find no such word on the card - it matched on the tag `маятник`, which is searched at weight 4 and was printed nowhere. A result whose query was found in its tags now carries a line naming them, with the matched part marked like everything else. It made a correct filter look like a list that was merely sorted, which is the worst kind of bug: the code was right and the page was silent.
+- **The whole card answers a click**, not only its title, through the stretched anchor the site already uses for a card in a list. It is `aria-hidden` and skipped by the Tab key, because the title beside it leads to the same place. The tags on the card are text and not links - the owner decided a result should have one destination.
+
 **Adding a third kind of entry**, should the site ever grow one, touches five places and no more - the search was built so that this list is short:
 
 1. A collection in `src/content/config.ts` (`defineCollection()` with its schema, exported in the `collections` object - Astro 4, "Content Collections").
