@@ -11,6 +11,13 @@ import { summary } from "../../lib/summary";
 import { site } from "../../config";
 import { t } from "../../i18n/strings";
 
+// The same rolling window as the posts feed, and for the same reasons - see the note next to
+// feedLength in src/pages/rss.xml.ts. The number is repeated rather than shared: the two feeds are
+// separate subscriptions, and either one may want a different depth later without disturbing the
+// other. There are ten lectures today, so this limit does nothing yet; it is here so that the two
+// files behave alike when the collection grows.
+const feedLength = 20;
+
 export async function GET(context: APIContext) {
   const videos = await getVideos();
 
@@ -20,7 +27,7 @@ export async function GET(context: APIContext) {
     title: `${site.title} - Video`,
     description: t.list_watch_video,
     site: context.site ?? site.title,
-    items: videos.map((video) => ({
+    items: videos.slice(0, feedLength).map((video) => ({
       title: video.data.title,
       pubDate: video.data.date,
       description: video.data.description || summary(video.body),

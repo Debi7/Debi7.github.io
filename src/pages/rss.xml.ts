@@ -16,6 +16,14 @@ import { getPosts, postUrl } from "../lib/posts";
 import { summary } from "../lib/summary";
 import { site } from "../config";
 
+// Added 2026-09-22 at the owner's request: the feed carries the newest 20 entries, not the whole
+// archive. A feed is a rolling window rather than a catalogue - a reader keeps every item it has
+// already fetched, so an entry falling off the end of the file does not disappear for anyone who
+// was subscribed; only a new subscriber sees less history. 20 is the conventional size and the one
+// most generators default to. The site itself remains the complete archive, and the sitemap lists
+// all of it.
+const feedLength = 20;
+
 export async function GET(context: APIContext) {
   // getPosts() applies the site's one publication rule - no drafts, nothing dated in the future,
   // newest first - so the feed can never show what the site does not (lib/lists.ts, published()).
@@ -29,7 +37,9 @@ export async function GET(context: APIContext) {
     // context.site is the `site` value from astro.config.mjs. It is what makes every link below
     // absolute, and the reason this file takes the context instead of importing the config.
     site: context.site ?? site.title,
-    items: posts.map((post) => ({
+    // slice() and not a filter: getPosts() returns the newest first, so the window is the head of
+    // that list.
+    items: posts.slice(0, feedLength).map((post) => ({
       title: post.data.title,
       pubDate: post.data.date,
       // The same summary the list cards show (lib/summary.ts), so a reader sees in the feed what
