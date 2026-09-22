@@ -124,7 +124,14 @@ const isPanel = variant === "panel";
 
         The band from 640px to 1024px is deliberately left as it was, space-x-1 and px-1.5: those
         values are not a choice but the result of fitting six items, the title, the logo and the
-        theme switch into one row, and halving 4px gives words that touch. */}
+        theme switch into one row, and halving 4px gives words that touch.
+
+        Worth recording, because the history looks odd otherwise: the reviewer made the same
+        change on main the same evening (commit 1bf0269, "Menu spacing"), lg:space-x-6 to
+        lg:space-x-3, the identical value arrived at independently. Merging main into this branch
+        conflicted on this block alone - the class itself merged cleanly because both sides had
+        written the same thing - and the resolution kept this version, which is hers plus the
+        padding on the links and this note. Nothing of hers was dropped. */}
       <ul class="flex list-none flex-row items-center space-x-1 py-2 lg:space-x-3">
         {site.menu.map((item) => (
           <li class="text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg">
