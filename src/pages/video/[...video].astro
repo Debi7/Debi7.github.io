@@ -1,52 +1,36 @@
 ---
-// The Video list: /video/, /video/<year>/ and /video/<year>/page/<n>/, the same shape as
-// the Posts list in posts/[...page].astro, fed by the `video` collection through
-// src/lib/video.ts and rendered by VideoList.astro.
+// The Video menu item: /video/, /video/<year>/ and /video/<year>/page/<n>/, the colleague's
+// section of 2026-09-20 to 2026-09-22 (VIDEO-PAGE.md). The list is the Posts list's: the same
+// paginateByYear() in lib/lists.ts and the same CardList.astro, over Cards this route builds
+// from the videos with videoCard() in lib/video.ts - so the list code knows no collection, and
+// what differs, the card's address and its last line, is inside the card. Until 2026-09-22
+// the route had its own copies of the list code, a lib/video.ts of that shape and
+// VideoList.astro; see VIDEO-PAGE.md, section 4. The title is a literal, like "Posts" in
+// posts/[...page].astro.
 //
-// Fixed on 2026-09-22 (VIDEO-PAGE.md, section 2): the rest parameter of this route is named
-// `video`, after the file, but getStaticPaths returned `params: { page: ... }`, copied from
-// the Posts route. Astro ignores a param the route does not declare, so every entry mapped
-// to /video/, the last one written - the oldest year - was what that page showed, and no
-// year page existed. The keys read `video` now.
+// The rest parameter of this route is named `video`, after the file. Fixed on 2026-09-22
+// (VIDEO-PAGE.md, section 2): getStaticPaths() used to return `params: { page }`, copied from
+// the Posts route; Astro ignores a param the route does not declare, so every entry mapped to
+// /video/, the last one written - the oldest year - was what that page showed, and no year
+// page existed.
+//
+// The single videos are in ./[slug].astro, which also matches one segment after /video/; as
+// with the posts, no video's file name may be a year.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../layouts/Base.astro";
-import VideoList from "../../components/VideoList.astro";
-import {
-  getVideo,
-  groupByYear,
-  pageParam,
-  paginateList,
-  yearLinks,
-} from "../../lib/video";
-
-import { getCollection } from "astro:content";
-const video = await getCollection("video");
+import CardList from "../../components/CardList.astro";
+import { getVideos, videoCard } from "../../lib/video";
+import { paginateByYear } from "../../lib/lists";
 
 const title = "Video";
 
 export async function getStaticPaths() {
-  const groups = groupByYear(await getVideo());
-  const years = yearLinks(groups);
-  const yearPages = groups.flatMap((group) =>
-    paginateList(group.videoArr, `/video/${group.year}/`).map((page) => ({
-      // `video`, not `page`: the name of this route's rest parameter (see the note above).
-      params: { video: pageParam(page.number, group.year) },
-      props: { page, years, year: group.year },
-    })),
+  return paginateByYear((await getVideos()).map(videoCard), "/video/").map(
+    (entry) => ({
+      params: { video: entry.param },
+      props: entry,
+    }),
   );
-
-  const newest = yearPages.at(0);
-  const home = newest
-    ? { params: { video: undefined }, props: newest.props }
-    : {
-        params: { video: undefined },
-        props: {
-          page: paginateList([], "/video/")[0],
-          years,
-          year: undefined,
-        },
-      };
-  return [home, ...yearPages];
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
@@ -55,5 +39,5 @@ const { page, years, year } = Astro.props;
 ---
 
 <Base title={title}>
-  <VideoList title={title} page={page} years={years} currentYear={year} />
+  <CardList title={title} page={page} years={years} currentYear={year} />
 </Base>

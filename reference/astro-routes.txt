@@ -90,3 +90,17 @@
 /tags/энергетика-человека/2026/
 /tags/энергополе/
 /tags/энергополе/2026/
+/video/
+/video/2024/
+/video/2025/
+/video/2026/
+/video/my-first-video/
+/video/video-1/
+/video/video-2/
+/video/video-3/
+/video/video-4/
+/video/video-5/
+/video/video-6/
+/video/video-7/
+/video/video-8/
+/video/video-9/

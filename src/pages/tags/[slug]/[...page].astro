@@ -4,7 +4,7 @@
 // Class attributes are copied verbatim, with one exception: the pagination block at the foot is
 // the shared components/Pagination.astro, with list.html's buttons - see PAGINATION, below.
 //
-// This looks like PostList.astro but is deliberately NOT it: tag.html has its own year badge
+// This looks like CardList.astro but is deliberately NOT it: tag.html has its own year badge
 // (with a decorative halo and a thicker rule), a date cell without the calendar icon, a
 // summary without `line-clamp-2`, pill-shaped tag chips that highlight the current tag, and
 // two navigation links at the foot. Sharing a component would mean parameterising all of
@@ -26,10 +26,10 @@
 //                                 the evening of 2026-09-19 it is "/tags/": the slash-less
 //                                 address is a 404 on Astro's dev and preview servers, the
 //                                 owner reported it, and the tag chips below got their slash
-//                                 with it. See the note in PostList.astro.
+//                                 with it. See the note in CardList.astro.
 //
 // PAGINATION - changed 2026-09-19, asked for by the owner. This used to read "NOT PORTED",
-// for the same reason as in PostList.astro: Hugo emitted nothing for it until a tag had more
+// for the same reason as in CardList.astro: Hugo emitted nothing for it until a tag had more
 // than ten posts. The owner has since asked for pages of 5 posts:
 //
 //   .Paginator.HasPrev / .HasNext / .Prev.URL / .Next.URL
@@ -47,7 +47,7 @@
 //   it was /tags/<slug>/page/<n>/ across all years.
 // - The year groups are built from `page.items`, the posts of this page - one year now.
 //   tag.html ranges over `.Pages`, every post with the tag, so on the Hugo site every page
-//   would repeat the whole list; see the same note in PostList.astro. The count under the
+//   would repeat the whole list; see the same note in CardList.astro. The count under the
 //   title stays the total across years.
 // - The year switcher and the page buttons come from ListByYear.astro, the same as on /posts/;
 //   the pagination block that stood here before it (tag.html's, with list.html's buttons since
@@ -55,24 +55,28 @@
 // See PAGINATION.md.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../../layouts/Base.astro";
-import { getTerms, groupByYear, paginateByYear } from "../../../lib/posts";
+// Changed 2026-09-22 (VIDEO-PAGE.md, section 4): the cards of a page are Cards, plain data
+// built with postCard(), and the split by year comes from lib/lists.ts, shared with the Video
+// list; until then the page held the posts themselves and this file read their fields.
+import { getTerms, postCard } from "../../../lib/posts";
+import { groupByYear, paginateByYear } from "../../../lib/lists";
 import { formatMonthDay } from "../../../lib/date";
-import { summary } from "../../../lib/summary";
 import { urlize, encodeSlug } from "../../../lib/urlize";
 import { t } from "../../../i18n/strings";
 // Added later on 2026-09-19: the year switcher and the page buttons around the list, through
-// one component shared with PostList.astro; see its header.
+// one component shared with CardList.astro; see its header.
 import ListByYear from "../../../components/ListByYear.astro";
 
 export async function getStaticPaths() {
   const terms = await getTerms("tags");
   return terms.flatMap((term) =>
-    paginateByYear(term.posts, `/tags/${encodeSlug(term.slug)}/`).map(
-      (entry) => ({
-        params: { slug: term.slug, page: entry.param },
-        props: { term, ...entry },
-      }),
-    ),
+    paginateByYear(
+      term.posts.map(postCard),
+      `/tags/${encodeSlug(term.slug)}/`,
+    ).map((entry) => ({
+      params: { slug: term.slug, page: entry.param },
+      props: { term, ...entry },
+    })),
   );
 }
 
@@ -138,39 +142,41 @@ const groups = groupByYear(page.items);
               the class is what it was, so nothing changes on a laptop. Hugo renders the indent at
               every width. */}
               <div class="space-y-6 sm:ml-8">
-                {group.posts.map((post) => (
+                {/* Cards since 2026-09-22 (was `group.posts`, the posts themselves): url,
+                title, date, summary, tags and the last line come ready from postCard(). */}
+                {group.items.map((card) => (
                   <div class="relative">
                     <a
-                      href={`/posts/${post.slug}/`}
+                      href={card.url}
                       class="absolute inset-0 z-10"
-                      aria-label={post.data.title}
+                      aria-label={card.title}
                     />
                     <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
                       <div class="p-5">
                         <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
                           <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
-                            {post.data.title}
+                            {card.title}
                           </h3>
                           <time class="mt-1 text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
-                            {formatMonthDay(post.data.date)}
+                            {formatMonthDay(card.date)}
                           </time>
                         </div>
 
-                        {summary(post.body) && (
+                        {card.summary && (
                           <div class="text-sm text-gray-600 dark:text-gray-300">
-                            {summary(post.body)}
+                            {card.summary}
                           </div>
                         )}
 
-                        {post.data.tags.length > 0 && (
+                        {card.tags.length > 0 && (
                           <div class="relative z-20 mt-3 flex flex-wrap gap-2">
-                            {post.data.tags.map((tag) => (
+                            {card.tags.map((tag) => (
                               /* Hugo's `$isCurrentTag` compares the lower-case front matter
                             tag with the title-cased page title, so it never matches and the
                             "current tag" styling never appears. The comparison is kept
                             faithful here rather than fixed: making it work would highlight a
                             chip the live site leaves plain. The href's trailing slash was
-                            added the evening of 2026-09-19; see the note in PostList.astro. */
+                            added the evening of 2026-09-19; see the note in CardList.astro. */
                               <a
                                 href={`/tags/${encodeSlug(urlize(tag))}/`}
                                 class:list={[
@@ -189,7 +195,7 @@ const groups = groupByYear(page.items);
 
                         <div class="mt-4">
                           <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
-                            {t.list_read_more}
+                            {card.action}
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               class="ml-1 h-4 w-4"

@@ -1,7 +1,7 @@
 ---
 // Previous, the page numbers and Next under a paginated list. Added 2026-09-19, asked for by
 // the owner: one component for every list - the Posts list and the category pages
-// (PostList.astro), the tag pages (pages/tags/[slug]/[...page].astro) and any list added later -
+// (CardList.astro), the tag pages (pages/tags/[slug]/[...page].astro) and any list added later -
 // in place of the two copies of the block those templates carried, one per theme template.
 // See PAGINATION.md, section 6.
 //
@@ -43,7 +43,9 @@
 // (order-last, w-full), from 640px up the three sit in one row with the numbers centred
 // whether or not both buttons are there. The caller sets the top margin through `class`,
 // because the two theme templates differ there (mt-12 in list.html, mt-10 in tag.html).
-import type { PageNumber } from "../lib/posts";
+// lib/lists.ts since 2026-09-22, when the list helpers left lib/posts.ts so that posts and
+// videos stay apart and share only what is common (VIDEO-PAGE.md, section 4).
+import type { PageNumber } from "../lib/lists";
 import { t } from "../i18n/strings";
 
 interface Props {

@@ -1,50 +1,34 @@
 ---
+// One video, /video/<slug>/, rendered through VideoLayout.astro: the player, then the body,
+// then the comments. Since 2026-09-22; until then it rendered through Post.astro with the
+// player in this file (VIDEO-PAGE.md, section 4). The previous and next links walk the videos
+// in getVideos() order, newest first, as posts/[slug].astro does for the posts. The comments
+// block is the post page's, with the video's address and slug as the Disqus thread; the slug
+// variable was `videoId` and is `videoIdentifier`, so that it is not mistaken for the YouTube
+// id in the front matter.
 import type { InferGetStaticPropsType } from "astro";
-import Video from "../../layouts/Post.astro";
-import { getVideo } from "../../lib/video";
+import VideoLayout from "../../layouts/VideoLayout.astro";
+import { getVideos } from "../../lib/video";
 import Disqus from "../../components/Disqus.astro";
 
 export async function getStaticPaths() {
-  const videoArr = await getVideo();
-  return videoArr.map((videoItem, i) => ({
-    params: { slug: videoItem.slug },
-    props: {
-      videoItem,
-      next: videoArr[i - 1] ?? null,
-      prev: videoArr[i + 1] ?? null,
-    },
+  const videos = await getVideos();
+  return videos.map((video, i) => ({
+    params: { slug: video.slug },
+    props: { video, next: videos[i - 1] ?? null, prev: videos[i + 1] ?? null },
   }));
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { videoItem, prev, next } = Astro.props;
-const { Content, headings } = await videoItem.render();
+const { video, prev, next } = Astro.props;
+const { Content, headings } = await video.render();
 
-const videoUrl = new URL(`/video/${videoItem.slug}/`, Astro.site).toString();
-const videoId = videoItem.slug;
+const videoUrl = new URL(`/video/${video.slug}/`, Astro.site).toString();
+const videoIdentifier = video.slug;
 ---
 
-<Video post={videoItem} headings={headings} prev={prev} next={next}>
-  {
-    /* тут можно закрыть доступ к конкретным лекциям: если пользователь не оплатил, вместо iframe от YouTube будет показываться красивая заглушка «Купить курс за ХХХ рублей», а если оплатил — будет рендериться сам плеер */
-  }
-  <div class="video-wrapper mb-8">
-    {
-      /* The address read `youtube.com{post.data.videoId}` until 2026-09-22: no `/embed/`
-      path, no `$` before the brace and a variable that does not exist in this file, so the
-      frame asked for that text as a host name and the browser showed "server not found".
-      YouTube's embeddable player lives at www.youtube.com/embed/<id>. VIDEO-PAGE.md, section 2. */
-    }
-    <iframe
-      class="aspect-video w-full rounded-xl shadow-lg"
-      src={`https://www.youtube.com/embed/${videoItem.data.videoId}`}
-      title={videoItem.data.title}
-      allowfullscreen
-    >
-    </iframe>
-  </div>
-
+<VideoLayout video={video} headings={headings} prev={prev} next={next}>
   <Content />
   <hr class="my-8 border-gray-200" />
 
@@ -56,5 +40,5 @@ const videoId = videoItem.slug;
       Показать комментарии
     </button>
   </div>
-  <Disqus url={videoUrl} identifier={videoId} />
-</Video>
+  <Disqus url={videoUrl} identifier={videoIdentifier} />
+</VideoLayout>

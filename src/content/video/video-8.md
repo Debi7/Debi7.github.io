@@ -1,9 +1,9 @@
 ---
-title: "Лекция третья"
-description: "На этом видео-уроке.."
-date: "2025-06-11"
+title: "Лекция пятая"
+description: "На этом видео-уроке мы разберем базовые понятия биоэнергетики, научимся калибровать маятник и делать первые замеры."
+date: "2025-03-20"
 videoUrl: "https://youtube.com"
-videoId: "dQwwWgXcQ"
+videoId: "placeholder"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "биолокация", "маятник", "новичкам"]
 categories: ["education video"]

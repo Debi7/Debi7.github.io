@@ -1,7 +1,7 @@
 ---
 // The Posts menu item. Hugo renders /posts/ from
 // ../klub_biolocation/themes/void/layouts/_default/list.html; the markup lives in
-// PostList.astro because /categories/<slug>/ uses the same template. MIGRATION-PLAN.md §4.1.
+// CardList.astro because /categories/<slug>/ uses the same template. MIGRATION-PLAN.md §4.1.
 //
 // The title comes from ../klub_biolocation/content/posts/_index.md, whose front matter sets
 // `title = 'Posts'`. There is no Astro equivalent of a section index page here, so it is a
@@ -27,21 +27,27 @@
 //
 // Changed later on 2026-09-19: the splitting by year moved from this file into
 // paginateByYear() in lib/posts.ts, because the owner asked for the tag and category lists to
-// work the same way; the three routes now share it, and PostList.astro renders every page
+// work the same way; the three routes now share it, and CardList.astro renders every page
 // through ListByYear.astro. Until then the year switcher was on this route only. See
 // PAGINATION.md.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../layouts/Base.astro";
-import PostList from "../../components/PostList.astro";
-import { getPosts, paginateByYear } from "../../lib/posts";
+// Changed 2026-09-22 (VIDEO-PAGE.md, section 4): the list component is CardList.astro (it was
+// PostList.astro) and renders Cards, plain data this route builds with postCard(); the split by
+// year comes from lib/lists.ts, shared with the Video list.
+import CardList from "../../components/CardList.astro";
+import { getPosts, postCard } from "../../lib/posts";
+import { paginateByYear } from "../../lib/lists";
 
 const title = "Posts";
 
 export async function getStaticPaths() {
-  return paginateByYear(await getPosts(), "/posts/").map((entry) => ({
-    params: { page: entry.param },
-    props: entry,
-  }));
+  return paginateByYear((await getPosts()).map(postCard), "/posts/").map(
+    (entry) => ({
+      params: { page: entry.param },
+      props: entry,
+    }),
+  );
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
@@ -50,5 +56,5 @@ const { page, years, year } = Astro.props;
 ---
 
 <Base title={title}>
-  <PostList title={title} page={page} years={years} currentYear={year} />
+  <CardList title={title} page={page} years={years} currentYear={year} />
 </Base>

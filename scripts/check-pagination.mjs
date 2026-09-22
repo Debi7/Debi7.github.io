@@ -24,12 +24,13 @@
 //     newest first, each year pointing at its list, the year being shown highlighted.
 //
 // It does that for every year of every list - the Posts list, every tag and every category are
-// all split by year since the evening of 2026-09-19 - and also checks that each list's own
+// all split by year since the evening of 2026-09-19, and the Video list (/video/, the `video`
+// collection in src/content/video/) since 2026-09-22 - and also checks that each list's own
 // address shows its newest year and highlights it, that no year without published posts has a
-// list under /posts/, that every published post has its page, and that drafts and future posts
-// have none.
+// list under /posts/ (or under /video/ without videos), that every published post and video has
+// its page, and that drafts and future entries have none.
 //
-// The rules it mirrors live in src/lib/posts.ts, src/lib/urlize.ts, src/lib/date.ts and the
+// The rules it mirrors live in src/lib/lists.ts, src/lib/urlize.ts, src/lib/date.ts and the
 // list templates. When one of them changes on purpose, change this script with it; a failure
 // here after such a change means the two disagree, not necessarily that the site is wrong.
 //
@@ -93,7 +94,7 @@ const urlize = (s) =>
     .replace(/[^\p{L}\p{N}\-_.~]/gu, "")
     .replace(/-+/g, "-");
 
-// Mirrors pageUrl() in src/lib/posts.ts: base itself for page 1, <base>page/<n>/ after it.
+// Mirrors pageUrl() in src/lib/lists.ts: base itself for page 1, <base>page/<n>/ after it.
 const pageUrl = (base, n) => (n === 1 ? base : `${base}page/${n}/`);
 
 // ---------------------------------------------------------------------------------------------
@@ -157,8 +158,11 @@ function parseFrontMatter(text, file, problems) {
   };
 }
 
-function readPosts(root, problems) {
-  const dir = path.join(root, "src/content/posts");
+// One collection folder: the posts or, since 2026-09-22, the videos. Both front matters carry
+// the fields this script reads (title, date, draft, tags, categories); a video's own fields are
+// ignored here.
+function readEntries(root, folder, problems) {
+  const dir = path.join(root, folder);
   return fs
     .readdirSync(dir)
     .filter((file) => /\.mdx?$/.test(file))
@@ -208,10 +212,11 @@ function readPage(dist, url) {
   return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
 }
 
+// A card's covering link, /posts/<slug>/ or, on the Video list, /video/<slug>/.
 const cardsOf = (html) =>
   [
     ...html.matchAll(
-      /<a href="\/posts\/([^"/]+)\/" class="absolute inset-0 z-10"/g,
+      /<a href="\/(?:posts|video)\/([^"/]+)\/" class="absolute inset-0 z-10"/g,
     ),
   ].map((m) => decodeURIComponent(m[1]));
 
@@ -238,7 +243,7 @@ function yearSwitcherOf(html) {
   );
 }
 
-// Mirrors yearSwitcher() in src/lib/posts.ts: every year up to everyYearUpTo of them, otherwise
+// Mirrors yearSwitcher() in src/lib/lists.ts: every year up to everyYearUpTo of them, otherwise
 // the newest, the oldest and the current year with one neighbour either side, "..." for a run
 // of hidden years. `years` are newest first.
 function expectedYearSwitcher(years, currentYear, everyYearUpTo) {
@@ -259,7 +264,7 @@ function expectedYearSwitcher(years, currentYear, everyYearUpTo) {
   return entries;
 }
 
-// The entries pageNumbers() in src/lib/posts.ts is expected to produce for page `n` of `last`:
+// The entries pageNumbers() in src/lib/lists.ts is expected to produce for page `n` of `last`:
 // "1 2 3 4 5" up to everyNumberUpTo pages, otherwise the first, the current and the last page
 // with a gap for every run of skipped pages - "1 ... 7 ... 20", "1 2 ... 20", "1 ... 20".
 // Changed 2026-09-19 with that rule; before it, the script checked a sliding window of two
@@ -429,14 +434,19 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
 
   const { pageSize, everyNumberUpTo, everyYearUpTo, offsetMinutes } =
     readSettings(root);
-  const all = readPosts(root, failures);
+  const all = readEntries(root, "src/content/posts", failures);
   const published = publishedPosts(all, now);
+  // The videos, since 2026-09-22: the same filter and order (published() in src/lib/lists.ts,
+  // which getPosts() and getVideos() share), walked as one more list by year below.
+  const allVideos = readEntries(root, "src/content/video", failures);
+  const videos = publishedPosts(allVideos, now);
+  const videoYears = groupBy(videos, (p) => [yearOf(p, offsetMinutes)]);
   const byYear = groupBy(published, (p) => [yearOf(p, offsetMinutes)]);
   const years = [...byYear.keys()];
   let pages = 0;
 
   // Every list is split by year since the evening of 2026-09-19 (paginateByYear() in
-  // src/lib/posts.ts): the Posts list, every tag and every category. Until then only the
+  // src/lib/lists.ts): the Posts list, every tag and every category. Until then only the
   // Posts list was, and the tag and category lists were walked across all years. A list is
   // walked year by year, newest first, and its own address must show the newest year's first
   // page and highlight that year in the switcher.
@@ -491,6 +501,8 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
     }
     log(`${kind}: ${groups.size} lists - checked`);
   }
+  pages += checkListByYear("/video/", videos, "video year");
+  log(`video: ${videoYears.size} years - checked`);
 
   // Nothing unpublished shows up, and every published post has its page.
   const publishedSlugs = new Set(published.map((p) => p.slug));
@@ -506,6 +518,20 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
     if (!byYear.has(year) && readPage(dist, `/posts/${year}/`))
       fail(`/posts/${year}/ exists, but ${year} has no published post`);
   }
+  // The same for the videos and their pages under /video/.
+  const publishedVideoSlugs = new Set(videos.map((p) => p.slug));
+  for (const video of allVideos) {
+    const hasPage = Boolean(readPage(dist, `/video/${video.slug}/`));
+    if (publishedVideoSlugs.has(video.slug) && !hasPage)
+      fail(`${video.file}: published, but has no page`);
+    if (!publishedVideoSlugs.has(video.slug) && hasPage)
+      fail(
+        `${video.file}: ${video.draft ? "a draft" : "dated in the future"}, but has a page`,
+      );
+    const year = yearOf(video, offsetMinutes);
+    if (!videoYears.has(year) && readPage(dist, `/video/${year}/`))
+      fail(`/video/${year}/ exists, but ${year} has no published video`);
+  }
 
   return {
     failures,
@@ -513,12 +539,16 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
     pageSize,
     years: years.length,
     published: published.length,
+    videos: videos.length,
   };
 }
 
-function report({ failures, pages, pageSize, years, published }, title) {
+function report(
+  { failures, pages, pageSize, years, published, videos },
+  title,
+) {
   console.log(
-    `${title}: ${published} published posts in ${years} years, ${pages} list pages walked, ${pageSize} to a page`,
+    `${title}: ${published} published posts in ${years} years and ${videos} published videos, ${pages} list pages walked, ${pageSize} to a page`,
   );
   if (failures.length === 0) {
     console.log("all checks passed");

@@ -3,7 +3,7 @@
 // list and the page buttons below it. Added 2026-09-19 evening, asked for by the owner - "a
 // component for choosing the year, and inside it, for each year, a component that pages
 // through that year" - so that /posts/, the tag pages and the category pages behave the same
-// way. The markup of the list itself is the caller's, passed in the slot: PostList.astro for
+// way. The markup of the list itself is the caller's, passed in the slot: CardList.astro for
 // the Posts list and the categories, the tag route for the tags; the two keep their own cards
 // (list.html's and tag.html's) for now, see PAGINATION.md, section 5.
 //
@@ -18,7 +18,9 @@
 //
 // To undo the whole "every list by year" change, revert the commit that added this file:
 // nothing else depends on it.
-import type { ListPage, YearLink } from "../lib/posts";
+// lib/lists.ts since 2026-09-22, when the list helpers left lib/posts.ts so that posts and
+// videos stay apart and share only what is common (VIDEO-PAGE.md, section 4).
+import type { ListPage, YearLink } from "../lib/lists";
 import YearSwitcher from "./YearSwitcher.astro";
 import Pagination from "./Pagination.astro";
 

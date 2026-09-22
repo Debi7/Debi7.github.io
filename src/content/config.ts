@@ -44,14 +44,11 @@ const video = defineCollection({
     duration: z.string().optional(),
     heroImage: z.string().optional(),
     videoPlatform: z.string().default("youtube"), // youtube, vk, rutube и т.д.
-    // Added 2026-09-22 (VIDEO-PAGE.md, section 2): Post.astro renders a video through the
-    // same ArticleLayout as a post since a3c194c, and that layout reads these four optional
-    // fields from `data`. Without them `astro check` reported four errors. They mean the
-    // same as in the posts schema above, and a video may set them the same way.
-    lastmod: z.coerce.date().optional(),
-    summary: z.string().optional(),
-    share_title: z.string().optional(),
-    share_description: z.string().optional(),
+    // For one day (2026-09-22) the four post-only fields - lastmod, summary, share_title,
+    // share_description - were here too, because ArticleLayout.astro read them from a video
+    // through Post.astro's `Post | Video` prop. The layout takes plain props now and
+    // VideoLayout.astro maps a video onto them, so the video schema is its own again.
+    // VIDEO-PAGE.md, section 4.
   }),
 });
 

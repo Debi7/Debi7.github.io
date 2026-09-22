@@ -1,4 +1,69 @@
 ---
+// The article frame: the page every post and every video is read on. The Base layout, the
+// card with its header (category label, title, date, the clock item, page views, Share), the
+// collapsible table of contents, an optional media block, the body, the "last updated" line,
+// the footer with the tags, the previous/next links and the home link - and, to the right of
+// the card on wide windows, the table-of-contents sidebar.
+//
+// Neutral since 2026-09-22 (VIDEO-PAGE.md, section 4). Until then this file read a post's
+// fields straight from `entry.data`; when the colleague's video pages started to render
+// through it, Post.astro widened its prop to `Post | Video`, and the video schema had to grow
+// four post fields it never used, only to type-check. The frame takes plain props now - a
+// title, the dates, the terms, the text of the clock item, the share texts - and knows nothing
+// about collections: Post.astro maps a post onto them and VideoLayout.astro a video, and those
+// two are the only places that read a collection's `data`. The Base layout and the sidebar
+// moved in here from Post.astro on the same day, so that the video page gets them without a
+// copy.
+//
+// THE SIDEBAR - as noted in Post.astro on 2026-09-18, when it was added there:
+//
+// The table-of-contents sidebar added in d0dbbd1 works the way the sidebar in the newer
+// hugo-theme-void does - the reference the owner pointed to is
+// https://www.daucloud.com/posts/fat-loss-diet-review/, built with that theme. Its entries are the
+// post's headings: src/pages/posts/[slug].astro takes them from post.render() and passes them in
+// as the headings prop, so the sidebar appears on every post that has "##" or "###" headings.
+//
+// What it does, and why:
+//
+//   - It sits to the right of the article card, 1.5rem (ml-6) from it, 14rem (w-56) wide, from a
+//     92rem (1472px) wide window up. All three numbers are the reference theme's own. main in
+//     Base.astro is max-w-4xl and the card fills it, so a column inside main would have squeezed
+//     the text; the sidebar is positioned absolutely at left-full of a relative wrapper instead,
+//     which puts it in the page margin and leaves the card exactly where and how wide it was.
+//     Below 92rem it is hidden, and the collapsible table of contents at the top of the article
+//     covers those widths. Above it, that collapsible one hides (TableOfContents.astro), so the
+//     page never shows two lists of the same headings - the reference does the same.
+//   - It stays in view while the page scrolls: position: sticky with top-24 (6rem, 96px). The
+//     site header is position: fixed and ends 68px down the page, measured, so the list has to
+//     start below that; 96px is also where the article card starts, so before scrolling the list
+//     lines up with the card. sticky works only while no ancestor clips its overflow, and main is
+//     overflow-visible from sm up.
+//   - The pinned part is capped at the window height minus 7rem (the 96px offset plus 16px at the
+//     bottom) and scrolls on its own when it is taller, so a long list stays reachable.
+//   - Subsections are nested under their section, with a thin line on their left, instead of
+//     one flat list with an indent: sidebarEntries below builds that tree.
+//   - The entry of the section being read is highlighted while scrolling (the script at the end of
+//     this file), and the highlighted entry is kept visible inside the capped list.
+//   - A click on an entry scrolls smoothly to its heading and highlights the heading in the
+//     reference theme's style, with the anchor-highlight class main.css already has; the same
+//     script handles it, for this sidebar and for the collapsible table of contents alike.
+//   - Colours, spacing and hover come from the reference theme's stylesheet, in the style block
+//     below, with its light and dark values. text-fg-faint, which the colleague's markup carried
+//     from that theme, does not exist in this project's Tailwind config; the title gets the same
+//     colour from the style block instead.
+//
+// The colleague's markup, kept for comparison:
+//
+//   <aside class="toc-sidebar hidden w-64 lg:block" aria-label="Table of Contents">
+//     <div class="toc-sidebar-title text-fg-faint mb-2 text-xs font-semibold uppercase tracking-wide">
+//     <nav id="TableOfContents-side" class="toc-nav text-sm"><ul class="space-y-2">
+//       <li class={`depth-${heading.depth} ${heading.depth > 2 ? "pl-4" : ""}`}>
+//         <a href={`#${heading.slug}`} class="text-gray-600 transition-colors hover:text-gray-900">
+//
+// The depth classes and the pl-4 indent are gone because the nesting now carries the depth. The
+// template literal had a second problem as well: prettier-plugin-tailwindcss reads a class
+// template literal as a class list and can eat the space inside it (see CLAUDE.md).
+import Base from "./Base.astro";
 import ShareWidget from "../components/ShareWidget.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import PostNav from "../components/PostNav.astro";
@@ -6,28 +71,50 @@ import Terms from "../components/Terms.astro";
 import { site } from "../config";
 import { t } from "../i18n/strings";
 import { formatDateTime, formatIsoDate } from "../lib/date";
-import { readingTime, type Post } from "../lib/posts";
-import { type Video } from "../lib/video";
-
+import type { NavLink } from "../lib/lists";
 import { encodeSlug, urlize } from "../lib/urlize";
 import type { MarkdownHeading } from "astro";
 
 interface Props {
-  entry: Post | Video;
+  /** The h1 and the page title. */
+  title: string;
+  /** The page's meta description. It is not a share text by itself; pass it in shareTexts. */
+  description: string;
+  date: Date;
+  /** Shown in the "last updated" line; the date itself when undefined. */
+  updated: Date | undefined;
+  categories: string[];
+  tags: string[];
+  /** The text of the clock item under the title: "3 min read" for a post, the duration for a video. The item is left out when undefined. */
+  timeLabel: string | undefined;
+  shareTitle: string;
+  /** Candidates for the Share button's text, in order; the first one with any text left after cleaning wins, else the site title. */
+  shareTexts: (string | undefined)[];
   headings: MarkdownHeading[];
-  prev: Post | Video | null;
-  next: Post | Video | null;
+  /** The previous and next links, built by the wrapper: postLink() or videoLink(). */
+  prev: NavLink | null;
+  next: NavLink | null;
 }
 
-const { entry, headings, prev, next } = Astro.props;
-const { data, body } = entry;
+const {
+  title,
+  description,
+  date,
+  updated,
+  categories,
+  tags,
+  timeLabel,
+  shareTitle,
+  shareTexts,
+  headings,
+  prev,
+  next,
+} = Astro.props;
 
-const dateMachine = formatDateTime(data.date);
-const dateHuman = formatIsoDate(data.date);
-const readingMinutes = readingTime(body);
-const updatedHuman = formatIsoDate(data.lastmod ?? data.date);
+const dateMachine = formatDateTime(date);
+const dateHuman = formatIsoDate(date);
+const updatedHuman = formatIsoDate(updated ?? date);
 
-const shareTitle = data.share_title ?? data.title;
 // Changed 2026-09-19, asked for by the owner: the Share button got an empty text for every
 // post without a description. The fallback chain used `??`, which only skips null and
 // undefined, and the collection schema defaults `description` to an empty string, so the chain
@@ -45,186 +132,525 @@ const shareTitle = data.share_title ?? data.title;
 //     .replace(/\s+/g, " ")
 //     .trim()
 //     .slice(0, 120);
+//
+// Since 2026-09-22 the candidates come in as the shareTexts prop: for a post
+// [share_description, description, summary], for a video [description].
 const cleanShareText = (text: string | undefined) =>
   (text ?? "")
     .replace(/<[^>]*>/g, "")
     .replace(/\s+/g, " ")
     .trim();
 const shareText = (
-  [data.share_description, data.description, data.summary]
-    .map(cleanShareText)
-    .find(Boolean) ?? site.title
+  shareTexts.map(cleanShareText).find(Boolean) ?? site.title
 ).slice(0, 120);
+
+// One entry per top-level heading of the post, with the deeper headings after it as its children.
+// The top level is the shallowest heading the post uses, normally "##"; a post that starts at
+// "###" still gets a flat list rather than an empty first level.
+type SidebarEntry = { heading: MarkdownHeading; children: MarkdownHeading[] };
+
+const topDepth = Math.min(...headings.map((heading) => heading.depth));
+const sidebarEntries: SidebarEntry[] = [];
+for (const heading of headings) {
+  const parent = sidebarEntries.at(-1);
+  if (parent && heading.depth > topDepth) parent.children.push(heading);
+  else sidebarEntries.push({ heading, children: [] });
+}
 ---
 
-<article
-  class="mx-auto max-w-4xl overflow-hidden rounded-lg bg-white shadow-md"
->
-  <header class="relative border-b border-gray-100">
-    <div class="article-inner py-8">
-      {
-        data.categories.length > 0 && (
-          <div class="mb-3 flex">
-            {/* Changed 2026-09-19 evening: the href got its trailing slash. Hugo prints
+<Base title={title} description={description}>
+  {
+    /* Changed 2026-09-18: this wrapper is what the sidebar below is positioned against. It has
+  no box of its own, so the article renders exactly as it did without it. */
+  }
+  <div class="relative">
+    <article
+      class="mx-auto max-w-4xl overflow-hidden rounded-lg bg-white shadow-md"
+    >
+      <header class="relative border-b border-gray-100">
+        <div class="article-inner py-8">
+          {
+            categories.length > 0 && (
+              <div class="mb-3 flex">
+                {/* Changed 2026-09-19 evening: the href got its trailing slash. Hugo prints
             /categories/blog (string concatenation), and ARTICLE-PAGE-FIX.md removed the slash
             for parity; but Astro's dev and preview servers answer the slash-less address with
-            404, which the owner reported. See PostList.astro and REVIEW-FIXES.md, section 5. */}
-            <a
-              href={`/categories/${encodeSlug(urlize(data.categories[0]))}/`}
-              class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-600 transition-colors hover:bg-blue-100"
+            404, which the owner reported. See CardList.astro and REVIEW-FIXES.md, section 5. */}
+                <a
+                  href={`/categories/${encodeSlug(urlize(categories[0]))}/`}
+                  class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-600 transition-colors hover:bg-blue-100"
+                >
+                  {categories[0]}
+                </a>
+              </div>
+            )
+          }
+
+          <h1
+            class="relative mb-4 text-3xl font-bold text-gray-900 sm:text-4xl"
+          >
+            {title}
+          </h1>
+
+          <div
+            class="relative flex flex-wrap items-center gap-4 text-sm text-gray-500"
+          >
+            <time datetime={dateMachine} class="flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mr-1.5 h-4 w-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
+              {dateHuman}
+            </time>
+
+            {
+              /* The clock item: the reading time of a post, the duration of a video, from the
+              timeLabel prop since 2026-09-22; it was `{readingMinutes} {t.reading_time}` here. */
+            }
+            {
+              timeLabel && (
+                <span class="flex items-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="mr-1.5 h-4 w-4 text-gray-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {timeLabel}
+                </span>
+              )
+            }
+
+            <span
+              id="busuanzi_container_page_pv"
+              class="inline-flex items-center whitespace-nowrap"
             >
-              {data.categories[0]}
-            </a>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mr-1.5 inline-block h-4 w-4 flex-shrink-0 text-gray-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                ></path>
+              </svg>
+              <span class="whitespace-nowrap">
+                {t.page_views}
+                <span id="busuanzi_value_page_pv"></span>
+              </span>
+            </span>
+
+            <ShareWidget
+              url={new URL(Astro.url.pathname, Astro.site).toString()}
+              title={shareTitle}
+              text={shareText}
+            />
+          </div>
+        </div>
+      </header>
+
+      {
+        /* Added 2026-09-22: a block between the header and the table of contents for what a
+        page shows before its text - the player of a video page (VideoLayout.astro). Rendered
+        only when the caller fills the slot, so a post page has no empty box here. */
+      }
+      {
+        Astro.slots.has("media") && (
+          <div class="article-inner pt-7">
+            <slot name="media" />
           </div>
         )
       }
 
-      <h1 class="relative mb-4 text-3xl font-bold text-gray-900 sm:text-4xl">
-        {data.title}
-      </h1>
+      {
+        /* Changed 2026-09-16: the "does this post have headings" check moved here from inside
+      TableOfContents.astro. Prettier parses the markup of an Astro expression as JSX, where Alpine's
+      @click attribute is a syntax error, so with the whole component wrapped in an expression
+      prettier --check failed on that file. Hugo makes the same check, in single.html. */
+      }
+      {headings.length > 0 && <TableOfContents headings={headings} />}
 
       <div
-        class="relative flex flex-wrap items-center gap-4 text-sm text-gray-500"
+        class="article-inner article-prose prose prose-sm sm:prose lg:prose-lg max-w-none py-7"
       >
-        <time datetime={dateMachine} class="flex items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="mr-1.5 h-4 w-4 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            ></path>
-          </svg>
-          {dateHuman}
-        </time>
+        <slot />
+      </div>
 
-        <span class="flex items-center">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="mr-1.5 h-4 w-4 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          {readingMinutes}
-          {t.reading_time}
-        </span>
-
-        <span
-          id="busuanzi_container_page_pv"
-          class="inline-flex items-center whitespace-nowrap"
+      <div class="article-inner flex items-center pb-2 text-sm text-gray-500">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="mr-1.5 h-4 w-4 text-gray-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="mr-1.5 inline-block h-4 w-4 flex-shrink-0 text-gray-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
             stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-            ></path>
-          </svg>
-          <span class="whitespace-nowrap">
-            {t.page_views}
-            <span id="busuanzi_value_page_pv"></span>
-          </span>
-        </span>
-
-        <ShareWidget
-          url={new URL(Astro.url.pathname, Astro.site).toString()}
-          title={shareTitle}
-          text={shareText}
-        />
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          ></path>
+        </svg>
+        {t.last_updated}
+        {updatedHuman}
       </div>
-    </div>
-  </header>
 
-  {
-    /* Changed 2026-09-16: the "does this post have headings" check moved here from inside
-  TableOfContents.astro. Prettier parses the markup of an Astro expression as JSX, where Alpine's
-  @click attribute is a syntax error, so with the whole component wrapped in an expression
-  prettier --check failed on that file. Hugo makes the same check, in single.html. */
-  }
-  {headings.length > 0 && <TableOfContents headings={headings} />}
+      <footer class="border-t border-gray-100 bg-gray-50 py-6">
+        <div class="article-inner">
+          <Terms tags={tags} />
 
-  <div
-    class="article-inner article-prose prose prose-sm sm:prose lg:prose-lg max-w-none py-7"
-  >
-    <slot />
-  </div>
+          <PostNav prev={prev} next={next} />
 
-  <div class="article-inner flex items-center pb-2 text-sm text-gray-500">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="mr-1.5 h-4 w-4 text-gray-400"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
+          <div class="mt-6 flex justify-center">
+            <a
+              href="/"
+              class="inline-flex items-center text-gray-600 transition-colors hover:text-blue-600"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="mr-2 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+              </svg>
+              {t.back_to_home}
+            </a>
+          </div>
+        </div>
+      </footer>
+    </article>
+
+    <div
+      class="theme-card mx-auto mt-8 max-w-4xl overflow-hidden rounded-lg bg-white shadow-md"
+      style="--tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-links: #2563eb; --tw-prose-links-hover: #1d4ed8; --tw-prose-code-bg: #f3f4f6; color: #374151;"
     >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2"
-        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-      ></path>
-    </svg>
-    {t.last_updated}
-    {updatedHuman}
-  </div>
-
-  <footer class="border-t border-gray-100 bg-gray-50 py-6">
-    <div class="article-inner">
-      <Terms tags={data.tags} />
-
-      <PostNav prev={prev} next={next} />
-
-      <div class="mt-6 flex justify-center">
-        <a
-          href="/"
-          class="inline-flex items-center text-gray-600 transition-colors hover:text-blue-600"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="mr-2 h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          {t.back_to_home}
-        </a>
-      </div>
     </div>
-  </footer>
-</article>
 
-<div
-  class="theme-card mx-auto mt-8 max-w-4xl overflow-hidden rounded-lg bg-white shadow-md"
-  style="--tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-links: #2563eb; --tw-prose-links-hover: #1d4ed8; --tw-prose-code-bg: #f3f4f6; color: #374151;"
->
-</div>
+    {
+      /* Динамическое оглавление (Sidebar)
+
+    Changed 2026-09-18: the note above was an HTML comment, which is sent to every visitor with
+    the page. It is an Astro comment now, so it stays in the source and out of the output. */
+    }
+    {
+      sidebarEntries.length > 0 && (
+        <aside
+          class="toc-sidebar absolute inset-y-0 left-full ml-6 w-56"
+          aria-label="Table of Contents"
+        >
+          <div class="toc-sidebar-scroll sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
+            <div class="toc-sidebar-title mb-2 text-xs font-semibold uppercase tracking-wide">
+              Table of Contents
+            </div>
+            <nav id="TableOfContents-side" class="toc-nav">
+              <ul>
+                {sidebarEntries.map(({ heading, children }) => (
+                  <li>
+                    <a href={`#${heading.slug}`}>{heading.text}</a>
+                    {children.length > 0 && (
+                      <ul>
+                        {children.map((child) => (
+                          <li>
+                            <a href={`#${child.slug}`}>{child.text}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+        </aside>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  /* Added 2026-09-18. Values from the stylesheet of the newer hugo-theme-void, the reference for
+  this sidebar: its --fg, --fg-muted, --fg-faint, --accent-soft, --accent-strong and --line
+  variables, light and dark. They are scoped to the sidebar under their own names, because this
+  project does not define those variables. */
+  .toc-sidebar {
+    --toc-fg: #1f2937;
+    --toc-fg-muted: #4b5563;
+    --toc-fg-faint: #6b7280;
+    --toc-accent-soft: #eff6ff;
+    --toc-accent-strong: #1d4ed8;
+    --toc-line: #e5e7eb;
+  }
+
+  :global(html.dark) .toc-sidebar {
+    --toc-fg: #e5e7eb;
+    --toc-fg-muted: #cbd5e1;
+    --toc-fg-faint: #94a3b8;
+    --toc-accent-soft: #3b82f62e;
+    --toc-accent-strong: #bfdbfe;
+    --toc-line: #334155;
+  }
+
+  /* Shown only from a 92rem (1472px) wide window up, the reference theme's breakpoint. It is a
+  media query here rather than a Tailwind class because this project's Tailwind 3 does not
+  generate an arbitrary min-width variant in rem: measured, a build with that class produced no
+  rule for it at all, so the sidebar stayed hidden at every width. Tailwind 3 accepts arbitrary
+  min-width and max-width variants only in the unit of the configured screens, which are in px,
+  and says so in the build output. The class is deliberately not spelled out in this comment:
+  Tailwind reads comments too, and the spelled-out class made every build print that warning. */
+  .toc-sidebar {
+    display: none;
+  }
+
+  @media (min-width: 92rem) {
+    .toc-sidebar {
+      display: block;
+    }
+  }
+
+  .toc-sidebar-scroll {
+    scrollbar-width: thin;
+  }
+
+  .toc-sidebar-title {
+    color: var(--toc-fg-faint);
+  }
+
+  .toc-nav {
+    font-size: 0.85rem;
+  }
+
+  .toc-nav ul {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .toc-nav > ul > li + li {
+    margin-top: 0.35rem;
+  }
+
+  .toc-nav a {
+    display: block;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.375rem;
+    color: var(--toc-fg-muted);
+    text-decoration: none;
+    transition:
+      background-color 0.15s,
+      color 0.15s;
+  }
+
+  .toc-nav a:hover {
+    background-color: var(--toc-accent-soft);
+    color: var(--toc-fg);
+  }
+
+  /* The entry of the section being read; set by the script below. */
+  .toc-nav a.toc-active {
+    background-color: var(--toc-accent-soft);
+    color: var(--toc-accent-strong);
+  }
+
+  .toc-nav a:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 2px;
+  }
+
+  /* Subsections: nested under their section, with a thin line on their left. */
+  .toc-nav ul ul {
+    margin-top: 0.15rem;
+    margin-left: 0.5rem;
+    padding-left: 0.75rem;
+    border-left: 1.5px solid var(--toc-line);
+  }
+
+  .toc-nav ul ul a {
+    padding-left: 0.25rem;
+    font-size: 0.92em;
+  }
+</style>
+
+<script>
+  // Added 2026-09-18: the two behaviours of the reference theme's table of contents, as its
+  // main.js implements them.
+  //
+  // 1. While the page scrolls, the sidebar entry of the section being read carries the toc-active
+  //    class. Throttled to one run per frame, the current section is the last heading that has
+  //    already reached its anchor position; before any heading is reached, it is the first one.
+  //    "Reached" means the heading is at or above the place an anchor jump puts it: its own
+  //    scroll-margin-top, 6.5rem (104px) from main.css, plus 8px of tolerance. Measuring against
+  //    that value rather than a fixed number keeps the highlight in step with a click on an entry.
+  //
+  // 2. A click on an entry of either table of contents - this sidebar or the collapsible one in
+  //    TableOfContents.astro - scrolls smoothly to the heading and marks it with the
+  //    anchor-highlight class. That class is already in main.css, ported from the theme, which
+  //    describes it as the "anchor highlight for in-page navigation (TOC, hash links)": an amber
+  //    background and outline, with its own dark variant, the same values the reference uses. The
+  //    clicked entry stays the active one in the sidebar until the reader does something else, so
+  //    the list does not flicker through the sections the smooth scroll passes. The highlight and
+  //    that hold end on the next key press, pointer press or touch, or on scrolling once 1.5s have
+  //    passed; the delay keeps the smooth scroll itself from ending them at once. The address bar
+  //    gets the heading's hash, as a plain anchor link would give it.
+  const sidebarNav = document.getElementById("TableOfContents-side");
+
+  // The id an in-page link points to. Headings with Cyrillic text have Cyrillic ids; the href
+  // normally carries them as they are, but an encoded one is decoded too.
+  const idFromHref = (link: HTMLAnchorElement): string => {
+    const raw = (link.getAttribute("href") ?? "").slice(1);
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  };
+
+  if (sidebarNav) {
+    const entries = Array.from(sidebarNav.querySelectorAll("a")).flatMap(
+      (link) => {
+        const target = document.getElementById(idFromHref(link));
+        if (!target) return [];
+        const reachedAt =
+          parseFloat(getComputedStyle(target).scrollMarginTop) + 8;
+        return [{ link, target, reachedAt }];
+      },
+    );
+    const scroller = sidebarNav.closest(".toc-sidebar-scroll");
+    let active: HTMLAnchorElement | undefined;
+    let pinned: HTMLAnchorElement | undefined;
+    let highlighted: HTMLElement | undefined;
+    let armScrollTimer: number | undefined;
+
+    const setActive = (link: HTMLAnchorElement | undefined) => {
+      if (!link || link === active) return;
+      active?.classList.remove("toc-active");
+      link.classList.add("toc-active");
+      active = link;
+
+      // A long list scrolls inside its capped box; keep the active entry visible in it.
+      if (scroller) {
+        const entryBox = link.getBoundingClientRect();
+        const listBox = scroller.getBoundingClientRect();
+        if (entryBox.top < listBox.top || entryBox.bottom > listBox.bottom) {
+          link.scrollIntoView({ block: "nearest" });
+        }
+      }
+    };
+
+    const update = () => {
+      if (pinned) {
+        setActive(pinned);
+        return;
+      }
+      let current = entries[0];
+      for (const entry of entries) {
+        if (entry.target.getBoundingClientRect().top <= entry.reachedAt)
+          current = entry;
+        else break;
+      }
+      setActive(current?.link);
+    };
+
+    // Ends the highlight of a clicked heading, and the hold on its sidebar entry.
+    const release = () => {
+      window.clearTimeout(armScrollTimer);
+      window.removeEventListener("keydown", release);
+      window.removeEventListener("pointerdown", release);
+      window.removeEventListener("touchstart", release);
+      window.removeEventListener("scroll", release);
+      highlighted?.classList.remove("anchor-highlight");
+      highlighted = undefined;
+      pinned = undefined;
+      update();
+    };
+
+    const onEntryClick = (event: MouseEvent) => {
+      const link = event.currentTarget;
+      if (!(link instanceof HTMLAnchorElement)) return;
+      const target = document.getElementById(idFromHref(link));
+      if (!target) return;
+      event.preventDefault();
+      history.pushState(null, "", link.getAttribute("href"));
+
+      release();
+      target.classList.add("anchor-highlight");
+      highlighted = target;
+      pinned = entries.find((entry) => entry.target === target)?.link;
+      update();
+
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      target.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      });
+
+      window.addEventListener("keydown", release, { once: true });
+      window.addEventListener("pointerdown", release, { once: true });
+      window.addEventListener("touchstart", release, {
+        once: true,
+        passive: true,
+      });
+      armScrollTimer = window.setTimeout(() => {
+        window.addEventListener("scroll", release, {
+          once: true,
+          passive: true,
+        });
+      }, 1500);
+    };
+
+    document
+      .querySelectorAll<HTMLAnchorElement>(
+        "#TableOfContents-side a, #TableOfContents a",
+      )
+      .forEach((link) => link.addEventListener("click", onEntryClick));
+
+    let queued = false;
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          update();
+          queued = false;
+        });
+      },
+      { passive: true },
+    );
+    update();
+  }
+</script>

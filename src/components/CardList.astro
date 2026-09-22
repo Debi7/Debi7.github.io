@@ -14,17 +14,20 @@
 //   .Title                       -> the `title` prop.
 //   .Pages.GroupByDate "2006"    -> groupByYear() in lib/posts.ts. Years newest first.
 //   .Key                         -> group.year.
-//   .Pages.ByDate.Reverse        -> group.posts, already newest first.
-//   .RelPermalink                -> `/posts/<slug>/`.
+//   .Pages.ByDate.Reverse        -> group.items, already newest first.
+//   .RelPermalink                -> card.url: `/posts/<slug>/` from postCard() in
+//                                   lib/posts.ts, `/video/<slug>/` from videoCard() in
+//                                   lib/video.ts (since 2026-09-22).
 //   .Date.Format (i18n "date_month_day_format")
 //                                -> formatMonthDay(), i.e. Hugo's "Jan 02" layout.
 //   .Summary | plainify | truncate 140
-//                                -> summary() in lib/summary.ts; see its header for the one
-//                                   known divergence.
-//   .Params.tags                 -> post.data.tags, in front matter order, lower-cased by
-//                                   the collection schema exactly as hugo.toml's
-//                                   `tags = [":lower"]` rule does.
-//   i18n "list_read_more"        -> t.list_read_more.
+//                                -> card.summary: summary() in lib/summary.ts, applied by
+//                                   postCard(); see its header for the one known divergence.
+//   .Params.tags                 -> card.tags: post.data.tags, in front matter order,
+//                                   lower-cased by the collection schema exactly as
+//                                   hugo.toml's `tags = [":lower"]` rule does.
+//   i18n "list_read_more"        -> card.action: t.list_read_more on a post,
+//                                   t.list_watch_video on a video.
 //
 // DECISIONS WORTH KNOWING
 //
@@ -71,16 +74,24 @@
 //   2026-09-19 it is YearSwitcher.astro, which also decides which years to show when there are
 //   many, and ListByYear.astro places it and the page buttons around the list.
 // See PAGINATION.md.
+//
+// CARDS - changed 2026-09-22 (VIDEO-PAGE.md, section 4). This file was PostList.astro and
+// rendered posts. The Video list (/video/) renders through it as well now: the colleague's
+// VideoList.astro was a copy of this file with the card's link changed, and it missed every
+// fix the review brought here. The owner asked for posts and videos to stay apart, so the
+// component knows neither: it renders Cards (lib/lists.ts), plain data the routes build with
+// postCard() (lib/posts.ts) or videoCard() (lib/video.ts), and the only things that differ
+// between a post and a video on a card - the address and the last line, "Read more" or the
+// colleague's "Watch the video" - come inside the card. For a few hours that day the page held
+// `Post | Video` entries and this file chose by the entry's collection.
 import {
   groupByYear,
+  type Card,
   type ListPage,
-  type Post,
   type YearLink,
-} from "../lib/posts";
+} from "../lib/lists";
 import { formatMonthDay } from "../lib/date";
-import { summary } from "../lib/summary";
 import { urlize, encodeSlug } from "../lib/urlize";
-import { t } from "../i18n/strings";
 // Added later on 2026-09-19: the year switcher and the page buttons around the list, through
 // one component shared with the tag route; see its header.
 import ListByYear from "./ListByYear.astro";
@@ -89,8 +100,9 @@ interface Props {
   /** Hugo's `.Title`: "Posts" for the section, the term title for one category. */
   title: string;
   // Changed 2026-09-19: one page of the list instead of the whole list (`posts: Post[]`),
-  // for pagination; see the note at the top.
-  page: ListPage<Post>;
+  // for pagination; see the note at the top. Cards since 2026-09-22 (was ListPage<Post>); see
+  // CARDS above.
+  page: ListPage<Card>;
   // Both required since the evening of 2026-09-19: every list is split by year, so every route
   // passes them (they were optional while only /posts/ had the switcher).
   /** Every year of the list, newest first, for the year switcher. */
@@ -133,18 +145,19 @@ const groups = groupByYear(page.items);
             the class is what it was, so nothing changes on a laptop. Hugo renders the indent at
             every width. */}
             <div class="space-y-6 sm:ml-8">
-              {group.posts.map((post) => (
+              {group.items.map((card) => (
                 <div class="relative">
+                  {/* card.url since 2026-09-22, was `/posts/${post.slug}/`; see CARDS above. */}
                   <a
-                    href={`/posts/${post.slug}/`}
+                    href={card.url}
                     class="absolute inset-0 z-10"
-                    aria-label={post.data.title}
+                    aria-label={card.title}
                   />
                   <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
                     <div class="p-5">
                       <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
                         <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
-                          {post.data.title}
+                          {card.title}
                         </h3>
                         <time class="mt-1 flex flex-shrink-0 items-center text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
                           <svg
@@ -161,23 +174,23 @@ const groups = groupByYear(page.items);
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                           </svg>
-                          {formatMonthDay(post.data.date)}
+                          {formatMonthDay(card.date)}
                         </time>
                       </div>
 
-                      {summary(post.body) && (
+                      {card.summary && (
                         <div class="line-clamp-2 text-sm text-gray-600 dark:text-gray-300">
-                          {summary(post.body)}
+                          {card.summary}
                         </div>
                       )}
 
-                      {post.data.tags.length > 0 && (
+                      {card.tags.length > 0 && (
                         <div class="relative z-20 mt-3 flex flex-wrap gap-2">
                           {/* Changed 2026-09-19: the parameter was annotated `any`, which the
                           house rules forbid and which nothing needed - the collection schema
                           declares `tags` as string[], so `tag` is inferred as string, as in the
                           tag route's copy of these chips. */}
-                          {post.data.tags.map((tag) => (
+                          {card.tags.map((tag) => (
                             <a
                               href={`/tags/${encodeSlug(urlize(tag))}/`}
                               class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
@@ -191,7 +204,9 @@ const groups = groupByYear(page.items);
 
                       <div class="mt-4">
                         <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
-                          {t.list_read_more}
+                          {/* card.action since 2026-09-22: "Read more" on a post, "Watch the
+                          video" on a video; see CARDS above. */}
+                          {card.action}
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="ml-1 h-4 w-4"

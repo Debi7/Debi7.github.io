@@ -26,7 +26,8 @@ The owner's requests, in the order they came on 2026-09-19:
 
 ## 2. The order of posts
 
-Every list on the site takes its posts from one function, `getPosts()` in `src/lib/posts.ts`: the Posts list and its
+Every list on the site takes its posts from one function, `getPosts()` in `src/lib/posts.ts` (`published()` in
+`src/lib/lists.ts` since 2026-09-22, shared with the videos): the Posts list and its
 years, the tag and category pages, the Categories page, and the Previous and Next links at the foot of a single post.
 So they all share one order:
 
@@ -86,7 +87,7 @@ Today's pages, with 23 published posts:
 - The buttons use the classes of the theme's own Previous and Next buttons from `list.html`; the highlighted one uses
   the colours of the year badges. So they match the theme in both colour schemes.
 - Since later on 2026-09-19 it is a component of its own, `src/components/YearSwitcher.astro`, kept separate from the
-  page buttons as the owner asked, with its own rule for many years (`yearSwitcher()` in `src/lib/posts.ts`,
+  page buttons as the owner asked, with its own rule for many years (`yearSwitcher()` in `src/lib/lists.ts`,
   threshold `pagination.everyYearUpTo` in `src/config.ts`, 5): up to five years every year is shown; with more, the
   newest, the oldest and the year being shown with the year either side of it, and an ellipsis for the years hidden:
   `2026 ... 2023 2022 2021 ... 2015`. The neighbours stay, unlike on the page numbers, because a reader browsing by
@@ -102,10 +103,11 @@ title lists only the years in which that tag or category has posts, and Previous
 within the year. The count under a tag's title ("19 articles") stays the total across years. The overview pages
 `/tags/` and `/categories/` list tags and categories, not posts, and are not paginated.
 
-The pieces are the same for every list: `paginateByYear()` in `src/lib/posts.ts` gives a route its pages by year, and
+The pieces are the same for every list: `paginateByYear()` in `src/lib/lists.ts` gives a route its pages by year, and
 `ListByYear.astro` puts the year switcher above the list and the page buttons below it. The Posts list and the
-category pages render their cards through `PostList.astro`, the tag pages through their own route with `tag.html`'s
-cards; the two kinds of cards were left as they were.
+category pages render their cards through `CardList.astro` (`PostList.astro` until 2026-09-22), the tag pages
+through their own route with `tag.html`'s cards; the two kinds of cards were left as they were. The Video list
+(`/video/`) goes through the same code since 2026-09-22; see `VIDEO-PAGE.md`.
 
 Earlier that day the tag and category pages were paginated across all years (`/tags/<tag>/page/2/`), and the
 judgement then was that splitting them was not worth it: of the 16 tags, 13 have five posts or fewer and seven a
@@ -119,7 +121,7 @@ navigation on every list over that, and said it may be rolled back: `git revert`
 - Shown only when there is a page to go to. Previous goes to newer posts, Next to older ones.
 - Between them, numbered links to the pages of the same list, added on 2026-09-19 at the owner's request, so that a
   long list does not take one click per page. The rule is the owner's, set later the same day (`pageNumbers()` in
-  `src/lib/posts.ts`, threshold `pagination.everyNumberUpTo` in `src/config.ts`, 5): a list of up to five pages shows
+  `src/lib/lists.ts`, threshold `pagination.everyNumberUpTo` in `src/config.ts`, 5): a list of up to five pages shows
   every number, `1 2 3 4 5`; a longer one shows only the first, the current and the last page, with an ellipsis that
   is not a link between them: `1 ... 7 ... 20`, `1 2 ... 20` on the second page, `1 ... 20` on the first and on the
   last. Only the first and the last page are links there. Five entries at most, so one set fits every width. Until
@@ -133,7 +135,7 @@ navigation on every list over that, and said it may be rolled back: `git revert`
 - The number buttons use the classes of the Previous and Next buttons, and the current page uses the year switcher's
   highlighted colours. The theme has no numbered links, so this markup is new.
 - The block is one component since later on 2026-09-19, `src/components/Pagination.astro`, asked for by the owner so
-  that any list added later gets the same buttons; the Posts and category pages (`PostList.astro`) and the tag pages
+  that any list added later gets the same buttons; the Posts and category pages (`CardList.astro`) and the tag pages
   pass it the addresses of the neighbouring pages and the numbers, plus their own top margin. Its container and
   buttons are the block at the end of the theme's `_default/list.html`; the arrows inside the buttons are the SVG
   chevrons of `taxonomy/tag.html`, the owner's choice over `list.html`'s text arrows - they match the Previous and
@@ -154,7 +156,9 @@ open decision in `MIGRATION-PLAN.md` §5.5; pagination does not change it.
 
 ## 7. How it is built
 
-In `src/lib/posts.ts`:
+In `src/lib/lists.ts` - `src/lib/posts.ts` until 2026-09-22, when the list code became shared with the Video list
+and `posts.ts` kept only what a post is (`VIDEO-PAGE.md`, section 4); `getPosts()` is still there and calls
+`published()` in `lists.ts`:
 
 - `getPosts()` - the order in section 2.
 - `groupByYear()` - the posts of each year, newest year first. It existed already, for the year badges.
@@ -180,7 +184,7 @@ The list routes are rest-parameter routes, one file per list:
   undefined for page 1 and `page/<n>` after it. They were `src/pages/categories/[slug].astro` and
   `src/pages/tags/[slug].astro`.
 
-Each keeps its header comment, with a note on what changed. `src/components/PostList.astro` takes one page (`page`)
+Each keeps its header comment, with a note on what changed. `src/components/CardList.astro` (`PostList.astro` until 2026-09-22) takes one page (`page`)
 instead of the whole list (`posts`), plus the optional `years` and `currentYear`.
 
 Astro has a `paginate()` helper for `getStaticPaths`, but it cannot produce these addresses: in a rest-parameter route
@@ -278,7 +282,7 @@ repository. It needs no dependency. Its header comment lists everything it check
   page, one post on a tag page was replaced by another, and a draft was given a page. It reported all four, and one
   consequence of each where there was one - six messages in all - and exited with code 1.
 
-The script mirrors rules that live in `src/lib/posts.ts`, `src/lib/urlize.ts`, `src/lib/date.ts` and the list
+The script mirrors rules that live in `src/lib/lists.ts`, `src/lib/urlize.ts`, `src/lib/date.ts` and the list
 templates. When one of them changes on purpose, the script has to change with it.
 
 ## 11. Open questions

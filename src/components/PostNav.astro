@@ -2,13 +2,18 @@
 // Changed 2026-09-16: the two labels below read t.<key>. `t` in src/i18n/strings.ts is an
 // object, not a function, so the t("key") calls this file used to have threw "t is not a
 // function" the moment the component rendered.
+//
+// Changed 2026-09-22: the two links come in as plain NavLinks (lib/lists.ts), an address and
+// a title, built by postLink() for a post page and videoLink() for a video page, so this
+// component knows no collection. Until then it took the entries and built /posts/<slug>/
+// itself, which sent the previous and next video to a page that does not exist; see
+// VIDEO-PAGE.md, section 4.
 import { t } from "../i18n/strings";
-import type { Post } from "../lib/posts";
-import type { Video } from "../lib/video";
+import type { NavLink } from "../lib/lists";
 
 interface Props {
-  prev: Post | Video | null;
-  next: Post | Video | null;
+  prev: NavLink | null;
+  next: NavLink | null;
 }
 
 const { prev, next } = Astro.props;
@@ -19,7 +24,7 @@ const { prev, next } = Astro.props;
     <nav class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
       {prev && (
         <a
-          href={`/posts/${prev.slug}/`}
+          href={prev.url}
           class="group block rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:border-blue-300 hover:bg-blue-50/30"
         >
           <div class="mb-1 flex items-center text-xs text-gray-500">
@@ -40,14 +45,14 @@ const { prev, next } = Astro.props;
             {t.pagination_previous}
           </div>
           <div class="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-blue-700">
-            {prev.data.title}
+            {prev.title}
           </div>
         </a>
       )}
 
       {next && (
         <a
-          href={`/posts/${next.slug}/`}
+          href={next.url}
           class="group block rounded-lg border border-gray-200 bg-white p-4 transition-colors hover:border-blue-300 hover:bg-blue-50/30 sm:col-start-2 sm:text-right"
         >
           <div class="mb-1 flex items-center text-xs text-gray-500 sm:justify-end">
@@ -68,7 +73,7 @@ const { prev, next } = Astro.props;
             </svg>
           </div>
           <div class="line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-blue-700">
-            {next.data.title}
+            {next.title}
           </div>
         </a>
       )}

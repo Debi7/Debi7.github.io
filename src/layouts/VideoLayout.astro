@@ -1,0 +1,71 @@
+---
+// The video page: maps one entry of the `video` collection onto ArticleLayout.astro, the frame
+// shared with the post page (Post.astro), and puts the player above the text through the
+// frame's `media` slot. Added 2026-09-22 (VIDEO-PAGE.md, section 4); until then the video route
+// rendered through Post.astro with its prop widened to `Post | Video`, and the player sat in
+// the route file.
+//
+// What a video supplies that a post does not: `duration` ("12:34") as the text of the clock
+// item, in place of the reading time - a video page used to show "0 min read", the word count
+// of a one-sentence body - and the description as the only share text. The four post-only
+// fields (lastmod, summary, share_title, share_description) are not part of the video schema,
+// so the "last updated" line shows the date itself.
+//
+// The player is YouTube's embeddable one at www.youtube.com/embed/<id>, where `videoId` is the
+// id from a watch?v= address, eleven characters; the sample entries carry placeholders, so the
+// player shows YouTube's own error until real ids are entered. Without a `videoId` the block
+// is left empty. `videoPlatform` and `videoUrl` are stored and not read: every video is a
+// YouTube video for now. The address was `youtube.com{post.data.videoId}` until 2026-09-22;
+// VIDEO-PAGE.md, section 2.
+import ArticleLayout from "./ArticleLayout.astro";
+import type { MarkdownHeading } from "astro";
+import { videoLink, type Video } from "../lib/video";
+
+interface Props {
+  video: Video;
+  headings: MarkdownHeading[];
+  prev: Video | null;
+  next: Video | null;
+}
+
+const { video, headings, prev, next } = Astro.props;
+const { data } = video;
+const player = data.videoId
+  ? `https://www.youtube.com/embed/${data.videoId}`
+  : undefined;
+---
+
+<ArticleLayout
+  title={data.title}
+  description={data.description}
+  date={data.date}
+  updated={undefined}
+  categories={data.categories}
+  tags={data.tags}
+  timeLabel={data.duration}
+  shareTitle={data.title}
+  shareTexts={[data.description]}
+  headings={headings}
+  prev={prev && videoLink(prev)}
+  next={next && videoLink(next)}
+>
+  {
+    /* The colleague's note, kept from the route file where the player used to be:
+    тут можно закрыть доступ к конкретным лекциям: если пользователь не оплатил, вместо iframe
+    от YouTube будет показываться красивая заглушка «Купить курс за ХХХ рублей», а если оплатил
+    - будет рендериться сам плеер */
+  }
+  <div slot="media" class="video-wrapper mb-8">
+    {
+      player && (
+        <iframe
+          class="aspect-video w-full rounded-xl shadow-lg"
+          src={player}
+          title={data.title}
+          allowfullscreen
+        />
+      )
+    }
+  </div>
+  <slot />
+</ArticleLayout>
