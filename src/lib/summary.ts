@@ -29,7 +29,12 @@ function typographer(text: string): string {
 
 // Roughly Hugo's `plainify` applied to rendered Markdown: block elements become lines,
 // inline syntax disappears, and the text survives.
-function plainifyMarkdown(body: string): string {
+//
+// Exported since 2026-09-22: src/pages/search-index.json.ts needs the body of an entry as plain
+// text, and a second implementation of "strip the Markdown" would drift from this one the first
+// time a rule here changed. summary() is still what a card shows; the search index wants the
+// whole text, so it calls this directly.
+export function plainifyMarkdown(body: string): string {
   const blocks = body
     .trim()
     // Hugo's escaped shortcode form: `{{</* x */>}}` renders the literal `{{< x >}}`.

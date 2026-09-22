@@ -67,8 +67,25 @@ const initials = site.title
       wordmark used to have, and with 40% the title truncated to "Radiesthes...". Above 640px
       the class is still sm:max-w-md, exactly as Hugo has it. */
     }
+    {
+      /* min-w-0 and no flex-shrink-0 below 1024px, added 2026-09-22 with the magnifier. The icon
+      costs the row about 32px, and measurement found exactly one band where that does not fit:
+      from 640px, where the full menu replaces the hamburger, to 676px, the row wanted 651px
+      against 616px. Everything wider fits with the sizes tightened earlier today.
+
+      A flex child will not shrink past its content unless it is told it may - flex-shrink-0 said
+      no, and min-width:auto is the default even without it - so the row could only spill. With
+      both off, the name gives up as many pixels as the row is short and `truncate` ends it in an
+      ellipsis: about 35px at 640px, nothing at 680px and above, because shrinking is proportional
+      to need. flex-shrink-0 comes back at 1024px, where the row has room to spare and the header
+      is again exactly what Hugo renders.
+
+      The alternative, and it is the owner's to decide: keep the hamburger until 768px instead of
+      640px, which removes the crowded band altogether rather than truncating anything. He chose
+      640px when the menu had five items and no logo; REVIEW-VIDEO.md remark 4 has the history. */
+    }
     <div
-      class="max-w-[70%] flex-shrink-0 truncate text-lg font-bold sm:max-w-md sm:text-xl"
+      class="min-w-0 max-w-[70%] truncate text-lg font-bold sm:max-w-md sm:text-xl lg:flex-shrink-0"
     >
       <a
         href="/"
@@ -127,6 +144,32 @@ const initials = site.title
         menu and nothing else. The button is written after the hamburger now so that it is the
         last control on the row at every width, which is where it already sat on a desktop. */
       }
+      {
+        /* The magnifier, added 2026-09-22 with /search/. It is a link and not a button: the
+        search lives at an address of its own, so it has to be openable in a new tab, and a
+        visitor without JavaScript still reaches a page that explains itself. First of the three
+        controls at every width - search, menu, theme - which is the order in the reference the
+        owner sent. The label is on the link, since an aria-hidden icon leaves it without a name. */
+      }
+      <a
+        href="/search/"
+        aria-label="Search"
+        class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center text-gray-700 no-underline transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-300"
+      >
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.5-3.5"></path>
+        </svg>
+      </a>
+
       <button
         id="menu-toggle"
         type="button"

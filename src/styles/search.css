@@ -1,0 +1,92 @@
+/* The search page's results, /search/. Moved out of a <style> block in src/pages/search.astro on
+   2026-09-22, the day it was written, because a scoped block cannot reach this markup: Astro
+   scopes CSS by stamping an attribute onto the elements the component renders, and every element
+   below is created by src/scripts/search.ts in the browser. The rules matched nothing and the
+   results were unstyled text. Same reason src/styles/carousel.css exists.
+
+   Imported by the page, so only the page carries it - Astro bundles CSS per page. The colours are
+   the ones the theme's cards use, so a result looks like the rest of the site.
+
+   .dark is written out rather than through :global(), for the plain reason that a .css file is
+   global already. */
+
+/* Scoped to this page, which is what Astro does with a plain style block: these class names are
+  written by search.ts into #search-results and exist nowhere else on the site. The colours are
+  the ones the theme's cards use, so a result looks like the rest of the site rather than like a
+  new component. */
+.search-result {
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 1rem 1.25rem;
+  box-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.05),
+    0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+.dark .search-result {
+  background: #0f172a;
+}
+
+.search-result__title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  text-decoration: none;
+}
+
+.search-result__title:hover {
+  color: #2563eb;
+}
+
+.dark .search-result__title {
+  color: #f3f4f6;
+}
+
+.dark .search-result__title:hover {
+  color: #93c5fd;
+}
+
+.search-result__meta {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.search-result__section {
+  display: inline-block;
+  border-radius: 9999px;
+  background: #eff6ff;
+  padding: 0.05rem 0.5rem;
+  color: #1d4ed8;
+}
+
+.dark .search-result__section {
+  background: #1e293b;
+  color: #93c5fd;
+}
+
+.search-result__snippet {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.dark .search-result__snippet {
+  color: #cbd5e1;
+}
+
+/* mark carries a yellow background of the browser's own, which is the one colour on the page
+  nobody chose. These are the theme's blues instead, and the dark rule matters more than the light
+  one: default mark on a dark card is unreadable. */
+.search-result mark {
+  border-radius: 0.2rem;
+  background: #dbeafe;
+  padding: 0 0.1rem;
+  color: inherit;
+}
+
+.dark .search-result mark {
+  background: #1d4ed8;
+  color: #f8fafc;
+}

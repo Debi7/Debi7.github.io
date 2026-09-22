@@ -240,6 +240,32 @@ The address was settled as a user site: the repository is `Debi7/Debi7.github.io
 
 Only `main` is deployed, so work on a branch reaches the site when the branch is merged. Verified 2026-09-22 against the live site; [DEPLOY.md](DEPLOY.md) section 0 records what was measured, what is left for the owner to do on GitHub (two dead branches from the first attempt are still on the remote), and keeps the original analysis of why that first attempt failed.
 
+## Search
+
+Added 2026-09-22 at the owner's request, after a reference site he sent (daucloud.com) put a magnifier in its header. The Hugo theme has no search to port - only the string `search_placeholder` in its `en.toml`, which had been ported and never used - so this was built rather than copied, and the reference could not help either: its own `/search/` says the index is missing from that build.
+
+Four pieces, and each one does a single thing:
+
+- `src/pages/search-index.json.ts` writes `/search-index.json` from `getPosts()` and `getVideos()` through their own `lib/` files, the way `src/lib/terms.ts` does. Every entry carries its address, title, date, section label, tags, summary and **the whole body as plain text**, through the `plainifyMarkdown()` that `summary()` already used (exported for this, so there is no second "strip the Markdown"). 41 entries, 93KB, 22KB over the wire.
+- `src/pages/search.astro` is `/search/`: the form, the status line and an empty list. A page, not a drop-down, because a result list needs room, has to survive a reload and should have an address that can be shared.
+- `src/scripts/search.ts` does the matching in the browser. Imported by that page alone, so it is 3.2KB no other page pays for, and the index is fetched on the first query rather than on load.
+- The magnifier in `Header.astro`, first of the three controls - search, menu, theme - which is the order in the reference at every width.
+
+No dependency, the owner's decision of 2026-09-22 out of three options (this, Fuse.js for fuzzy matching, Pagefind for a real index). The index is the same in all three, so changing the matcher later costs the matching code and not the data.
+
+How it matches, so that a change to the ranking is a decision rather than a guess:
+
+- Case is folded and `ё` is read as `е`; nothing else is normalised, because stemming Russian needs a dictionary, which is the dependency that was declined.
+- Every word of the query has to appear somewhere in the entry - AND, not OR. With 41 entries an OR search returns most of the site.
+- Where a word is found decides its weight: title 8, tag 4, summary 2, body 1, plus a bonus when the whole query appears as one phrase. The body scores once however often the word occurs, so one long article cannot outrank a page that is actually about the word.
+- Results are sorted by score, then by the site's own order, which the index is already in.
+- The snippet is a window of the body around the first match, and the matched words are wrapped in `<mark>` - by building text nodes, never `innerHTML`, because the index carries whatever an author wrote.
+
+Two things worth knowing before touching it:
+
+- **A scoped `<style>` cannot reach these results.** Astro scopes CSS by stamping an attribute onto the elements the component renders, and every result is created by the script in the browser, so a scoped rule matches nothing: the first build came out as unstyled text with the browser's yellow `mark`. The rules are `src/styles/search.css`, a plain global file, for the same reason `src/styles/carousel.css` is one.
+- **The magnifier cost the header 32px**, and measurement found exactly one band where that did not fit: from 640px, where the full menu replaces the hamburger, to 676px, the row wanted 651px against 616px. The site title may shrink below 1024px now (`min-w-0`, no `flex-shrink-0`), so it gives up as many pixels as the row is short and `truncate` ends it in an ellipsis - about 35px at 640px, nothing at 680px and above. The alternative is to keep the hamburger until 768px instead of 640px, which is the owner's call.
+
 ## Feeds and sitemap
 
 Added 2026-09-22, when the deploy address stopped being a placeholder - every address in a feed or a sitemap is absolute, so both were waiting on `site`.
