@@ -105,6 +105,17 @@ The frame passes those props now, from values it already held. A post is `og:typ
 
 That also put the last `astro check` warning to rest: `isVideo` had been accepted by `Base.astro` and never read.
 
+### The carousel's stylesheet and script are files
+
+Since 2026-09-22. They used to be two JavaScript template literals inside `Carousel.astro` - 170 lines of CSS in `const css`, 110 of code in `const js` - rendered with `is:inline set:html`. They are `src/styles/carousel.css` and `src/scripts/carousel.ts`, the component is 152 lines instead of 439, `astro check` reads the script, and the house rule about never writing a backtick in those constants is gone with them.
+
+Two things were measured on the way, and both are now in `CLAUDE.md`:
+
+- A bundled `<script>` inside a `{cond && (...)}` expression is **not** hoisted into the page bundle. Written where the old literal stood, the built home page contained no carousel code at all and the markup would have been inert. The tag sits at the top level of the template now; `carousel.ts` returns immediately when `#home-carousel` is absent.
+- The stylesheet import has to stand with the other imports at the top of the frontmatter. Placed after the declarations, esbuild fails the build with `Unexpected "../styles/carousel.css"`.
+
+Verified in a headless browser against the preview build: six slides, the active one still the first at 1.5s of virtual time and the fourth at 10s, which is the same 3s autoplay as before. The inlined carousel CSS still lands after the theme stylesheet in the head, so the cascade is unchanged.
+
 ### Math is typeset at build time
 
 Until 2026-09-22 it was not typeset at all, and nobody had noticed because no page uses math yet. `Head.astro` loaded KaTeX from a CDN and `site.ts` called `renderMathInElement`, but `remark-math` had already consumed the dollars while the page was built: `$E = mc^2$` reached the browser as `<code class="language-math math-inline">E = mc^2</code>`, and KaTeX's auto-render scans text nodes for dollars, so it found nothing. Measured on a temporary post with an inline and a display formula - zero `.katex` nodes in the DOM, while `typeof renderMathInElement` was `function`, which put the fault in the Markdown pipeline rather than in the CDN or the call.
@@ -203,8 +214,9 @@ src/components/         Head, Header, Menu, ThemeToggle, Carousel, Footer, Callo
 src/pages/              Routes: index, about, 404, posts/, video/, tags/, categories/
 src/lib/                lists (the order of every list, pages, years, the Card and NavLink shapes), posts (getPosts, getTerms, postCard, readingTime), video (getVideos, videoCard), urlize, titleize, date
 src/i18n/strings.ts     Theme UI strings, ported from the theme's en.toml
-src/styles/             main.css (theme), custom.css (colour overrides, loaded last)
+src/styles/             main.css (theme), custom.css (colour overrides, loaded last), carousel.css (home page only)
 src/scripts/site.ts     Client-side behaviour (theme toggle, responsive menu, ...)
+src/scripts/carousel.ts Home-page carousel behaviour (was a template literal in Carousel.astro)
 public/                 Favicons and images, copied as-is
 templates/              Templates for new posts: post.md (the rules for front matter and headings) and one per existing post; the steps are in CONTENT.md
 scripts/                check-pagination.mjs, the check behind npm run check:pages (no dependencies)

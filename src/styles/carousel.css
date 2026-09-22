@@ -1,0 +1,188 @@
+/* The home-page carousel's stylesheet, ported from
+   ../klub_biolocation/themes/void/layouts/partials/home/carousel.html (MIGRATION-PLAN.md section 4).
+   Imported by src/components/Carousel.astro, which is used only by src/pages/index.astro, so these
+   rules reach the home page and no other.
+
+   Moved here on 2026-09-22. Until then the whole stylesheet lived inside Carousel.astro as a
+   JavaScript template literal, rendered with <style is:inline set:html={css} />. That had a cost
+   the comments below still mention: a backtick anywhere in this text ended the literal, so the
+   compiler started reading CSS as code and astro check failed with a pile of errors pointing at
+   prose. In a .css file a backtick is just a character; the warnings in the comments below are
+   kept as written, but they no longer apply. The rules themselves are unchanged, and so is what
+   the visitor sees: this file is still global CSS, not scoped, because these selectors have to
+   reach html, main and the theme's markup. */
+
+/* Full-bleed: the carousel is wider than the main container (max-w-4xl) and spans the whole viewport.
+   html{overflow-x:clip} suppresses horizontal page scrolling (100vw includes the scrollbar width).
+   main{overflow:visible} disables the theme's overflow-x-auto on mobile; otherwise main shows its own scrollbar. */
+html {
+  overflow-x: clip;
+}
+
+/* main.overflow-x-auto, not plain main, and that is a bug fix rather than a copy.
+   Base.astro gives main the utility classes overflow-x-auto sm:overflow-visible, and a class
+   selector outranks an element selector, so the Hugo original - main{overflow:visible} - lost
+   below 640px and never took effect there. Two consequences, both present in the Hugo site too:
+   overflow-x:auto forces overflow-y to compute to auto, which made main a scroll container that
+   clipped the carousel's negative top margin, so the band of background under the header came
+   back on narrow screens; and the full-bleed carousel gave main its own horizontal scrollbar
+   along the bottom of the viewport. Matching the specificity makes the rule win at every width.
+   This CSS only exists on the home page, so no other page's wide content is affected.
+   Do not write a backtick in these comments: the block is a JavaScript template literal, and a
+   backtick ends it. The compiler then reads the CSS as code and astro check fails. */
+main.overflow-x-auto {
+  overflow: visible;
+}
+
+/* Runs under the fixed header, which is the one change to the Hugo original.
+   Base.astro offsets the content with pt-24 (6rem) because the header is fixed, but the header
+   itself is shorter than that, so a band of page background showed between the two. Rather than
+   tune a number against a header height that changes with the viewport, the carousel starts at
+   the top of the document and the header paints over it: then there is no gap to measure.
+   margin-top:-6rem cancels the pt-24 exactly and the same 6rem goes back into the height, so the
+   carousel still occupies its original height in the flow and nothing below it moves. */
+.void-carousel {
+  position: relative;
+  width: 100vw;
+  margin: -6rem 0 2.5rem calc(50% - 50vw);
+  height: calc(clamp(220px, 40vh, 560px) + 6rem);
+  overflow: hidden;
+  background: #e5e7eb;
+}
+
+.dark .void-carousel {
+  background: #1f2937;
+}
+
+.void-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.void-carousel__slide.is-active {
+  opacity: 1;
+  z-index: 1;
+}
+
+.void-carousel__slide img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.void-carousel__btn,
+.void-carousel__toggle {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    opacity 0.3s,
+    background 0.2s;
+}
+
+.void-carousel__btn:hover,
+.void-carousel__toggle:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* The arrows centre on the part of the carousel the visitor can see, not on the whole element:
+   the header hides the top of it. The hidden band is exactly the header's height, which is 68px
+   at desktop widths, so half of it rounds to 2rem. An approximation on purpose - the header is a
+   little taller on narrow screens - but the arrows only appear on hover and a few pixels of drift
+   there costs nothing, whereas a visible band of background at the top did. */
+.void-carousel__btn {
+  top: calc(50% + 2rem);
+  width: 2.75rem;
+  height: 2.75rem;
+  transform: translateY(-50%);
+  font-size: 1.9rem;
+  line-height: 1;
+  padding: 0 0 0.2rem;
+  opacity: 0;
+}
+
+.void-carousel__btn--prev {
+  left: 1rem;
+}
+
+.void-carousel__btn--next {
+  right: 1rem;
+}
+
+.void-carousel:hover .void-carousel__btn,
+.void-carousel:focus-within .void-carousel__btn {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .void-carousel__btn {
+    opacity: 0.85;
+  }
+}
+
+.void-carousel__toggle {
+  right: 1rem;
+  bottom: 0.85rem;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.void-carousel__toggle svg {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.void-carousel__dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.1rem;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.void-carousel__dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+
+.void-carousel__dot.is-active {
+  background: #fff;
+  transform: scale(1.35);
+}
+
+.void-carousel.is-single .void-carousel__btn,
+.void-carousel.is-single .void-carousel__toggle,
+.void-carousel.is-single .void-carousel__dots {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .void-carousel__slide {
+    transition: none;
+  }
+}
