@@ -56,6 +56,10 @@ const page: PageLike = {
   permalink: new URL(Astro.url.pathname, Astro.site).toString(),
   isHome: Astro.url.pathname === "/",
   isPage: Boolean(isArticle),
+  // Added 2026-09-22: `isVideo` was accepted as a prop and then dropped here, so it was the one
+  // value this layout took and never used - `astro check` said so, and Open Graph called a video
+  // page a website. It travels to SEO.astro now, which turns it into `og:type` `video.other`.
+  isVideo: Boolean(isVideo),
   publishDate,
   updatedDate,
   tags,

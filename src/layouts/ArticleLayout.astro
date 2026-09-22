@@ -104,6 +104,12 @@ interface Props {
   /** The previous and next links, built by the wrapper: postLink() or videoLink(). */
   prev: NavLink | null;
   next: NavLink | null;
+  /**
+   * The subject of the page is a video, which Open Graph types as `video.other` instead of
+   * `article`. Added 2026-09-22 and set by VideoLayout.astro; a post leaves it alone. It is a
+   * flag and not the entry, so this frame still knows nothing about collections.
+   */
+  isVideo?: boolean;
 }
 
 const {
@@ -119,6 +125,7 @@ const {
   headings,
   prev,
   next,
+  isVideo,
 } = Astro.props;
 
 const dateMachine = formatDateTime(date);
@@ -154,6 +161,12 @@ const shareText = (
   shareTexts.map(cleanShareText).find(Boolean) ?? site.title
 ).slice(0, 120);
 
+// Added 2026-09-22 with the head meta below: the same first non-empty candidate, but not cut to
+// 120 characters. That cut belongs to the share widget, whose links carry the text in a query
+// string; resolveDescription() in lib/seo.ts does its own truncation at 160, which is what the
+// meta description wants.
+const shareDescription = shareTexts.map(cleanShareText).find(Boolean);
+
 // One entry per top-level heading of the post, with the deeper headings after it as its children.
 // The top level is the shallowest heading the post uses, normally "##"; a post that starts at
 // "###" still gets a flat list rather than an empty first level.
@@ -168,7 +181,33 @@ for (const heading of headings) {
 }
 ---
 
-<Base title={title} description={description}>
+{
+  /* Changed 2026-09-22. This call used to pass the title and the description and nothing else,
+  which quietly disabled every article-specific head tag on the site. Base.astro accepts
+  isArticle, publishDate, updatedDate, tags and params, builds a PageLike out of them and hands
+  it to SEO.astro - and SEO.astro decides og:type from `isPage`, emits article:published_time,
+  article:modified_time and one article:tag per tag, and prefers params.share_title and
+  params.share_description over the page's own. Nothing in src/ set any of those, so measured in
+  the built HTML: every post and every video carried og:type "website" and not one article:* tag,
+  while the share fields in the front matter reached the share widget and stopped there. The
+  machinery was written and never connected.
+
+  The values below are the ones this frame already holds, so its callers did not change:
+  Post.astro and VideoLayout.astro map an entry onto these props as before. `content` is the one
+  prop still not passed - the body is a slot here, so this file never sees the text; a post
+  without a description therefore falls back to the site title rather than to its opening
+  sentence, which is a separate question from this one. */
+}
+<Base
+  title={title}
+  description={description}
+  isArticle={true}
+  isVideo={isVideo}
+  publishDate={date}
+  updatedDate={updated}
+  tags={tags}
+  params={{ share_title: shareTitle, share_description: shareDescription }}
+>
   {
     /* Changed 2026-09-18: this wrapper is what the sidebar below is positioned against. It has
   no box of its own, so the article renders exactly as it did without it. */

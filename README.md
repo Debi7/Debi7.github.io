@@ -97,6 +97,14 @@ A pass of Astro best practice on 2026-09-22, at the owner's request. Nothing a v
 - `src/components/DisqusLazy.astro` is deleted. It was wired nowhere, never published `disqus_config`, and still carried a `YOUR_SHORTNAME` placeholder, so anyone who used it would have loaded a stranger's thread; `DISQUS-FIX.md` section 9 used to warn about it instead.
 - `src/scripts/site.js` is `src/scripts/site.ts`. As a `.js` file it was shipped to every visitor without `astro check` ever looking at it. The annotations it needed are documented in place; the emitted bundle is the same code.
 
+### An article page now says it is an article
+
+Fixed 2026-09-22, and it had been wrong since the head meta was written. `Base.astro` accepts `isArticle`, `isVideo`, `publishDate`, `updatedDate`, `tags` and `params`, turns them into the `PageLike` that `SEO.astro` reads, and `SEO.astro` uses them to choose `og:type` and to emit the dated meta. `ArticleLayout.astro` passed the title and the description and nothing else, and no other file passed them either - so every post and every video went out as `og:type="website"` with not one `article:*` tag, while `share_title` and `share_description` from the front matter reached the share buttons and stopped there. The code was all written; nothing connected it.
+
+The frame passes those props now, from values it already held. A post is `og:type="article"` with `article:published_time`, `article:modified_time` and one `article:tag` per tag; a video is `og:type="video.other"` with `video:release_date` and `video:tag`, because Open Graph defines `article:*` only for the article type and a page should not describe itself with properties its type does not have. Lists and the home page stay `website`. Checked in the built HTML, not in the source.
+
+That also put the last `astro check` warning to rest: `isVideo` had been accepted by `Base.astro` and never read.
+
 ### Math is typeset at build time
 
 Until 2026-09-22 it was not typeset at all, and nobody had noticed because no page uses math yet. `Head.astro` loaded KaTeX from a CDN and `site.ts` called `renderMathInElement`, but `remark-math` had already consumed the dollars while the page was built: `$E = mc^2$` reached the browser as `<code class="language-math math-inline">E = mc^2</code>`, and KaTeX's auto-render scans text nodes for dollars, so it found nothing. Measured on a temporary post with an inline and a display formula - zero `.katex` nodes in the DOM, while `typeof renderMathInElement` was `function`, which put the fault in the Markdown pipeline rather than in the CDN or the call.
@@ -196,7 +204,7 @@ src/pages/              Routes: index, about, 404, posts/, video/, tags/, catego
 src/lib/                lists (the order of every list, pages, years, the Card and NavLink shapes), posts (getPosts, getTerms, postCard, readingTime), video (getVideos, videoCard), urlize, titleize, date
 src/i18n/strings.ts     Theme UI strings, ported from the theme's en.toml
 src/styles/             main.css (theme), custom.css (colour overrides, loaded last)
-src/scripts/site.ts     Client-side behaviour (theme toggle, copy buttons, ...)
+src/scripts/site.ts     Client-side behaviour (theme toggle, responsive menu, ...)
 public/                 Favicons and images, copied as-is
 templates/              Templates for new posts: post.md (the rules for front matter and headings) and one per existing post; the steps are in CONTENT.md
 scripts/                check-pagination.mjs, the check behind npm run check:pages (no dependencies)
