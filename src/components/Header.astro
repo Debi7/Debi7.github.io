@@ -50,7 +50,17 @@ const initials = site.title
   from the page's width. Tailwind's own step is the class; a hand-made one would hide the value
   from anyone reading the markup. */
 }
-<div class="mx-auto w-full max-w-5xl overflow-x-auto px-6 sm:overflow-visible">
+{
+  /* The side padding is trimmed between 640px and 1024px, added 2026-09-22 with the sizes in
+  Menu.astro. That is the band where the whole header has to fit on one line - six menu items,
+  the title, the logo and the theme switch - and it was spilling off the right edge, taking the
+  switch with it. 12px a side instead of 24px is 24px back into the row. Below 640px the menu is
+  a hamburger and there is nothing to squeeze, so the padding stays as it was; from 1024px the
+  row fits with room to spare and the header is again what Hugo renders. */
+}
+<div
+  class="mx-auto w-full max-w-5xl overflow-x-auto px-6 sm:overflow-visible sm:px-3 lg:px-6"
+>
   <div class="flex items-center justify-between py-3">
     {
       /* max-w-[70%] below 640px instead of Hugo's max-w-[40%]: the logo takes room the
@@ -151,7 +161,11 @@ const initials = site.title
         </svg>
       </button>
 
-      <ThemeToggle class="ml-2 inline-flex" />
+      {
+        /* ml-1 below 1024px, ml-2 above: at exactly 640px, where the menu appears, the row was
+        still 3px wider than the space it had. Measured, like the rest of this band. */
+      }
+      <ThemeToggle class="ml-1 inline-flex lg:ml-2" />
     </div>
   </div>
 </div>

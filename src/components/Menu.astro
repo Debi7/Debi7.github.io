@@ -69,6 +69,27 @@ const currentClasses = (current: "page" | "true" | undefined) => [
 //    Keeping the compact sizes until 768px makes the row fit with room to spare, and at 768px
 //    and up it is exactly what Hugo renders, `md:space-x-6` included. The owner chose to keep
 //    the hamburger threshold at 640px, so this is what closes that band instead.
+//
+// Changed again on 2026-09-22, because the band moved rather than closed. Two things grew since
+// that note was written: Video made a sixth menu item, and the logo is now painted at every width
+// instead of only below 640px. Measured in a headless browser on the built page, row width
+// against usable width: at a 656px viewport the row wanted 663px against 608px, and at 806px -
+// just above the old md: threshold, where the bumps make everything bigger - it wanted 819px
+// against 758px. Both spill to the right, and the header is `fixed`, so the end of the row and
+// the theme toggle with it simply cannot be reached.
+//
+// Three changes, all of them inert at 1024px and up, where the row is again exactly what Hugo
+// renders:
+//
+// 1. The size bumps moved from `md:` to `lg:`. The compact row now holds from 640px to 1024px,
+//    which is the whole band where six items, the title, the logo and the switch have to share a
+//    line.
+// 2. `space-x-2` became `space-x-1` below that threshold: five gaps, 4px each.
+// 3. The links are `px-1.5` instead of `px-2` below it: six links, 4px each.
+//
+// Header.astro trims the wrapper's side padding over the same band for the same reason. Together
+// they take about 68px out of a row that was 55px too wide at its worst, and every width from
+// 640px to 1600px was re-measured afterwards.
 const isPanel = variant === "panel";
 ---
 
@@ -94,12 +115,12 @@ const isPanel = variant === "panel";
     </nav>
   ) : (
     <nav class="hidden w-full justify-end whitespace-nowrap sm:flex">
-      <ul class="flex list-none flex-row items-center space-x-2 py-2 md:space-x-6">
+      <ul class="flex list-none flex-row items-center space-x-1 py-2 lg:space-x-6">
         {site.menu.map((item) => (
-          <li class="text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white md:text-lg">
+          <li class="text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg">
             <a
               class:list={[
-                "rounded px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 md:px-3 md:py-2",
+                "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 lg:px-3 lg:py-2",
                 ...currentClasses(ariaCurrent(item.url)),
               ]}
               aria-current={ariaCurrent(item.url)}
