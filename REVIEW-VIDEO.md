@@ -93,6 +93,16 @@ duplicates the section every one of those entries already lives in. It is on all
 the largest tag on the site and will say nothing `/video/` does not. Keeping it is defensible (the reviewer asked for
 it); dropping it from the front matter is one edit per file and one less tag that means nothing.
 
+### Done on 2026-09-22
+
+Option A. `collectTerms()` in `src/lib/lists.ts` groups flat `{ names, card }` data, `postTerms()` and `videoTerms()`
+map their own collection into it, and `src/lib/terms.ts` - the one file in `lib/` that imports both - concatenates
+them. The four term routes call it and nothing else. `/tags/video/` holds the ten lectures over two pages,
+`/tags/биолокация/` mixes articles and lectures, and `npm run check:pages` walks 74 list pages without a complaint
+after `scripts/check-pagination.mjs` was taught the same merge. The tag `video` was left in the front matter, as the
+reviewer asked; the count beside a tag still reads "articles", which is the theme's own string and a wording question
+for the owner.
+
 ### Size
 
 Medium, and the only item in this list that touches shared code. `getTerms()` keeps its signature for its current
@@ -121,6 +131,14 @@ decisions are left over, and both are content, not code:
   category that mixes articles and lectures on the same subject is the smaller navigation; two separate ones make the
   lectures findable on their own. The reviewer asked for the second, and with `/video/` in the menu it is arguably
   redundant, which is worth saying out loud before it is built.
+
+### Done on 2026-09-22
+
+The category is built by the same term code, and the owner chose its name: the front matter of all ten lectures says
+`обучающее видео`, so the Categories page prints "Обучающее Видео" beside Blog and Education and the address is
+`/categories/обучающее-видео/`. A row in that accordion used to build its address as `/posts/` plus the slug, which
+would have sent every lecture to a post address that does not exist; it uses the card's own `url` now, so a lecture
+opens `/video/<slug>/` - the jump from a category to the video the owner asked for.
 
 ### Size
 

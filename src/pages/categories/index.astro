@@ -51,7 +51,11 @@
 // pre-scan looks for those tokens in .astro files without parsing the TypeScript, so it
 // would try to execute the rest of the comment as JavaScript and `astro dev` would fail.
 import Base from "../../layouts/Base.astro";
-import { getTerms } from "../../lib/posts";
+// Changed 2026-09-22: the terms come from lib/terms.ts, which collects them over the posts
+// and the videos, instead of from lib/posts.ts, which saw the posts only. A term now holds
+// cards rather than posts, so this route no longer maps anything - the entries arrive flat
+// and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
+import { getTerms } from "../../lib/terms";
 import { formatIsoDate } from "../../lib/date";
 import { t } from "../../i18n/strings";
 
@@ -100,7 +104,7 @@ const helpText = "Click any category to expand or collapse articles";
                 the page stops being pixel-identical to the Hugo one. */}
                 <span
                   class="category-count-badge ml-2 rounded-full bg-green-50 px-2 py-0.5 text-xs text-green-600"
-                  set:html={String(category.posts.length)}
+                  set:html={String(category.cards.length)}
                 />
               </div>
               <svg
@@ -125,16 +129,23 @@ const helpText = "Click any category to expand or collapse articles";
               <div class="space-y-3 pt-3">
                 {/* Hugo's `.RelPermalink`. Not an href: the card itself is the click
                 target, handled by the script at the bottom of this file. */}
-                {category.posts.map((post) => (
+                {/* Changed 2026-09-22 with the terms spanning both collections. Two things
+                were wrong here the moment a lecture could appear in a category: the address was
+                assembled on the spot as /posts/ plus the slug, which is a second definition of a
+                rule that belongs to postUrl() in lib/posts.ts, and it would have sent every
+                lecture to a post address that does not exist. A card carries its own url, built
+                by postUrl() or videoUrl(), so a lecture opens /video/<slug>/ - the jump from a
+                category to the video the owner asked for. */}
+                {category.cards.map((card) => (
                   <article
                     class="article-link cursor-pointer rounded p-3 transition-colors hover:bg-gray-50 dark:hover:bg-slate-800"
-                    data-href={`/posts/${post.slug}/`}
+                    data-href={card.url}
                   >
                     <h3 class="mb-1 text-base font-medium text-gray-800">
-                      {post.data.title}
+                      {card.title}
                     </h3>
                     <div class="text-xs text-gray-500">
-                      {formatIsoDate(post.data.date)}
+                      {formatIsoDate(card.date)}
                     </div>
                   </article>
                 ))}

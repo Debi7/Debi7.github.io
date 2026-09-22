@@ -58,7 +58,11 @@ import Base from "../../../layouts/Base.astro";
 // Changed 2026-09-22 (VIDEO-PAGE.md, section 4): the cards of a page are Cards, plain data
 // built with postCard(), and the split by year comes from lib/lists.ts, shared with the Video
 // list; until then the page held the posts themselves and this file read their fields.
-import { getTerms, postCard } from "../../../lib/posts";
+// Changed 2026-09-22: the terms come from lib/terms.ts, which collects them over the posts
+// and the videos, instead of from lib/posts.ts, which saw the posts only. A term now holds
+// cards rather than posts, so this route no longer maps anything - the entries arrive flat
+// and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
+import { getTerms } from "../../../lib/terms";
 import { groupByYear, paginateByYear } from "../../../lib/lists";
 import { formatMonthDay } from "../../../lib/date";
 import { urlize, encodeSlug } from "../../../lib/urlize";
@@ -70,13 +74,12 @@ import ListByYear from "../../../components/ListByYear.astro";
 export async function getStaticPaths() {
   const terms = await getTerms("tags");
   return terms.flatMap((term) =>
-    paginateByYear(
-      term.posts.map(postCard),
-      `/tags/${encodeSlug(term.slug)}/`,
-    ).map((entry) => ({
-      params: { slug: term.slug, page: entry.param },
-      props: { term, ...entry },
-    })),
+    paginateByYear(term.cards, `/tags/${encodeSlug(term.slug)}/`).map(
+      (entry) => ({
+        params: { slug: term.slug, page: entry.param },
+        props: { term, ...entry },
+      }),
+    ),
   );
 }
 
@@ -109,8 +112,14 @@ const groups = groupByYear(page.items);
           {term.title}
         </h1>
       </div>
+      {
+        /* Changed 2026-09-22: cards, not posts. The count now includes the video lectures that
+      carry the tag, because the term pages span both collections (lib/terms.ts). The label is
+      still t.articles, the theme's own string - with lectures counted in it, the wording is a
+      question for the owner rather than something to invent a key for. */
+      }
       <div class="text-sm text-gray-600">
-        {term.posts.length}
+        {term.cards.length}
         {t.articles}
       </div>
     </div>

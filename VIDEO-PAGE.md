@@ -242,3 +242,15 @@ One consequence is worth knowing before it is mistaken for a bug. Every list on 
 shows Лекция четвертая, Лекция третья, Введение, Лекция вторая. The dates are right and the ordering rule is the
 one the owner set for posts; a course that should read first-to-last on the page would need the video lists to sort
 the other way, which is a change to `src/lib/video.ts` and nothing else, and has not been asked for.
+
+## 8. The review of 2026-09-22 and what it found
+
+The reviewer sent six remarks about finishing the section: pagination on the video list, the `video` tag leading to a
+404, a category for the lectures on the Categories page, the header being too narrow for a sixth menu item, the logo
+in the header, and the carousel cropping its photos on a phone. They are answered one by one, with the measurements
+behind each answer and a recommendation, in [REVIEW-VIDEO.md](REVIEW-VIDEO.md). Two of the six turned out to be
+already in the tree; the rest were built the same day, each under a "Done" heading in that file. The one that reaches
+this section: a tag or a category now spans both collections, so a lecture appears on `/tags/биолокация/` beside the
+articles, `/tags/video/` exists at last, and the ten lectures are a category of their own, renamed from
+`education video` to `обучающее видео` at the owner's request. The separation rule of section 4 is untouched - the
+merge happens in `src/lib/terms.ts`, on flat data, with no branch on where an entry came from.

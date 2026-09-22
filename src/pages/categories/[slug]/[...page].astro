@@ -24,20 +24,23 @@ import Base from "../../../layouts/Base.astro";
 // PostList.astro) and renders Cards, plain data this route builds with postCard(); the split by
 // year comes from lib/lists.ts, shared with the Video list.
 import CardList from "../../../components/CardList.astro";
-import { getTerms, postCard } from "../../../lib/posts";
+// Changed 2026-09-22: the terms come from lib/terms.ts, which collects them over the posts
+// and the videos, instead of from lib/posts.ts, which saw the posts only. A term now holds
+// cards rather than posts, so this route no longer maps anything - the entries arrive flat
+// and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
+import { getTerms } from "../../../lib/terms";
 import { paginateByYear } from "../../../lib/lists";
 import { encodeSlug } from "../../../lib/urlize";
 
 export async function getStaticPaths() {
   const terms = await getTerms("categories");
   return terms.flatMap((term) =>
-    paginateByYear(
-      term.posts.map(postCard),
-      `/categories/${encodeSlug(term.slug)}/`,
-    ).map((entry) => ({
-      params: { slug: term.slug, page: entry.param },
-      props: { term, ...entry },
-    })),
+    paginateByYear(term.cards, `/categories/${encodeSlug(term.slug)}/`).map(
+      (entry) => ({
+        params: { slug: term.slug, page: entry.param },
+        props: { term, ...entry },
+      }),
+    ),
   );
 }
 

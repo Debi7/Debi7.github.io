@@ -6,10 +6,16 @@
 // here is what only a post has: the terms, the reading time, and how a post becomes a Card of
 // a list or a NavLink of an article page.
 import type { CollectionEntry } from "astro:content";
-import { urlize } from "./urlize";
-import { titleize } from "./titleize";
+// urlize and titleize used to be imported here for getTerms(); they moved to lib/lists.ts with
+// collectTerms() on 2026-09-22 and nothing in this file needs them any more.
 import { summary } from "./summary";
-import { published, type Card, type NavLink } from "./lists";
+import {
+  published,
+  type Card,
+  type NavLink,
+  type TermKind,
+  type TermSource,
+} from "./lists";
 import { t } from "../i18n/strings";
 
 export type Post = CollectionEntry<"posts">;
@@ -46,36 +52,28 @@ export function postLink(post: Post): NavLink {
   return { url: postUrl(post), title: post.data.title };
 }
 
-export type Term = {
-  /** As written in the front matter, e.g. "blog". Sort key and slug source. */
-  name: string;
-  /** What Hugo prints on a term page, e.g. "Blog". See lib/titleize.ts. */
-  title: string;
-  slug: string;
-  posts: Post[];
-};
-
-// Tags or categories with their posts, sorted by the front-matter name. That is Hugo's
-// `.Data.Terms.Alphabetical`, which orders by the term key, not by the title-cased label -
-// so "blog" before "education" is decided on the lower-case names, and `title` is only for
-// display. Posts inside a term keep getPosts' order (newest first), as Hugo's term pages do.
+// Replaced on 2026-09-22. What stood here was `export type Term` and `getTerms(kind)`, which
+// grouped posts by their tags or categories and returned the posts themselves. Both moved: the
+// shape and the grouping are collectTerms() in lib/lists.ts, and what asks for the terms of the
+// whole site is lib/terms.ts. The comment that explained Hugo's `.Data.Terms.Alphabetical`
+// moved with the code and is quoted there in full.
 //
-// Used by src/pages/categories/index.astro today; the tag pages will use the same shape.
-export async function getTerms(kind: "tags" | "categories"): Promise<Term[]> {
-  const byName = new Map<string, Post[]>();
-  for (const post of await getPosts()) {
-    for (const name of post.data[kind]) {
-      byName.set(name, [...(byName.get(name) ?? []), post]);
-    }
-  }
-  return [...byName]
-    .map(([name, posts]) => ({
-      name,
-      title: titleize(name),
-      slug: urlize(name),
-      posts,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+// The reason for the move is a defect the reviewer found: term pages were built from this file
+// alone, so /tags/video/ was built by nobody although ten videos carry that tag, and
+// /tags/биолокация/ listed articles only although videos carry it too (REVIEW-VIDEO.md, remarks
+// 2 and 3). A term is a subject, and a subject does not stop at a collection boundary.
+//
+// What is left here is this file's half of the work, and it stays inside the owner's rule that
+// the two kinds of entry share code only on plain data (VIDEO-PAGE.md, section 4): posts.ts
+// knows the posts collection and hands out flat data, video.ts does the same for videos, and
+// neither learns about the other.
+
+/** Every published post as the term builder takes it: the names it declares, and its card. */
+export async function postTerms(kind: TermKind): Promise<TermSource[]> {
+  return (await getPosts()).map((post) => ({
+    names: post.data[kind],
+    card: postCard(post),
+  }));
 }
 
 // Hugo: math.Round (div (countwords .Content) 200.0)

@@ -487,11 +487,19 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
 
   pages += checkListByYear("/posts/", published, "year");
   log(`posts: ${years.length} years - checked`);
+  // Changed 2026-09-22 with the code it mirrors. A term spans both collections now
+  // (src/lib/terms.ts): a tag or a category page lists the posts and the videos that carry it,
+  // so grouping the posts alone made this script expect pages that no longer exist and miss the
+  // ones that do - /tags/video/ above all, which is built by videos only. The merge mirrors
+  // collectTerms() in src/lib/lists.ts: concatenate posts then videos and sort on the date
+  // alone, so JavaScript's stable sort leaves a post ahead of a video dated the same day, which
+  // is the order the pages are built in.
+  const termEntries = [...published, ...videos].sort((a, b) => b.date - a.date);
   for (const [kind, keysOf] of [
     ["tags", (p) => p.tags],
     ["categories", (p) => p.categories],
   ]) {
-    const groups = groupBy(published, keysOf);
+    const groups = groupBy(termEntries, keysOf);
     for (const [name, posts] of groups) {
       pages += checkListByYear(
         `/${kind}/${encodeURIComponent(urlize(name))}/`,

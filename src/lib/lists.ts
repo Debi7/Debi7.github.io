@@ -9,6 +9,10 @@
 // held a copy of them typed to videos.
 import { getCollection, type CollectionEntry } from "astro:content";
 import { formatYear } from "./date";
+// Added 2026-09-22 with collectTerms() at the foot of this file: a term needs its display name
+// and its address segment, and both are plain string rules rather than knowledge of a collection.
+import { titleize } from "./titleize";
+import { urlize } from "./urlize";
 import { site } from "../config";
 
 /** What a list needs of an item to split it by year: its date. A Card has one. */
@@ -304,4 +308,68 @@ export function groupByYear<T extends Dated>(items: T[]): YearGroup<T>[] {
     else groups.push({ year, items: [item] });
   }
   return groups;
+}
+
+/** Which taxonomy a term belongs to. Both collections declare both in their front matter. */
+export type TermKind = "tags" | "categories";
+
+/**
+ * A tag or a category with the entries that carry it, as cards.
+ *
+ * Cards and not entries, and that is the point of the shape: a term page renders posts and
+ * videos through the same component and cannot tell which collection a line came from.
+ */
+export type Term = {
+  /** The name as the front matter writes it, lower-cased by the schema. Hugo sorts on this. */
+  name: string;
+  /** The display name, title-cased the way Hugo cases a taxonomy term (lib/titleize.ts). */
+  title: string;
+  /** The address segment, from urlize(). */
+  slug: string;
+  /** The entries under the term, newest first. */
+  cards: Card[];
+};
+
+/** One entry as the term builder sees it: the names it declares, and the card that renders it. */
+export type TermSource = { names: string[]; card: Card };
+
+// Moved here from getTerms() in src/lib/posts.ts on 2026-09-22, and widened while it moved. The
+// original text of that function's comment, because it is still what this does:
+//
+//   Tags or categories with their posts, sorted by the front-matter name. That is Hugo's
+//   `.Data.Terms.Alphabetical`, which orders by the term key, not by the title-cased label - so
+//   "blog" before "education" is decided on the lower-case names, and `title` is only for
+//   display. Posts inside a term keep getPosts' order (newest first), as Hugo's term pages do.
+//
+// What changed: it took posts and returned posts, so /tags/video/ was built by nobody (no post
+// carries that tag, ten videos do) and /tags/биолокация/ listed articles only, although videos
+// carry it too. The reviewer found the 404; the half-empty page is the quieter side of the same
+// fault. This version takes the flat shape above, so src/lib/terms.ts can hand it both
+// collections and neither collection has to know about the other (REVIEW-VIDEO.md, remarks 2
+// and 3).
+//
+// The sort inside a term is explicit now. The old one relied on the input already being in
+// site order, which two merged lists are not. Sorting on the date alone keeps JavaScript's
+// stable sort deciding the ties, so entries dated the same day keep the order they arrived in -
+// posts before videos, both newest first.
+//
+// push, not `[...(byName.get(name) ?? []), card]`: the old line rebuilt the array of a term
+// once per entry that carried it, which was on the list of things to tidy up.
+export function collectTerms(sources: TermSource[]): Term[] {
+  const byName = new Map<string, Card[]>();
+  for (const { names, card } of sources) {
+    for (const name of names) {
+      const cards = byName.get(name);
+      if (cards) cards.push(card);
+      else byName.set(name, [card]);
+    }
+  }
+  return [...byName]
+    .map(([name, cards]) => ({
+      name,
+      title: titleize(name),
+      slug: urlize(name),
+      cards: cards.sort((a, b) => b.date.getTime() - a.date.getTime()),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

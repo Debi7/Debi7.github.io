@@ -5,7 +5,13 @@
 // says how a video becomes what those helpers and the shared components work with: a Card of
 // a list and a NavLink of an article page. VIDEO-PAGE.md, section 4.
 import type { CollectionEntry } from "astro:content";
-import { published, type Card, type NavLink } from "./lists";
+import {
+  published,
+  type Card,
+  type NavLink,
+  type TermKind,
+  type TermSource,
+} from "./lists";
 import { summary } from "./summary";
 import { t } from "../i18n/strings";
 
@@ -36,4 +42,17 @@ export function videoCard(video: Video): Card {
 /** A video as the previous or next link of a video page. */
 export function videoLink(video: Video): NavLink {
   return { url: videoUrl(video), title: video.data.title };
+}
+
+// Added 2026-09-22, the video half of what collectTerms() in lib/lists.ts needs. The tag and
+// category pages used to be built from the posts alone, so a click on a tag printed on a video
+// card led either to a 404 (/tags/video/, which no post carries) or to a page listing articles
+// only (REVIEW-VIDEO.md, remarks 2 and 3). This file says what a video contributes to a term and
+// nothing about how terms are assembled, exactly as it says what a video contributes to a list.
+/** Every published video as the term builder takes it: the names it declares, and its card. */
+export async function videoTerms(kind: TermKind): Promise<TermSource[]> {
+  return (await getVideos()).map((video) => ({
+    names: video.data[kind],
+    card: videoCard(video),
+  }));
 }
