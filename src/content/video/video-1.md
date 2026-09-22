@@ -1,7 +1,10 @@
 ---
 title: "Лекция первая"
 description: "На этом видео-уроке мы разберем..."
-date: "2026-08-17"
+# Date reassigned 2026-09-22: the lectures were dated in reverse, so a later lecture carried an
+# earlier date than the one before it. The six lecture dates were swapped among themselves, so
+# every year page still lists the same number of videos. See VIDEO-PAGE.md.
+date: "2024-02-14"
 videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"

@@ -211,3 +211,34 @@ What would change in the tree when it is built: the `access` field in the video 
 the guard in `src/lib/video.ts`, the two branches of the `media` slot in `VideoLayout.astro`, one script file, and
 the service's address in `src/config.ts`. Nothing shared - not `ArticleLayout.astro`, not `CardList.astro`, not
 `lists.ts` - and nothing about posts.
+
+## 7. The lecture dates, corrected on 2026-09-22
+
+The owner read the year pages and found the course out of order: "Лекция вторая" carried an earlier date than
+"Лекция первая", and the same held all the way down - the higher the lecture number, the older the date. The sample
+entries had been written that way from the start, so the six lectures ran backwards through the calendar.
+
+The six lecture dates were reassigned in lecture order. The set of dates is unchanged; they were only swapped among
+the six files, so every year page still lists the same number of videos and the 3 / 4 / 3 layout of section 1 is
+intact.
+
+- `video-1.md`, Лекция первая: 2026-08-17 becomes 2024-02-14
+- `video-2.md`, Лекция вторая: 2026-07-15 becomes 2025-03-20
+- `video-3.md`, Лекция третья: 2025-06-11 becomes 2025-06-10
+- `video-4.md`, Лекция четвертая: 2025-06-10 becomes 2025-06-11
+- `video-8.md`, Лекция пятая: 2025-03-20 becomes 2026-07-15
+- `video-9.md`, Лекция шестая: 2024-02-14 becomes 2026-08-17
+
+The first lecture is now the oldest video on the site and the sixth the newest, which is what a course recorded over
+three years looks like. Each of the six files carries a note in its front matter saying so.
+
+The four "Введение в биолокацию и работу с маятником" entries were left where they are, because the owner asked
+about the lectures: `video-7.md` and `video-6.md` sit in 2024 between the first and second lectures, `video-5.md` in
+2025, and `my-first-video.md` is the newest video on the site. Three of them are duplicates of the same placeholder
+text, so where they belong is a content question rather than a chronology one.
+
+One consequence is worth knowing before it is mistaken for a bug. Every list on the site is ordered newest first
+(`published()` in `src/lib/lists.ts`), so a year page reads from the latest lecture down to the earliest: /video/2025/
+shows Лекция четвертая, Лекция третья, Введение, Лекция вторая. The dates are right and the ordering rule is the
+one the owner set for posts; a course that should read first-to-last on the page would need the video lists to sort
+the other way, which is a change to `src/lib/video.ts` and nothing else, and has not been asked for.
