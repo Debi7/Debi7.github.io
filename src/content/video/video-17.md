@@ -10,7 +10,7 @@ videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "энергетика человека", "энергополе"]
-categories: ["обучающее видео"]
+categories: ["обучающие видео"]
 duration: "16:44"
 videoPlatform: "youtube"
 ---

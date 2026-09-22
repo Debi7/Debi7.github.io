@@ -144,8 +144,8 @@ decisions are left over, and both are content, not code:
 ### Done on 2026-09-22
 
 The category is built by the same term code, and the owner chose its name: the front matter of every lecture says
-`обучающее видео`, so the Categories page prints "Обучающее Видео" beside Blog and Education and the address is
-`/categories/обучающее-видео/`. A row in that accordion used to build its address as `/posts/` plus the slug, which
+`обучающие видео`, so the Categories page prints "обучающие Видео" beside Blog and Education and the address is
+`/categories/обучающие-видео/`. A row in that accordion used to build its address as `/posts/` plus the slug, which
 would have sent every lecture to a post address that does not exist; it uses the card's own `url` now, so a lecture
 opens `/video/<slug>/` - the jump from a category to the video the owner asked for.
 

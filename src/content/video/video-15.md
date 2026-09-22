@@ -10,7 +10,7 @@ videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "самопроверка", "исследования"]
-categories: ["обучающее видео"]
+categories: ["обучающие видео"]
 duration: "13:02"
 videoPlatform: "youtube"
 ---

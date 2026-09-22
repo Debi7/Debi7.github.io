@@ -10,7 +10,7 @@ videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "биолокация", "маятник", "ориентирование"]
-categories: ["обучающее видео"]
+categories: ["обучающие видео"]
 duration: "17:48"
 videoPlatform: "youtube"
 ---

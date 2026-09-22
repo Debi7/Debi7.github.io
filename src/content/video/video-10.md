@@ -10,7 +10,7 @@ videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "биолокация", "рамки", "поиск воды"]
-categories: ["обучающее видео"]
+categories: ["обучающие видео"]
 duration: "14:05"
 videoPlatform: "youtube"
 ---

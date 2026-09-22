@@ -10,7 +10,7 @@ videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "геопатогенные зоны", "практика"]
-categories: ["обучающее видео"]
+categories: ["обучающие видео"]
 duration: "21:10"
 videoPlatform: "youtube"
 ---
