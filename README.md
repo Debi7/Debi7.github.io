@@ -105,6 +105,12 @@ The frame passes those props now, from values it already held. A post is `og:typ
 
 That also put the last `astro check` warning to rest: `isVideo` had been accepted by `Base.astro` and never read.
 
+### The table of contents is a recursive component
+
+Since 2026-09-22. `src/lib/toc.ts` used to concatenate `<ul>`, `<li>` and `<a>` into a string, with its own `escapeHtml()` because a heading's text went into that string raw, and `TableOfContents.astro` dropped the result in with `set:html`. The escaping was correct; the problem was that it had to be remembered. `toc.ts` now returns the headings as a tree and `src/components/TocList.astro` renders it, calling itself through `Astro.self` for each level, so the template does the escaping and there is no `set:html` left on the page.
+
+Two differences in the built HTML, both checked: the markup carries whitespace between tags (`<ul> <li> <a>`), and the `<nav>` gets a `data-astro-cid` attribute because it sits in a component with a scoped style block. Neither is visible. Every rule for the table of contents in `main.css` is a global id or element selector, `#TableOfContents a` is `display: block`, the lists are not flex, and `li + li` matches elements regardless of text nodes between them.
+
 ### The carousel's stylesheet and script are files
 
 Since 2026-09-22. They used to be two JavaScript template literals inside `Carousel.astro` - 170 lines of CSS in `const css`, 110 of code in `const js` - rendered with `is:inline set:html`. They are `src/styles/carousel.css` and `src/scripts/carousel.ts`, the component is 152 lines instead of 439, `astro check` reads the script, and the house rule about never writing a backtick in those constants is gone with them.
