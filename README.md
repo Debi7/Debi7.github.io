@@ -150,6 +150,10 @@ It is written this way rather than as a measured offset because the header's hei
 
 The practical consequence is that `/` can no longer be diffed against the Hugo screenshot as a whole. Everything below the carousel still matches; the reference image for the home page has to be retaken from the Astro build.
 
+Below 640px that geometry cropped the photos, and since 2026-09-22 it does not. Every photo in `public/images/carousel/` is 1600x700, a 2.29:1 panorama, while `clamp(220px, 40vh, 560px) + 6rem` on a 390x844 phone is a 390x434 frame: `object-fit: cover` scaled the picture to 434px tall and therefore 994px wide, of which 390px were on the screen - 39% of it, taken from the middle, which is why the reviewer could not find the waterfall. The media query at the foot of `carousel.css` gives the carousel `aspect-ratio: 1600 / 700` below the breakpoint, so the frame follows the picture and `cover` has nothing left to crop. Above 640px nothing changed.
+
+It still meets the header there, but by measurement rather than by the `-6rem` trick, because the trick and the whole picture cannot both be had: the 6rem that goes back into the height is exactly what makes the frame taller than the photo. The header is 56px below 640px (the 32px logo plus `py-3`), the wrapper's `pt-24` is 96px, and `margin-top: calc(3.5rem - 6rem)` is the difference. Plain `0` left a 40px band of page background between the two, which is what the owner saw. That value is the header's height: re-measure it if the contents of the bar change.
+
 ### The header is wider than the page, and the logo shows at every width
 
 Since 2026-09-22, both at the owner's decision after the reviewer asked for them (`REVIEW-VIDEO.md`, remarks 4 and 5).

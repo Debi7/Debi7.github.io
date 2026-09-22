@@ -248,6 +248,14 @@ not six.
 
 One stylesheet, one media query, and the phone screenshots at 390px and 360px that the project already takes.
 
+### Done on 2026-09-22
+
+Option A, as recommended, plus one thing the recommendation had not foreseen. `aspect-ratio: 1600 / 700` below 640px
+shows the whole photo. Dropping the overlap with `margin-top: 0` then left a 40px band of page background between the
+header and the carousel, because the wrapper's `pt-24` is 96px and the header at that width is 56px; the owner saw it
+immediately. The rule is `margin-top: calc(3.5rem - 6rem)` now, the difference between the two measured numbers, so the
+carousel meets the header exactly and still shows the picture whole. Checked in a headless browser at 545px and 390px.
+
 ## Suggested order
 
 1. **Remarks 4 and 5 together** - one component, immediate to see, no shared code. Good first commit.
