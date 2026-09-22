@@ -256,8 +256,8 @@ to add it to and no file to edit; a tag that no entry carries any more disappear
 - **It turns.** The cloud is a globe: it drifts by itself and follows the pointer, faster the
   further the pointer is from the middle. A visitor whose system asks for less motion sees the
   same words standing still in a row, and so does one with JavaScript turned off.
-- **Below 640px there is no cloud.** On a narrow screen the header menu is a hamburger, and the cloud and the row of
-  round links under the site title both give way to it.
+- **The cloud is the narrow-screen half.** Below 640px the cloud is what the home page shows under the title; from
+  640px up it gives way to the row of round menu links, and the two are never on screen together.
 
 ### Renaming a tag or a category
 

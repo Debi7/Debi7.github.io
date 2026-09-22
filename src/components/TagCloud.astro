@@ -45,6 +45,26 @@
 // harder way round. So the markup is in the page on a phone too, unseen - which is what lets a
 // crawler read the links whatever the viewport is.
 //
+// REVERSED THE SAME EVENING, AND THIS IS THE RULE THAT HOLDS
+//
+// The two paragraphs above describe the arrangement until the owner looked at it and asked for the
+// opposite, in these words: the cloud appears below 640px and disappears above it, where the row
+// of round menu links comes back instead. They are kept because the reasoning in them is still the
+// reasoning for the pair swapping at all, and because the rule flipped once and a later session
+// should be able to see that it did rather than assume a mistake.
+//
+// So: below 640px this block is shown and the round links are not; from 640px up it is
+// display:none and the links are shown (src/pages/index.astro carries the mirror image). The
+// breakpoint is still the header's - 640px is where Header.astro swaps its menu for a hamburger -
+// and the last paragraph above is unaffected: it is still a media query, the markup is still in
+// the page at every width, and a crawler still reads the links whichever side of 640px it renders
+// at.
+//
+// One consequence belongs here rather than in the script. The sphere now runs where the screen is
+// narrowest, so its radius is capped by the widest word it holds: without that cap a long tag like
+// "Геопатогенные Зоны" reaches past the edge of a 390px phone, and `main` below 640px carries
+// overflow-x-auto, which turns that into a horizontal scrollbar on the whole page.
+//
 // HOW IT MOVES
 //
 // Asked for by the owner on 2026-09-22, in three parts, and each part is here for a different
@@ -179,7 +199,7 @@ const motionOf = (name: string, step: number): Motion => {
   tags.length > 0 && (
     <nav
       aria-label="Tags"
-      class="tag-cloud mx-auto hidden max-w-3xl px-4 pt-10 sm:block"
+      class="tag-cloud mx-auto block max-w-3xl px-4 pt-10 sm:hidden"
     >
       <div class="tag-cloud__sky flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
         {tags.map((tag) => {

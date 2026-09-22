@@ -41,9 +41,13 @@ import { site } from "../config";
       stand at every width, as it does in Hugo.
 
       The breakpoint is the hamburger's, not a number chosen here - see the same note in
-      src/components/TagCloud.astro, which carries the mirror image of these classes. */
+      src/components/TagCloud.astro, which carries the mirror image of these classes.
+
+      Reversed the same evening, at the owner's word: the row is hidden below 640px and shown
+      from 640px up, and the cloud is the other way round. The paragraph above is kept because it
+      explains why the two swap at all; only which side each one takes has changed. */
     }
-    <div class="mt-12 flex flex-wrap justify-center gap-3 sm:hidden">
+    <div class="mt-12 hidden flex-wrap justify-center gap-3 sm:flex">
       {
         site.menu.map((item) => (
           <a

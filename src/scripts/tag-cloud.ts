@@ -39,19 +39,26 @@
 //
 // A visitor who asked for less motion never gets the sphere: the words stay in the wrapping row
 // they are rendered as, which is also what a visitor without JavaScript sees. The row is the
-// markup; the sphere is a class this script adds. Below 640px the block is display:none - the
-// cloud and the home page's round menu links trade places there - so the loop is stopped while
-// the media query says so, rather than turning a sphere nobody can see.
+// markup; the sphere is a class this script adds. The block itself is display:none on one side of
+// 640px - it and the home page's round menu links trade places there - so the loop is stopped
+// while the media query says so, rather than turning a sphere nobody can see. Which side that is
+// changed on the evening of 2026-09-22: the cloud was the wide half and is the narrow one now,
+// below 640px, at the owner's word. The query a few lines down is the only place that decides it.
 const cloud = document.querySelector<HTMLElement>(".tag-cloud");
 const sky = cloud?.querySelector<HTMLElement>(".tag-cloud__sky");
 const words = sky
   ? Array.from(sky.querySelectorAll<HTMLElement>(".tag-cloud__word"))
   : [];
 
-// 640px is Tailwind's sm, which is where Header.astro swaps its menu for a hamburger and where
-// this block appears. It is written out here because a script cannot read a Tailwind breakpoint;
-// if that rule moves, this number moves with it.
-const wideEnough = window.matchMedia("(min-width: 640px)");
+// 640px is Tailwind's sm, which is where Header.astro swaps its menu for a hamburger. It is
+// written out here because a script cannot read a Tailwind breakpoint; if that rule moves, this
+// number moves with it.
+//
+// The test was (min-width: 640px) until the owner reversed the pair on the evening of 2026-09-22:
+// the cloud is the narrow-screen half now and the row of round menu links is the wide one. 639.98
+// rather than 639 is the usual complement of a min-width query - a viewport can be 639.5px wide on
+// a scaled display, and neither query may claim it.
+const cloudShown = window.matchMedia("(max-width: 639.98px)");
 const stillPlease = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 if (cloud && sky && words.length > 0) {
@@ -101,7 +108,25 @@ if (cloud && sky && words.length > 0) {
     const box = cloud.getBoundingClientRect();
     // A third of the shorter side. The words are wide and stand at the equator at their widest,
     // so a larger sphere pushes the longest of them past the edge of the block.
-    radius = Math.min(box.width, box.height) * 0.36;
+    const wanted = Math.min(box.width, box.height) * 0.36;
+
+    // And no wider than the longest word allows. Added on the evening of 2026-09-22, when the
+    // owner moved the cloud to the narrow half of the breakpoint: on a 390px phone the block is
+    // about 358px wide, "Геопатогенные Зоны" is some 150px of it, and a sphere sized on height
+    // alone hangs that word over the edge. `main` carries overflow-x-auto below 640px, so the
+    // overhang would not be clipped - it would give the whole page a horizontal scrollbar.
+    //
+    // 1.15 is how far from the middle a word can travel: at the sides of the sphere the depth
+    // factor is about 1, and a little more where the word is both to the side and towards the
+    // viewer. offsetWidth is the layout width and ignores the transform this script writes, which
+    // is what makes it the right number to reserve room with.
+    let widest = 0;
+    for (const word of placed) widest = Math.max(widest, word.node.offsetWidth);
+    const room = (box.width - widest) / 2 / 1.15;
+
+    // The floor keeps a sphere on a very narrow screen rather than collapsing it into a knot of
+    // overlapping words; below it the words simply crowd, which is what a tag cloud does anyway.
+    radius = Math.max(60, Math.min(wanted, room));
   };
 
   // The two angles of the sphere and the speed each is turning at. The idle speed is what the
@@ -200,7 +225,7 @@ if (cloud && sky && words.length > 0) {
   };
 
   const decide = () => {
-    if (wideEnough.matches && !stillPlease.matches) start();
+    if (cloudShown.matches && !stillPlease.matches) start();
     else stop();
   };
 
@@ -224,7 +249,7 @@ if (cloud && sky && words.length > 0) {
     if (frame !== 0) measure();
   });
 
-  wideEnough.addEventListener("change", decide);
+  cloudShown.addEventListener("change", decide);
   stillPlease.addEventListener("change", decide);
   decide();
 }
