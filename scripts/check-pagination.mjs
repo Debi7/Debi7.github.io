@@ -14,16 +14,20 @@
 //
 //   - the posts and their order;
 //   - the addresses of Previous and Next, no Next on the last page, and no page after the last;
-//   - both sets of page numbers (the full one, two pages either side of the current one, and
-//     the compact one, one either side): the current page present and not a link, the first
-//     and last pages present, the pages around the current one present, every link pointing at
-//     its page, no more entries than allowed, and a gap only where two or more pages are skipped;
-//   - on the Posts list, the year switcher: one button per year, newest first, each pointing at
-//     its year, the year being shown highlighted.
+//   - the page numbers (rule changed later on 2026-09-19 with the owner's: every page of a list
+//     of at most pagination.everyNumberUpTo pages, otherwise only the first, the current and the
+//     last page with an ellipsis for each run of skipped pages): exactly the expected entries in
+//     order, the current page not a link, every other number a link pointing at its page;
+//   - on the Posts list, the year switcher (its rule from later on 2026-09-19: every year up to
+//     pagination.everyYearUpTo of them, otherwise the newest, the oldest and the year being
+//     shown with its neighbours, an ellipsis for hidden years): exactly the expected entries,
+//     newest first, each year pointing at its list, the year being shown highlighted.
 //
-// It does that for every year of the Posts list, every tag and every category, and also checks
-// that /posts/ shows the newest year, that no year without published posts has a list, that
-// every published post has its page, and that drafts and future posts have none.
+// It does that for every year of every list - the Posts list, every tag and every category are
+// all split by year since the evening of 2026-09-19 - and also checks that each list's own
+// address shows its newest year and highlights it, that no year without published posts has a
+// list under /posts/, that every published post has its page, and that drafts and future posts
+// have none.
 //
 // The rules it mirrors live in src/lib/posts.ts, src/lib/urlize.ts, src/lib/date.ts and the
 // list templates. When one of them changes on purpose, change this script with it; a failure
@@ -58,14 +62,26 @@ function readSettings(root) {
   const pageSize = Number(
     config.match(/pagination:\s*\{\s*pageSize:\s*(\d+)/)?.[1],
   );
+  // Added with the numbers rule of 2026-09-19; it sits next to pageSize in the same object.
+  const everyNumberUpTo = Number(
+    config.match(/pagination:\s*\{[^}]*everyNumberUpTo:\s*(\d+)/)?.[1],
+  );
   const offsetMinutes = Number(
     date.match(/FRONT_MATTER_OFFSET_MINUTES\s*=\s*(-?\d+)/)?.[1],
   );
   if (!pageSize)
     throw new Error("pagination.pageSize not found in src/config.ts");
+  if (!everyNumberUpTo)
+    throw new Error("pagination.everyNumberUpTo not found in src/config.ts");
+  // The year switcher's own threshold, added with YearSwitcher.astro on 2026-09-19.
+  const everyYearUpTo = Number(
+    config.match(/pagination:\s*\{[^}]*everyYearUpTo:\s*(\d+)/)?.[1],
+  );
+  if (!everyYearUpTo)
+    throw new Error("pagination.everyYearUpTo not found in src/config.ts");
   if (Number.isNaN(offsetMinutes))
     throw new Error("FRONT_MATTER_OFFSET_MINUTES not found in src/lib/date.ts");
-  return { pageSize, offsetMinutes };
+  return { pageSize, everyNumberUpTo, everyYearUpTo, offsetMinutes };
 }
 
 // Mirrors urlize() in src/lib/urlize.ts.
@@ -210,52 +226,60 @@ function linkOf(html, word) {
 function yearSwitcherOf(html) {
   const nav = html.match(/<nav aria-label="Years"[\s\S]*?<\/nav>/);
   if (!nav) return null;
+  // Years and, since the rule of 2026-09-19, the ellipsis between hidden years, in order.
   return [
-    ...nav[0].matchAll(/<a href="([^"]+)"([^>]*)>\s*(\d{4})\s*<\/a>/g),
-  ].map((m) => ({
-    url: m[1],
-    year: m[3],
-    current: /aria-current/.test(m[2]),
-  }));
-}
-
-function checkNumberBlock(block, n, last, base, where, radius, fail) {
-  const re =
-    /<a href="([^"]+)" aria-label="Page (\d+)"[^>]*>\s*(\d+)\s*<\/a>|<span aria-current="page"[^>]*>\s*(\d+)\s*<\/span>|<span aria-hidden="true"[^>]*>\s*(?:&hellip;|\u2026)\s*<\/span>/g;
-  const entries = [...block.matchAll(re)].map((m) =>
-    m[4]
-      ? { n: Number(m[4]), current: true }
-      : m[2]
-        ? { n: Number(m[3]), url: m[1], label: Number(m[2]) }
-        : { gap: true },
+    ...nav[0].matchAll(
+      /<a href="([^"]+)"([^>]*)>\s*(\d{4})\s*<\/a>|<span aria-hidden="true"[^>]*>\s*(?:&hellip;|…)\s*<\/span>/g,
+    ),
+  ].map((m) =>
+    m[3]
+      ? { url: m[1], year: m[3], current: /aria-current/.test(m[2]) }
+      : { gap: true },
   );
-  if (entries.length > 2 * radius + 5)
-    fail(`${where}: ${entries.length} entries`);
-  const current = entries.filter((e) => e.current);
-  if (current.length !== 1 || current[0].n !== n)
-    fail(`${where}: current page ${JSON.stringify(current)}`);
-  const numbers = entries.filter((e) => !e.gap);
-  if (numbers[0]?.n !== 1 || numbers.at(-1)?.n !== last)
-    fail(`${where}: numbers do not run from 1 to ${last}`);
-  for (let k = Math.max(1, n - radius); k <= Math.min(last, n + radius); k++) {
-    if (!numbers.some((e) => e.n === k)) fail(`${where}: page ${k} missing`);
-  }
-  for (const e of numbers) {
-    if (e.url && (e.url !== pageUrl(base, e.n) || e.label !== e.n))
-      fail(`${where}: link ${e.n} points at ${e.url}`);
-  }
-  for (let i = 1; i < entries.length; i++) {
-    const a = entries[i - 1];
-    const b = entries[i];
-    if (a.gap && b.gap) fail(`${where}: two gaps in a row`);
-    if (!a.gap && !b.gap && b.n !== a.n + 1)
-      fail(`${where}: ${a.n} then ${b.n} without a gap`);
-    if (a.gap && (!entries[i - 2] || b.n - entries[i - 2].n < 3))
-      fail(`${where}: a gap hides fewer than two pages`);
-  }
 }
 
-function checkNumbers(html, n, last, base, where, fail) {
+// Mirrors yearSwitcher() in src/lib/posts.ts: every year up to everyYearUpTo of them, otherwise
+// the newest, the oldest and the current year with one neighbour either side, "..." for a run
+// of hidden years. `years` are newest first.
+function expectedYearSwitcher(years, currentYear, everyYearUpTo) {
+  const current = years.indexOf(currentYear);
+  const shown =
+    years.length <= everyYearUpTo
+      ? years.map((_, index) => index)
+      : [...new Set([0, current - 1, current, current + 1, years.length - 1])]
+          .filter((index) => index >= 0 && index < years.length)
+          .sort((a, b) => a - b);
+  const entries = [];
+  let previous = -1;
+  for (const index of shown) {
+    if (index - previous > 1) entries.push("...");
+    entries.push(years[index]);
+    previous = index;
+  }
+  return entries;
+}
+
+// The entries pageNumbers() in src/lib/posts.ts is expected to produce for page `n` of `last`:
+// "1 2 3 4 5" up to everyNumberUpTo pages, otherwise the first, the current and the last page
+// with a gap for every run of skipped pages - "1 ... 7 ... 20", "1 2 ... 20", "1 ... 20".
+// Changed 2026-09-19 with that rule; before it, the script checked a sliding window of two
+// pages either side of the current one, plus a second, narrower set for small screens.
+function expectedNumbers(n, last, everyNumberUpTo) {
+  const shown =
+    last <= everyNumberUpTo
+      ? Array.from({ length: last }, (_, i) => i + 1)
+      : [...new Set([1, n, last])];
+  const entries = [];
+  let previous = 0;
+  for (const k of shown) {
+    if (k - previous > 1) entries.push("...");
+    entries.push(k);
+    previous = k;
+  }
+  return entries;
+}
+
+function checkNumbers(html, n, last, base, where, everyNumberUpTo, fail) {
   const blocks = [
     ...html.matchAll(
       /<div class="[^"]*\border-last\b[^"]*">([\s\S]*?)<\/div>/g,
@@ -265,28 +289,37 @@ function checkNumbers(html, n, last, base, where, fail) {
     if (blocks.length) fail(`${where}: page numbers on a list of one page`);
     return;
   }
-  if (blocks.length !== 2)
+  // One block since the rule of 2026-09-19 (five entries at most); it used to be two, one
+  // shown from 640px up and one below.
+  if (blocks.length !== 1)
     return fail(
-      `${where}: ${blocks.length} blocks of page numbers, expected 2`,
+      `${where}: ${blocks.length} blocks of page numbers, expected 1`,
     );
-  checkNumberBlock(
-    blocks[0][1],
-    n,
-    last,
-    base,
-    `${where}, full numbers`,
-    2,
-    fail,
+  const re =
+    /<a href="([^"]+)" aria-label="Page (\d+)"[^>]*>\s*(\d+)\s*<\/a>|<span aria-current="page"[^>]*>\s*(\d+)\s*<\/span>|<span aria-hidden="true"[^>]*>\s*(?:&hellip;|\u2026)\s*<\/span>/g;
+  const entries = [...blocks[0][1].matchAll(re)].map((m) =>
+    m[4]
+      ? { n: Number(m[4]), current: true }
+      : m[2]
+        ? { n: Number(m[3]), url: m[1], label: Number(m[2]) }
+        : { gap: true },
   );
-  checkNumberBlock(
-    blocks[1][1],
-    n,
-    last,
-    base,
-    `${where}, compact numbers`,
-    1,
-    fail,
-  );
+  const found = entries.map((e) => (e.gap ? "..." : e.n));
+  const expected = expectedNumbers(n, last, everyNumberUpTo);
+  if (found.join(" ") !== expected.join(" "))
+    fail(
+      `${where}: numbers "${found.join(" ")}", expected "${expected.join(" ")}"`,
+    );
+  for (const e of entries) {
+    if (e.gap) continue;
+    // Links have no `current` field, so compare as booleans.
+    if (Boolean(e.current) !== (e.n === n))
+      fail(
+        `${where}: page ${e.n} ${e.current ? "is" : "is not"} the current one`,
+      );
+    if (e.url && (e.url !== pageUrl(base, e.n) || e.label !== e.n))
+      fail(`${where}: link ${e.n} points at ${e.url}`);
+  }
 }
 
 // Walks one list from its first page with Next, then back from its last page with Previous.
@@ -295,10 +328,15 @@ function checkList({
   base,
   expected,
   pageSize,
+  everyNumberUpTo,
+  everyYearUpTo,
   label,
   fail,
   years,
   currentYear,
+  // The list's own address, under which the year buttons must point ("/tags/hugo/"); added
+  // when every list got years, it used to be "/posts/" for all.
+  yearBase,
 }) {
   const last = Math.max(1, Math.ceil(expected.length / pageSize));
   const seen = [];
@@ -328,15 +366,24 @@ function checkList({
     const prev = linkOf(html, "Previous");
     if (prev !== (n === 1 ? null : pageUrl(base, n - 1)))
       fail(`${where}: Previous points at ${prev}`);
-    checkNumbers(html, n, last, base, where, fail);
+    checkNumbers(html, n, last, base, where, everyNumberUpTo, fail);
     if (years) {
       const switcher = yearSwitcherOf(html);
-      const wanted = years.length > 1 ? years.join() : null;
-      if ((switcher ? switcher.map((s) => s.year).join() : null) !== wanted)
+      const found = switcher
+        ? switcher.map((s) => (s.gap ? "..." : s.year)).join(" ")
+        : null;
+      const wanted =
+        years.length > 1
+          ? expectedYearSwitcher(years, currentYear, everyYearUpTo).join(" ")
+          : null;
+      if (found !== wanted)
         fail(
-          `${where}: the year switcher shows ${switcher?.map((s) => s.year).join()}`,
+          `${where}: the year switcher shows "${found}", expected "${wanted}"`,
         );
-      if (switcher && switcher.some((s) => s.url !== `/posts/${s.year}/`))
+      if (
+        switcher &&
+        switcher.some((s) => !s.gap && s.url !== `${yearBase}${s.year}/`)
+      )
         fail(`${where}: a year button points elsewhere`);
       if (
         switcher &&
@@ -380,56 +427,67 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
       pages: 0,
     };
 
-  const { pageSize, offsetMinutes } = readSettings(root);
+  const { pageSize, everyNumberUpTo, everyYearUpTo, offsetMinutes } =
+    readSettings(root);
   const all = readPosts(root, failures);
   const published = publishedPosts(all, now);
   const byYear = groupBy(published, (p) => [yearOf(p, offsetMinutes)]);
   const years = [...byYear.keys()];
   let pages = 0;
 
-  for (const year of years) {
-    const posts = byYear.get(year);
-    pages += checkList({
-      dist,
-      base: `/posts/${year}/`,
-      expected: posts,
-      pageSize,
-      label: `year ${year}`,
-      fail,
-      years,
-      currentYear: year,
-    });
-    log(`year ${year}: ${posts.length} posts - checked`);
-  }
-  const home = readPage(dist, "/posts/");
-  if (!home) fail("/posts/ is missing");
-  else if (
-    years.length &&
-    cardsOf(home).join() !==
-      cardsOf(readPage(dist, `/posts/${years[0]}/`) ?? "").join()
-  )
-    fail(`/posts/ does not show the first page of ${years[0]}`);
-  else if (
-    years.length > 1 &&
-    yearSwitcherOf(home)?.find((s) => s.current)?.year !== years[0]
-  )
-    fail(`/posts/ does not highlight ${years[0]}`);
+  // Every list is split by year since the evening of 2026-09-19 (paginateByYear() in
+  // src/lib/posts.ts): the Posts list, every tag and every category. Until then only the
+  // Posts list was, and the tag and category lists were walked across all years. A list is
+  // walked year by year, newest first, and its own address must show the newest year's first
+  // page and highlight that year in the switcher.
+  const checkListByYear = (base, posts, label) => {
+    const byYearHere = groupBy(posts, (p) => [yearOf(p, offsetMinutes)]);
+    const yearsHere = [...byYearHere.keys()];
+    let walked = 0;
+    for (const year of yearsHere) {
+      walked += checkList({
+        dist,
+        base: `${base}${year}/`,
+        expected: byYearHere.get(year),
+        pageSize,
+        everyNumberUpTo,
+        everyYearUpTo,
+        label: `${label} ${year}`,
+        fail,
+        years: yearsHere,
+        currentYear: year,
+        yearBase: base,
+      });
+    }
+    const own = readPage(dist, base);
+    if (!own) fail(`${base} is missing`);
+    else if (
+      yearsHere.length &&
+      cardsOf(own).join() !==
+        cardsOf(readPage(dist, `${base}${yearsHere[0]}/`) ?? "").join()
+    )
+      fail(`${base} does not show the first page of ${yearsHere[0]}`);
+    else if (
+      yearsHere.length > 1 &&
+      yearSwitcherOf(own)?.find((s) => s.current)?.year !== yearsHere[0]
+    )
+      fail(`${base} does not highlight ${yearsHere[0]}`);
+    return walked;
+  };
 
+  pages += checkListByYear("/posts/", published, "year");
+  log(`posts: ${years.length} years - checked`);
   for (const [kind, keysOf] of [
     ["tags", (p) => p.tags],
     ["categories", (p) => p.categories],
   ]) {
     const groups = groupBy(published, keysOf);
     for (const [name, posts] of groups) {
-      const base = `/${kind}/${encodeURIComponent(urlize(name))}/`;
-      pages += checkList({
-        dist,
-        base,
-        expected: posts,
-        pageSize,
-        label: `${kind} "${name}"`,
-        fail,
-      });
+      pages += checkListByYear(
+        `/${kind}/${encodeURIComponent(urlize(name))}/`,
+        posts,
+        `${kind} "${name}"`,
+      );
     }
     log(`${kind}: ${groups.size} lists - checked`);
   }

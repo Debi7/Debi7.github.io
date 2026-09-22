@@ -102,10 +102,10 @@ The Hugo guide also lists `slug`, `aliases` and `cover`. This site does not supp
 
 ### The posts list page
 
-The Posts list is split by year. The buttons under its title choose a year: `/posts/2025/` lists only the posts of
-2025, five to a page, and Previous, Next and the page numbers at the foot move between the pages of that year only.
-`/posts/` itself shows the newest year. A post appears in the year of its `date`. The tag pages and the category
-pages use the same order, pages of five and page numbers, across all years. Details are in
+Every list is split by year: the Posts list, each tag page and each category page. The buttons under the title choose
+a year: `/posts/2025/` lists only the posts of 2025, five to a page, and Previous, Next and the page numbers at the
+foot move between the pages of that year only; `/tags/<tag>/2025/` does the same for one tag. `/posts/` and
+`/tags/<tag>/` themselves show the newest year. A post appears in the year of its `date`. Details are in
 [PAGINATION.md](PAGINATION.md).
 
 The order:

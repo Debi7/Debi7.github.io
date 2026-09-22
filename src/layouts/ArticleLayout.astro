@@ -65,8 +65,12 @@ const shareText = (
       {
         data.categories.length > 0 && (
           <div class="mb-3 flex">
+            {/* Changed 2026-09-19 evening: the href got its trailing slash. Hugo prints
+            /categories/blog (string concatenation), and ARTICLE-PAGE-FIX.md removed the slash
+            for parity; but Astro's dev and preview servers answer the slash-less address with
+            404, which the owner reported. See PostList.astro and REVIEW-FIXES.md, section 5. */}
             <a
-              href={`/categories/${encodeSlug(urlize(data.categories[0]))}`}
+              href={`/categories/${encodeSlug(urlize(data.categories[0]))}/`}
               class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs text-blue-600 transition-colors hover:bg-blue-100"
             >
               {data.categories[0]}

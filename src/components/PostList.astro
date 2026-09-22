@@ -32,9 +32,13 @@
 // carries the whole link, while the tag chips sit above it on `z-20` and stop the click from
 // propagating. That is the theme's own construction and it is reproduced as-is.
 //
-// The tag chip hrefs deliberately have NO trailing slash: Hugo builds them by hand as
-// `{{ "/tags/" | relLangURL }}{{ . | urlize }}`, so the live site links to `/tags/hugo`,
-// not `/tags/hugo/`. Adding the slash here would be a silent improvement over the original.
+// The tag chip hrefs had NO trailing slash until the evening of 2026-09-19, because Hugo
+// builds them by hand as `{{ "/tags/" | relLangURL }}{{ . | urlize }}` and the live Hugo site
+// links to `/tags/hugo`, not `/tags/hugo/`. The owner reported it as broken: with
+// `trailingSlash: "always"` Astro's dev and preview servers answer such an address with 404
+// (GitHub Pages redirects it, so nobody saw it live). The chips now link to `/tags/hugo/`, the
+// address the page is built at; the same change was made to the chips of the tag route, its
+// "All Tags" link and the category label in ArticleLayout.astro. REVIEW-FIXES.md, section 5.
 //
 // PAGINATION - changed 2026-09-19, asked for by the owner. This used to read "NOT PORTED":
 // Hugo paginates at 10 posts and the site had two, so Hugo emitted no pagination markup and
@@ -43,8 +47,9 @@
 //
 //   .Paginator.HasPrev / .HasNext / .Prev.URL / .Next.URL
 //                                -> page.prevUrl / page.nextUrl, from paginateList() in
-//                                   lib/posts.ts. The block at the end of this file is
-//                                   list.html's, classes verbatim.
+//                                   lib/posts.ts, rendered by Pagination.astro since later
+//                                   on 2026-09-19: list.html's block, classes verbatim, with
+//                                   tag.html's SVG arrows in place of the text arrows.
 //   i18n "pagination_previous" / "pagination_next"
 //                                -> t.pagination_previous / t.pagination_next.
 //
@@ -53,16 +58,18 @@
 //   section, not over `.Paginator.Pages`, the posts of the current page. So on the Hugo site
 //   every page of a paginated list would show all the posts, and only the Previous and Next
 //   links would change. That bug is not reproduced: here a page shows its own posts.
-// - On the category pages a year that continues from one page to the next gets its badge
-//   again at the top of the next page, because the groups are built per page. The Posts list
-//   is paginated per year, so each of its pages has exactly one year and one badge.
+// - Every page holds one year, so it has exactly one year badge: the Posts list and, since the
+//   evening of 2026-09-19, the category pages too are split by year (paginateByYear() in
+//   lib/posts.ts). For a few hours that day the category pages were paginated across years,
+//   and a year continuing from one page to the next got its badge again on the next page.
 // - The year switcher under the h1 is new, asked for by the owner; Hugo has nothing like it.
-//   It is shown only when the route passes `years` - /posts/ does, the category pages do not -
-//   and only when there are at least two years. Each link goes to the first page of its year,
-//   /posts/<year>/, and the year being shown (`currentYear`) is highlighted and carries
-//   aria-current. Its button classes are the pagination buttons' classes from list.html, and
-//   the highlighted state uses the year badge's colours, so it matches the theme in both
-//   colour schemes.
+//   Every route passes `years` and `currentYear` now, and the switcher renders only when there
+//   are at least two years. Each link goes to the first page of its year under the list's own
+//   address, and the year being shown is highlighted and carries aria-current. Its button
+//   classes are the pagination buttons' classes from list.html, and the highlighted state uses
+//   the year badge's colours, so it matches the theme in both colour schemes. Since later on
+//   2026-09-19 it is YearSwitcher.astro, which also decides which years to show when there are
+//   many, and ListByYear.astro places it and the page buttons around the list.
 // See PAGINATION.md.
 import {
   groupByYear,
@@ -74,6 +81,9 @@ import { formatMonthDay } from "../lib/date";
 import { summary } from "../lib/summary";
 import { urlize, encodeSlug } from "../lib/urlize";
 import { t } from "../i18n/strings";
+// Added later on 2026-09-19: the year switcher and the page buttons around the list, through
+// one component shared with the tag route; see its header.
+import ListByYear from "./ListByYear.astro";
 
 interface Props {
   /** Hugo's `.Title`: "Posts" for the section, the term title for one category. */
@@ -81,10 +91,12 @@ interface Props {
   // Changed 2026-09-19: one page of the list instead of the whole list (`posts: Post[]`),
   // for pagination; see the note at the top.
   page: ListPage<Post>;
-  /** The year switcher's links; the switcher is shown only when this is given. */
-  years?: YearLink[];
-  /** The year the page shows, highlighted in the year switcher. */
-  currentYear?: string;
+  // Both required since the evening of 2026-09-19: every list is split by year, so every route
+  // passes them (they were optional while only /posts/ had the switcher).
+  /** Every year of the list, newest first, for the year switcher. */
+  years: YearLink[];
+  /** The year the page shows, highlighted in the year switcher; undefined on an empty list. */
+  currentYear: string | undefined;
 }
 
 const { title, page, years, currentYear } = Astro.props;
@@ -95,199 +107,115 @@ const groups = groupByYear(page.items);
   <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
 
   {
-    /* Added 2026-09-19: the year switcher; see the note at the top. The label is a literal
-    because the theme's strings, ported in full to src/i18n/strings.ts, have no key for it. */
-    years && years.length > 1 && (
-      <nav
-        aria-label="Years"
-        class="-mt-4 mb-8 flex flex-wrap justify-center gap-2"
-      >
-        {years.map((link) => (
-          <a
-            href={link.url}
-            aria-current={link.year === currentYear ? "true" : undefined}
-            class:list={[
-              "rounded-md px-3 py-1 text-sm shadow-sm transition-colors",
-              link.year === currentYear
-                ? "bg-blue-50 text-blue-700 dark:bg-slate-700 dark:text-blue-300"
-                : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800",
-            ]}
-          >
-            {link.year}
-          </a>
-        ))}
-      </nav>
-    )
+    /* Added 2026-09-19: the year switcher above the list and the page buttons below it; see
+    the note at the top. First inline here, then YearSwitcher.astro and Pagination.astro, and
+    since the evening ListByYear.astro, which places both around the list the same way on
+    every list route. The switcher's label stays a literal because the theme's strings, ported
+    in full to src/i18n/strings.ts, have no key for it. */
   }
-
-  <div class="space-y-16">
-    {
-      groups.map((group) => (
-        <div class="relative">
-          {/* Year indicator */}
-          <div class="mb-6 flex items-center">
-            <div class="year-indicator-badge flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
-              {group.year}
+  <ListByYear page={page} years={years} currentYear={currentYear}>
+    <div class="space-y-16">
+      {
+        groups.map((group) => (
+          <div class="relative">
+            {/* Year indicator */}
+            <div class="mb-6 flex items-center">
+              <div class="year-indicator-badge flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
+                {group.year}
+              </div>
+              <div class="ml-4 h-px flex-grow bg-gradient-to-r from-blue-200 to-transparent dark:from-slate-600" />
             </div>
-            <div class="ml-4 h-px flex-grow bg-gradient-to-r from-blue-200 to-transparent dark:from-slate-600" />
-          </div>
 
-          {/* Article list */}
-          <div class="ml-8 space-y-6">
-            {group.posts.map((post) => (
-              <div class="relative">
-                <a
-                  href={`/posts/${post.slug}/`}
-                  class="absolute inset-0 z-10"
-                  aria-label={post.data.title}
-                />
-                <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
-                  <div class="p-5">
-                    <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
-                      <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
-                        {post.data.title}
-                      </h3>
-                      <time class="mt-1 flex flex-shrink-0 items-center text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="mr-1 h-4 w-4 text-gray-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        {formatMonthDay(post.data.date)}
-                      </time>
-                    </div>
-
-                    {summary(post.body) && (
-                      <div class="line-clamp-2 text-sm text-gray-600 dark:text-gray-300">
-                        {summary(post.body)}
-                      </div>
-                    )}
-
-                    {post.data.tags.length > 0 && (
-                      <div class="relative z-20 mt-3 flex flex-wrap gap-2">
-                        {post.data.tags.map((tag: any) => (
-                          <a
-                            href={`/tags/${encodeSlug(urlize(tag))}`}
-                            class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
-                            onclick="event.stopPropagation();"
+            {/* Article list. The theme's `ml-8` became `sm:ml-8` on 2026-09-19 evening
+            (REVIEW-FIXES.md, section 9): the 2rem timeline indent under the year badge put the
+            cards 80px from the left edge of a phone and 48px from the right, which the reviewer
+            read as "shifted right". Below 640px the cards now span the column; from 640px up
+            the class is what it was, so nothing changes on a laptop. Hugo renders the indent at
+            every width. */}
+            <div class="space-y-6 sm:ml-8">
+              {group.posts.map((post) => (
+                <div class="relative">
+                  <a
+                    href={`/posts/${post.slug}/`}
+                    class="absolute inset-0 z-10"
+                    aria-label={post.data.title}
+                  />
+                  <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
+                    <div class="p-5">
+                      <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
+                        <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
+                          {post.data.title}
+                        </h3>
+                        <time class="mt-1 flex flex-shrink-0 items-center text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="mr-1 h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
                           >
-                            {tag}
-                          </a>
-                        ))}
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                            />
+                          </svg>
+                          {formatMonthDay(post.data.date)}
+                        </time>
                       </div>
-                    )}
 
-                    <div class="mt-4">
-                      <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
-                        {t.list_read_more}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          class="ml-1 h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M14 5l7 7m0 0l-7 7m7-7H3"
-                          />
-                        </svg>
-                      </span>
+                      {summary(post.body) && (
+                        <div class="line-clamp-2 text-sm text-gray-600 dark:text-gray-300">
+                          {summary(post.body)}
+                        </div>
+                      )}
+
+                      {post.data.tags.length > 0 && (
+                        <div class="relative z-20 mt-3 flex flex-wrap gap-2">
+                          {/* Changed 2026-09-19: the parameter was annotated `any`, which the
+                          house rules forbid and which nothing needed - the collection schema
+                          declares `tags` as string[], so `tag` is inferred as string, as in the
+                          tag route's copy of these chips. */}
+                          {post.data.tags.map((tag) => (
+                            <a
+                              href={`/tags/${encodeSlug(urlize(tag))}/`}
+                              class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
+                              onclick="event.stopPropagation();"
+                            >
+                              {tag}
+                            </a>
+                          ))}
+                        </div>
+                      )}
+
+                      <div class="mt-4">
+                        <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
+                          {t.list_read_more}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="ml-1 h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M14 5l7 7m0 0l-7 7m7-7H3"
+                            />
+                          </svg>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      ))
-    }
-  </div>
-
-  {
-    /* Added 2026-09-19: list.html's pagination block, which was not ported before; see the
-    note at the top. Like Hugo, it renders only when there is a neighbouring page, and an
-    empty div keeps Next on the right when there is no Previous.
-
-    The numbered page links in the middle are new, asked for by the owner; the theme has
-    none. They come from pageNumbers() in lib/posts.ts. The classes added to the theme's own
-    - flex-wrap, items-center, gap-y-4 and the sm: grid on the container, the justify-self
-    on the two buttons - only place them: below 640px the numbers take a row of their own
-    under Previous and Next, from 640px up the three sit in one row with the numbers centred
-    whether or not both buttons are there. The number buttons use the classes of the
-    Previous and Next buttons, and the current page the year switcher's highlighted colours;
-    it is a span with aria-current, not a link. Each link is labelled "Page n" with the
-    theme's own string. */
-    (page.prevUrl || page.nextUrl) && (
-      <div class="mt-12 flex flex-wrap items-center justify-between gap-y-4 sm:grid sm:grid-cols-[1fr_auto_1fr]">
-        {page.prevUrl ? (
-          <a
-            href={page.prevUrl}
-            class="rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-start"
-          >
-            &larr; {t.pagination_previous}
-          </a>
-        ) : (
-          <div />
-        )}
-        {/* Two copies of the numbers: the full one from 640px up, the compact one below;
-        see pageNumbers() for why. Only one is ever displayed. */}
-        {[page.numbers, page.numbersCompact].map((numbers, index) => (
-          <div
-            class:list={[
-              "order-last w-full flex-wrap justify-center gap-1 sm:order-none sm:w-auto",
-              index === 0 ? "hidden sm:flex" : "flex sm:hidden",
-            ]}
-          >
-            {numbers.map((entry) =>
-              entry.kind === "gap" ? (
-                <span
-                  aria-hidden="true"
-                  class="px-1 py-1 text-sm text-gray-500 dark:text-gray-400"
-                >
-                  &hellip;
-                </span>
-              ) : entry.current ? (
-                <span
-                  aria-current="page"
-                  class="rounded-md bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-300"
-                >
-                  {entry.number}
-                </span>
-              ) : (
-                <a
-                  href={entry.url}
-                  aria-label={t.pagination_page(entry.number)}
-                  class="rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
-                >
-                  {entry.number}
-                </a>
-              ),
-            )}
-          </div>
-        ))}
-        {page.nextUrl ? (
-          <a
-            href={page.nextUrl}
-            class="rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-end"
-          >
-            {t.pagination_next} &rarr;
-          </a>
-        ) : (
-          <div />
-        )}
-      </div>
-    )
-  }
+        ))
+      }
+    </div>
+  </ListByYear>
 </div>

@@ -20,11 +20,17 @@ const path = Astro.url.pathname;
 // Hugo marks the entry that is the current page with IsMenuCurrent (`aria-current="page"`)
 // and the entry whose section contains the current page with HasMenuCurrent
 // (`aria-current="true"`). Checked against the Hugo build for every route: only
-// /posts/<slug>/ ever produces an ancestor match. Taxonomy term pages (/tags/hugo/,
-// /categories/blog/) mark nothing at all, so they are deliberately not handled here.
+// /posts/<slug>/ ever produced an ancestor match, and taxonomy term pages (/tags/hugo/,
+// /categories/blog/) marked nothing at all.
+//
+// Changed 2026-09-19 evening, asked for by the owner: the menu is to show which section the
+// reader is in, so every entry but Home is the ancestor of the pages under its address -
+// Posts of /posts/2026/ and of an article, Tags of /tags/hugo/, Categories of
+// /categories/blog/. That goes beyond Hugo's HasMenuCurrent, which ignores taxonomy terms.
+// Home matches only the home page itself.
 function ariaCurrent(url: string): "page" | "true" | undefined {
   if (path === url) return "page";
-  if (url === "/posts/" && path.startsWith("/posts/")) return "true";
+  if (url !== "/" && path.startsWith(url)) return "true";
   return undefined;
 }
 
@@ -33,9 +39,22 @@ function ariaCurrent(url: string): "page" | "true" | undefined {
 //   <a class="px-2 py-1 ..." aria-current="page" class="active font-bold" href="/">
 // Browsers keep the first class attribute and drop the second, and neither `.active` nor
 // `.ancestor` is styled anywhere in the theme - so on the live Hugo site the current menu
-// item is NOT bold. Merging those classes here would make this port render a bold item
-// where Hugo renders a normal one, so they are intentionally left out. See README,
-// "The active menu item is not highlighted".
+// item is NOT bold, and until 2026-09-19 this port left the classes out to render the same.
+//
+// Changed 2026-09-19 evening, asked for by the owner: the classes are merged into the one
+// class attribute now, through class:list, so the current page's entry is bold and its
+// section's entry semibold - what the theme's author wrote and never saw. `active` and
+// `ancestor` stay as hooks. The weight alone turned out too subtle - the owner did not
+// notice it - so both states also take the colours of the year switcher's highlighted
+// button (YearSwitcher.astro), the site's existing "you are here" look: blue-50 with
+// blue-700 text, slate-700 with blue-300 in dark mode. The link's own hover classes still
+// win on hover. See README, "The active menu item is highlighted", and MIGRATION-PLAN.md
+// section 9.
+const currentClasses = (current: "page" | "true" | undefined) => [
+  current === "page" && "active font-bold",
+  current === "true" && "ancestor font-semibold",
+  current && "bg-blue-50 text-blue-700 dark:bg-slate-700 dark:text-blue-300",
+];
 
 // Two changes to the Hugo class list in the "bar" variant, both inert at 768px and up, which
 // is where the parity screenshots are taken:
@@ -60,7 +79,10 @@ const isPanel = variant === "panel";
         {site.menu.map((item) => (
           <li class="text-base text-gray-600 dark:text-gray-200">
             <a
-              class="block rounded px-2 py-3 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-slate-800 dark:hover:text-white"
+              class:list={[
+                "block rounded px-2 py-3 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-slate-800 dark:hover:text-white",
+                ...currentClasses(ariaCurrent(item.url)),
+              ]}
               aria-current={ariaCurrent(item.url)}
               href={item.url}
             >
@@ -76,7 +98,10 @@ const isPanel = variant === "panel";
         {site.menu.map((item) => (
           <li class="text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white md:text-lg">
             <a
-              class="rounded px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 md:px-3 md:py-2"
+              class:list={[
+                "rounded px-2 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 md:px-3 md:py-2",
+                ...currentClasses(ariaCurrent(item.url)),
+              ]}
               aria-current={ariaCurrent(item.url)}
               href={item.url}
             >

@@ -25,44 +25,23 @@
 // two routes never produce the same address as long as no post's file name is a year, like
 // 2025.md; the templates and CONTENT.md say so.
 //
-// The year switcher is on this route only, as the owner asked; the category pages share
-// PostList.astro but do not pass `years`. See PAGINATION.md.
+// Changed later on 2026-09-19: the splitting by year moved from this file into
+// paginateByYear() in lib/posts.ts, because the owner asked for the tag and category lists to
+// work the same way; the three routes now share it, and PostList.astro renders every page
+// through ListByYear.astro. Until then the year switcher was on this route only. See
+// PAGINATION.md.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../layouts/Base.astro";
 import PostList from "../../components/PostList.astro";
-import {
-  getPosts,
-  groupByYear,
-  pageParam,
-  paginateList,
-  yearLinks,
-} from "../../lib/posts";
+import { getPosts, paginateByYear } from "../../lib/posts";
 
 const title = "Posts";
 
 export async function getStaticPaths() {
-  const groups = groupByYear(await getPosts());
-  const years = yearLinks(groups);
-  const yearPages = groups.flatMap((group) =>
-    paginateList(group.posts, `/posts/${group.year}/`).map((page) => ({
-      params: { page: pageParam(page.number, group.year) },
-      props: { page, years, year: group.year },
-    })),
-  );
-  // /posts/ itself: the newest year's first page, which is the first entry above. With no
-  // posts at all it is an empty list, so the menu item still leads somewhere.
-  const newest = yearPages.at(0);
-  const home = newest
-    ? { params: { page: undefined }, props: newest.props }
-    : {
-        params: { page: undefined },
-        props: {
-          page: paginateList([], "/posts/")[0],
-          years,
-          year: undefined,
-        },
-      };
-  return [home, ...yearPages];
+  return paginateByYear(await getPosts(), "/posts/").map((entry) => ({
+    params: { page: entry.param },
+    props: entry,
+  }));
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
