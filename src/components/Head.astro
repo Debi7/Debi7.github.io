@@ -46,6 +46,25 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
   }
 </style>
 
+{
+  /* Added 2026-09-22 with the feeds themselves: this is how a browser or a reader extension finds
+  a feed - the address alone is not discoverable. Both are listed on every page, each with its own
+  title, because the two are separate subscriptions (the posts and the lectures) and a reader shows
+  these titles when offering the choice. */
+}
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title={site.title}
+  href="/rss.xml"
+/>
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title={`${site.title} - Video`}
+  href="/video/rss.xml"
+/>
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 

@@ -218,6 +218,15 @@ The address was settled as a user site: the repository is `Debi7/Debi7.github.io
 
 Only `main` is deployed, so work on a branch reaches the site when the branch is merged. Verified 2026-09-22 against the live site; [DEPLOY.md](DEPLOY.md) section 0 records what was measured, what is left for the owner to do on GitHub (two dead branches from the first attempt are still on the remote), and keeps the original analysis of why that first attempt failed.
 
+## Feeds and sitemap
+
+Added 2026-09-22, when the deploy address stopped being a placeholder - every address in a feed or a sitemap is absolute, so both were waiting on `site`.
+
+- `/sitemap.xml` is `sitemap-index.xml` plus `sitemap-0.xml`, written by `@astrojs/sitemap`. It lists 96 addresses: the pages, the year pages and the term pages, but not the paginated ones - `/posts/2025/page/2/` and its like are navigation, and a search engine that indexes them competes with itself for the entries they hold. Drafts and future-dated entries cannot appear: they are not in the build at all.
+- `/rss.xml` carries the 23 published posts, `/video/rss.xml` the 10 videos. Two feeds, not one, because posts and videos are separate entities here and a reader who subscribes for the lectures should not receive the articles. Both are declared in the head of every page, so a reader extension finds them.
+
+`@astrojs/sitemap` is pinned to exactly **3.6.0**. From 3.7 it depends on `sitemap@9`, which requires Node 20.19.5; this project is on 20.19.0 with `engine-strict`, so `npm ci` would refuse to install it. Raise that pin only together with the Node version. `@astrojs/rss` has no such constraint.
+
 ## Layout
 
 ```

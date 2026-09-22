@@ -6,6 +6,14 @@ import remarkMath from "remark-math";
 // the markdown block below for why the site moved to build-time rendering.
 import rehypeKatex from "rehype-katex";
 import alpinejs from "@astrojs/alpinejs";
+// Added 2026-09-22, once the deploy address was settled (DEPLOY.md section 0). The integration
+// writes sitemap-index.xml and sitemap-0.xml from the routes of the build, using `site` above as
+// the origin, which is why it could not be added while that value was still a placeholder.
+//
+// Pinned to exactly 3.6.0 in package.json, not a caret: 3.7 depends on sitemap@9, which requires
+// Node 20.19.5, and this project is on 20.19.0 with engine-strict set. The note in package.json
+// says the same, so raising one raises the other.
+import sitemap from "@astrojs/sitemap";
 
 export default defineConfig({
   // Публичный адрес деплоя на GitHub Pages (без базового пути)
@@ -20,7 +28,21 @@ export default defineConfig({
 
   // applyBaseStyles: false - the Tailwind base layer is imported by src/styles/main.css so
   // that the order (base, theme rules, custom.css) stays under our control.
-  integrations: [tailwind({ applyBaseStyles: false }), mdx(), alpinejs()],
+  // sitemap() goes last; the order of integrations does not matter here, and putting it at the end
+  // keeps the three that affect how pages are built together at the front.
+  integrations: [
+    tailwind({ applyBaseStyles: false }),
+    mdx(),
+    alpinejs(),
+    sitemap({
+      // A draft or a future-dated entry is not in the build at all - published() in lib/lists.ts
+      // filters it out - so the sitemap cannot leak one. What it would otherwise list is the
+      // paginated machinery: /posts/2025/page/2/ and its like are real pages, but they are
+      // navigation, and a search engine that indexes them competes with itself for the entries
+      // they hold. The entry pages, the year pages and the term pages stay.
+      filter: (page) => !/\/page\/\d+\/$/.test(page),
+    }),
+  ],
 
   markdown: {
     // remark-math only keeps $...$ / $$...$$ intact in Markdown. Rendering stays client-side
