@@ -5,6 +5,20 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Added 2026-09-22: GitHub Pages accepts one deployment at a time, and two pushes to main close
+# together would otherwise start two runs that race to publish. `cancel-in-progress: false` is the
+# setting GitHub's own Pages template uses: a run already uploading is left to finish rather than
+# cancelled half way, and the next one waits its turn, so the site is never published from a
+# partial build.
+#
+# This is the one thing here that Astro's deployment guide does not show. The rest of the file is
+# that guide's workflow - the same triggers, the same three permissions, the same build-then-deploy
+# pair - on newer action versions than the guide prints (checkout@v4, withastro/action@v3,
+# deploy-pages@v4 against its checkout@v3, action@v1, deploy-pages@v1).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 permissions:
   contents: read
   pages: write
@@ -20,6 +34,10 @@ jobs:
         uses: withastro/action@v3
         with:
           # `.npmrc` содержит engine-strict=true, а package.json требует Node 20
+          # (English, added 2026-09-22 next to the original note: `.npmrc` sets engine-strict=true
+          # and package.json requires Node 20, so the runner has to use 20 or `npm ci` refuses to
+          # install. The action runs npm ci and astro build and uploads dist/ as the Pages
+          # artifact, which the deploy job below publishes.)
           node-version: 20
 
   deploy:

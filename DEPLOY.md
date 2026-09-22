@@ -8,6 +8,46 @@ The public address of the site is not decided yet. Section 2 defines the placeho
 against, and section 5 lists the three possible shapes of the address. Fill in the decision record in section 2
 when the choice is made and substitute the values in the steps.
 
+**Read section 0 first: most of what follows describes a state the repository has left.** The address was chosen,
+the repository was renamed and the site has been live since before 2026-09-22. Sections 1, 3 and 4 are kept as the
+record of why the first attempt failed, and section 6 is still the procedure that was followed, but neither
+describes the repository as it is today.
+
+## 0. Current state, verified 2026-09-22
+
+Everything in this section was measured, not assumed: the remote was read with `git`, the addresses with `curl`.
+
+- **Option B was taken.** The repository is `git@github.com:Debi7/Debi7.github.io.git`; `origin` points there, and
+  `https://github.com/Debi7/klub_biolocation_astro` answers 301 to the new name, which is GitHub's redirect for a
+  renamed repository. So the project owns the account's user site, exactly as section 5 describes Option B.
+- **The site is live.** `https://debi7.github.io/` answers 200 and serves this project's build - the canonical link,
+  `og:site_name` and the Russian `lang` are ours - and so do `/video/` and `/video/video-1/`, the section added on
+  2026-09-20 to 2026-09-22. `https://debi7.github.io/klub_biolocation_astro/` answers 404, which is right: under a
+  user site that path never existed.
+- **GitHub Actions does the building.** `.github/workflows/deploy.yml` is on `origin/main` (and on the working
+  branches). It runs `withastro/action@v3`, which does `npm ci` and `astro build` and uploads `dist/` as the Pages
+  artifact, then `actions/deploy-pages@v4` publishes it. So problem 3 of section 1 - "nothing builds the site on
+  GitHub" - is solved.
+- **`astro.config.mjs` is correct for this address.** `site: "https://debi7.github.io/"` and no `base`, which is
+  what Option B needs. The link sweep of section 7 is not needed and should not be done.
+- **The published site is behind the branch.** A live post still carries `og:type="website"`, the fault fixed on
+  2026-09-22; that fix and the ones after it are on `video-page-v1` and reach the site when it is merged into
+  `main`, since only a push to `main` triggers the workflow.
+
+What is still open, and all of it is the owner's to do, because nothing here changes anything on GitHub by itself:
+
+- **The two leftover branches from the first attempt are still on the remote**: `gh-pages`, which holds the source
+  tree rather than a built site, and `gh-pages"` with the literal double quote in its name. Neither is used by the
+  Pages deployment any more, and both are confusing to anyone reading the branch list. Step 1 of section 6 has the
+  commands; the quoted one needs its name quoted on the command line.
+- **Check Settings > Pages once**: the source has to be "GitHub Actions", not "Deploy from a branch". The site being
+  live from a workflow run says it already is, but it is worth seeing.
+- **Merge `video-page-v1` into `main`** when the work on it is done, which is what publishes it.
+
+Changed here on 2026-09-22: the workflow gained a `concurrency` group, so two pushes to `main` in quick succession
+cannot start two deployments that race each other; a run that is already publishing is left to finish. The Russian
+comment in it has an English note beside it now, as the house rule asks, and the original was left in place.
+
 ## 1. Summary
 
 The site does not appear on GitHub Pages (`https://debi7.github.io/klub_biolocation_astro/` answers HTTP 404)
@@ -41,12 +81,16 @@ files (section 7).
 - `GITHUB_USER`: the account that owns the repository the site is published from. Today that is `Debi7`, so the
   Pages host is `debi7.github.io`. If the site is published from another account, replace it throughout.
 
-Decision record - fill in when the address is chosen:
+Decision record:
 
-- Option chosen (A, B or C from section 5):
-- `SITE_URL`:
-- `BASE_PATH`:
-- Decided by, on:
+- Option chosen (A, B or C from section 5): **B, the user site.** The repository was renamed to
+  `Debi7/Debi7.github.io`, which is what serves `debi7.github.io`.
+- `SITE_URL`: `https://debi7.github.io/` - the value already in `astro.config.mjs`, and the canonical link the
+  live pages carry.
+- `BASE_PATH`: `/`. No `base` in `astro.config.mjs`, and section 7's link sweep is not needed. Astro's own
+  deployment guide only asks for `base` when the site is served from `github.io/<repo>`, which this one is not.
+- Decided by, on: the owner, before 2026-09-22; recorded here on 2026-09-22 from the state of the remote and of
+  the live site, since the record had been left blank. Section 0 lists what was measured.
 
 ## 3. What is on GitHub right now (observed 2026-09-13)
 

@@ -206,7 +206,11 @@ Alpine.js comes from npm through the official `@astrojs/alpinejs` integration: `
 
 ## Deployment
 
-Not deployed yet. The first GitHub Pages attempt (the abandoned `github-pages` npm package, a branch named `gh-pages"` holding the source tree, no workflow) does not work; [DEPLOY.md](DEPLOY.md) explains why and gives the fix step by step. The public address is still to be decided, so that file is written against a `SITE_URL` placeholder with a decision record at the top.
+Live at **https://debi7.github.io/**, built and published by GitHub Actions on every push to `main`.
+
+The address was settled as a user site: the repository is `Debi7/Debi7.github.io`, so `site` in `astro.config.mjs` is `https://debi7.github.io/` and no `base` is needed - which is why every internal link in the source can stay root-relative, as Hugo parity requires. `.github/workflows/deploy.yml` runs `withastro/action@v3` (`npm ci`, `astro build`, upload `dist/` as the Pages artifact) and then `actions/deploy-pages@v4`; it is Astro's own deployment workflow on newer action versions, plus a `concurrency` group so two pushes cannot race to publish.
+
+Only `main` is deployed, so work on a branch reaches the site when the branch is merged. Verified 2026-09-22 against the live site; [DEPLOY.md](DEPLOY.md) section 0 records what was measured, what is left for the owner to do on GitHub (two dead branches from the first attempt are still on the remote), and keeps the original analysis of why that first attempt failed.
 
 ## Layout
 
