@@ -1,6 +1,9 @@
 ---
 import { t } from "../i18n/strings";
-import { titleize } from "../lib/titleize";
+// Changed 2026-09-22: titleize() until then. termLabel() is titleize() plus the rename map in
+// src/config.ts, so the tag under an article is called what the Tags page and the cloud on the
+// home page call it. Nothing about the output changes while that map is empty.
+import { termLabel } from "../lib/lists";
 import { encodeSlug, urlize } from "../lib/urlize";
 
 interface Props {
@@ -37,7 +40,7 @@ const { tags } = Astro.props;
                 d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
               />
             </svg>
-            {titleize(tag)}
+            {termLabel(tag)}
           </a>
         ))}
       </div>
