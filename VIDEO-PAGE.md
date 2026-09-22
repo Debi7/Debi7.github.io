@@ -251,6 +251,6 @@ in the header, and the carousel cropping its photos on a phone. They are answere
 behind each answer and a recommendation, in [REVIEW-VIDEO.md](REVIEW-VIDEO.md). Two of the six turned out to be
 already in the tree; the rest were built the same day, each under a "Done" heading in that file. The one that reaches
 this section: a tag or a category now spans both collections, so a lecture appears on `/tags/биолокация/` beside the
-articles, `/tags/video/` exists at last, and the ten lectures are a category of their own, renamed from
+articles, `/tags/video/` exists at last, and the lectures are a category of their own, renamed from
 `education video` to `обучающее видео` at the owner's request. The separation rule of section 4 is untouched - the
 merge happens in `src/lib/terms.ts`, on flat data, with no branch on where an entry came from.

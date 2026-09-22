@@ -43,6 +43,15 @@ links, and with no change to any file.
 Nothing to do. If the reviewer wants to see it working before that sixth video exists, `npm run check:pages:stress`
 builds a temporary copy with many generated entries and checks every page of it.
 
+### Done on 2026-09-22
+
+Nothing was changed in the code, and nothing needed to be. The owner asked instead for more than five videos in every
+year, so that the pagination is there to be looked at rather than argued about: eight sample lectures were added,
+`video-10.md` to `video-17.md`, three in 2024, two in 2025 and three in 2026. Every year now holds six, and
+`/video/2024/page/2/`, `/video/2025/page/2/` and `/video/2026/page/2/` are in the build with their Previous, Next and
+numbered links. They are sample content in the shape of the lectures beside them, each saying so in its front matter,
+and they share the placeholder `videoId` the other samples use.
+
 ## 2. "Add the `video` tag - clicking it gives a 404 today"
 
 ### What the code does
@@ -97,7 +106,7 @@ it); dropping it from the front matter is one edit per file and one less tag tha
 
 Option A. `collectTerms()` in `src/lib/lists.ts` groups flat `{ names, card }` data, `postTerms()` and `videoTerms()`
 map their own collection into it, and `src/lib/terms.ts` - the one file in `lib/` that imports both - concatenates
-them. The four term routes call it and nothing else. `/tags/video/` holds the ten lectures over two pages,
+them. The four term routes call it and nothing else. `/tags/video/` holds the lectures over four pages,
 `/tags/биолокация/` mixes articles and lectures, and `npm run check:pages` walks 74 list pages without a complaint
 after `scripts/check-pagination.mjs` was taught the same merge. The tag `video` was left in the front matter, as the
 reviewer asked; the count beside a tag still reads "articles", which is the theme's own string and a wording question
@@ -134,7 +143,7 @@ decisions are left over, and both are content, not code:
 
 ### Done on 2026-09-22
 
-The category is built by the same term code, and the owner chose its name: the front matter of all ten lectures says
+The category is built by the same term code, and the owner chose its name: the front matter of every lecture says
 `обучающее видео`, so the Categories page prints "Обучающее Видео" beside Blog and Education and the address is
 `/categories/обучающее-видео/`. A row in that accordion used to build its address as `/posts/` plus the slug, which
 would have sent every lecture to a post address that does not exist; it uses the card's own `url` now, so a lecture
