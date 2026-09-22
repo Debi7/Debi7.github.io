@@ -73,6 +73,11 @@ document.addEventListener("DOMContentLoaded", function () {
     // drop-down panel carries the other one below that. Only ever one of them is displayed,
     // but both are in the document, so both are bound and both are kept in the same aria
     // state. Hugo has a single #theme-toggle; see ThemeToggle.astro for why the id is gone.
+    // Changed 2026-09-22: there is one button again. The owner asked for the switch to stay in
+    // the header bar when the drop-down panel is open instead of moving into it, so the panel no
+    // longer renders a second instance. The query and the loop stay as they are - they cost
+    // nothing over one element, and they are what makes a second switch anywhere on the page
+    // work without touching this file.
     const btns = document.querySelectorAll("[data-theme-toggle]");
 
     function systemPrefersDark() {

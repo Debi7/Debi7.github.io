@@ -12,6 +12,14 @@
 // Nothing visual depended on it - the theme's CSS hooks on the .theme-toggle and
 // .theme-toggle-btn classes, never on the id (src/styles/main.css, lines 848-935) - and
 // src/scripts/site.js now binds every [data-theme-toggle] and keeps their aria state in sync.
+//
+// Changed 2026-09-22: the paragraph above describes an arrangement that ended today. At the
+// owner's request the switch stays in the header bar at every width and the drop-down panel no
+// longer carries a copy, so the document holds one of these buttons again and there is no aria
+// state to keep in sync between two. The component stays a component - it is forty lines of SVG
+// that Header.astro is better off without, and the class prop is still how the caller places it -
+// and site.ts still binds every [data-theme-toggle], which costs nothing with one button and
+// keeps working if a second one ever returns.
 
 interface Props {
   /** Extra classes, used to hide one instance at a breakpoint. */

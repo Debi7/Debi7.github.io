@@ -108,8 +108,15 @@ const initials = site.title
     </div>
     <div class="flex items-center gap-2">
       <Menu />
-      <ThemeToggle class="ml-2 hidden sm:inline-flex" />
-
+      {
+        /* Changed 2026-09-22 at the owner's request: the switch stays in the bar at every width
+        and no longer moves into the drop-down panel when the menu opens. It used to carry
+        `hidden sm:inline-flex`, so below 640px the bar hid it and the panel showed a second
+        instance under a "Theme" row; the owner asked for the arrangement in the reference he
+        sent, where the switch sits in the bar beside the close button and the panel holds the
+        menu and nothing else. The button is written after the hamburger now so that it is the
+        last control on the row at every width, which is where it already sat on a desktop. */
+      }
       <button
         id="menu-toggle"
         type="button"
@@ -143,6 +150,8 @@ const initials = site.title
           <path d="M6 6l12 12M18 6L6 18"></path>
         </svg>
       </button>
+
+      <ThemeToggle class="ml-2 inline-flex" />
     </div>
   </div>
 </div>
@@ -155,11 +164,11 @@ const initials = site.title
   }
   <div class="mx-auto w-full max-w-5xl px-6 pb-4">
     <Menu variant="panel" />
-    <div
-      class="mt-2 flex items-center justify-between border-t border-gray-200 px-2 pt-3 dark:border-slate-700"
-    >
-      <span class="text-base text-gray-600 dark:text-gray-200">Theme</span>
-      <ThemeToggle />
-    </div>
+    {
+      /* The "Theme" row that stood here - a label and a second ThemeToggle - was removed on
+      2026-09-22 with the change above. The panel holds the menu and nothing else now, and the
+      document carries one theme button instead of two, so nothing has to be kept in sync
+      between them. */
+    }
   </div>
 </div>
