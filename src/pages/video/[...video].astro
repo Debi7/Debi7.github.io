@@ -1,4 +1,13 @@
 ---
+// The Video list: /video/, /video/<year>/ and /video/<year>/page/<n>/, the same shape as
+// the Posts list in posts/[...page].astro, fed by the `video` collection through
+// src/lib/video.ts and rendered by VideoList.astro.
+//
+// Fixed on 2026-09-22 (VIDEO-PAGE.md, section 2): the rest parameter of this route is named
+// `video`, after the file, but getStaticPaths returned `params: { page: ... }`, copied from
+// the Posts route. Astro ignores a param the route does not declare, so every entry mapped
+// to /video/, the last one written - the oldest year - was what that page showed, and no
+// year page existed. The keys read `video` now.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../layouts/Base.astro";
 import VideoList from "../../components/VideoList.astro";
@@ -20,16 +29,17 @@ export async function getStaticPaths() {
   const years = yearLinks(groups);
   const yearPages = groups.flatMap((group) =>
     paginateList(group.videoArr, `/video/${group.year}/`).map((page) => ({
-      params: { page: pageParam(page.number, group.year) },
+      // `video`, not `page`: the name of this route's rest parameter (see the note above).
+      params: { video: pageParam(page.number, group.year) },
       props: { page, years, year: group.year },
     })),
   );
 
   const newest = yearPages.at(0);
   const home = newest
-    ? { params: { page: undefined }, props: newest.props }
+    ? { params: { video: undefined }, props: newest.props }
     : {
-        params: { page: undefined },
+        params: { video: undefined },
         props: {
           page: paginateList([], "/video/")[0],
           years,

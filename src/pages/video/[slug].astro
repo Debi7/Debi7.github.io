@@ -30,9 +30,15 @@ const videoId = videoItem.slug;
     /* тут можно закрыть доступ к конкретным лекциям: если пользователь не оплатил, вместо iframe от YouTube будет показываться красивая заглушка «Купить курс за ХХХ рублей», а если оплатил — будет рендериться сам плеер */
   }
   <div class="video-wrapper mb-8">
+    {
+      /* The address read `youtube.com{post.data.videoId}` until 2026-09-22: no `/embed/`
+      path, no `$` before the brace and a variable that does not exist in this file, so the
+      frame asked for that text as a host name and the browser showed "server not found".
+      YouTube's embeddable player lives at www.youtube.com/embed/<id>. VIDEO-PAGE.md, section 2. */
+    }
     <iframe
       class="aspect-video w-full rounded-xl shadow-lg"
-      src={`https://youtube.com{post.data.videoId}`}
+      src={`https://www.youtube.com/embed/${videoItem.data.videoId}`}
       title={videoItem.data.title}
       allowfullscreen
     >

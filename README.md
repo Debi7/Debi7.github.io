@@ -47,6 +47,7 @@ The build is green and every Hugo route has an Astro file. **All five menu items
 | Content: headings in the ported posts, 21 new posts, templates - [CONTENT.md](CONTENT.md)       | `src/content/posts/*.md`, `templates/`                          |
 | Plan §5: one route file per Hugo route, all wired to the collection                             | `src/pages/**`                                                  |
 | Static assets copied (`static/` -> `public/`)                                                   | `public/favicon/`, `public/images/`                             |
+| Video section: collection, list by year, a page per video - [VIDEO-PAGE.md](VIDEO-PAGE.md)      | `src/content/video/`, `src/lib/video.ts`, `src/pages/video/`    |
 
 Not done (in plan order): reference screenshots (§2 step 3), the remaining `TODO(migration ...)` stubs in `src/` - footer, the single-post layout (its components exist but are not wired into the post route; their type and formatting errors are fixed, so `npm run check` is green - [ARTICLE-PAGE-FIX.md](ARTICLE-PAGE-FIX.md) tracks what is applied and what is left), social meta, callout, Disqus (§4, §6), the rest of `site.js` (§7), the rehype plugins for code blocks and footnotes (§6), the `/page/1/` alias decision (§5.5).
 
