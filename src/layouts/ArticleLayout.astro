@@ -29,6 +29,13 @@ import TocSidebar from "../components/TocSidebar.astro";
 // the only place a formula can appear. The lists show summaries, and a summary is the Markdown
 // source truncated to plain text, so it never carries KaTeX markup. Astro bundles CSS per page, so
 // this keeps the stylesheet off every page that cannot use it.
+//
+// Corrected later on 2026-09-22: "the npm package rehype-katex installs" is no longer how this
+// path resolves. katex is a dependency of this project in its own right now, declared in
+// package.json, because relying on a transitive one means the import breaks the day rehype-katex
+// stops depending on katex or npm nests it instead of hoisting it - and it breaks as a build
+// failure on articles only. Nothing new was downloaded: it is the same 0.16.47 that was already in
+// the tree. The note in package.json says the same.
 import "katex/dist/katex.min.css";
 import ShareWidget from "../components/ShareWidget.astro";
 import TableOfContents from "../components/TableOfContents.astro";

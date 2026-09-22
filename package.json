@@ -24,7 +24,9 @@
     "Details and measurements: README.md, section on @astrojs/alpinejs being pinned to 0.4.9.",
     "Added 2026-09-19: check:pages checks the paginated post lists in dist/ after a build, and check:pages:stress does the same on a temporary copy with many generated posts. Both run scripts/check-pagination.mjs, which needs no dependency. See PAGINATION.md.",
     "Added 2026-09-22: @astrojs/sitemap is pinned to exactly 3.6.0, without a caret, for the same kind of reason as @astrojs/alpinejs above. From 3.7.0 it depends on sitemap@9, which declares node >=20.19.5; this project runs Node 20.19.0 and .npmrc sets engine-strict, so npm ci refuses to install it. 3.6.0 depends on sitemap@8, which asks for node >=14. Raise the pin only together with the Node version.",
-    "Added 2026-09-22: @astrojs/rss powers /rss.xml and /video/rss.xml. It has no such constraint and is left on a caret."
+    "Added 2026-09-22: @astrojs/rss powers /rss.xml and /video/rss.xml. It has no such constraint and is left on a caret.",
+    "Added 2026-09-22: katex is listed although nothing imports the library in code. src/layouts/ArticleLayout.astro imports katex/dist/katex.min.css, the stylesheet the markup rehype-katex emits needs, and until now that path resolved only because rehype-katex depends on katex and npm hoists it to the root of node_modules. That is a dependency on somebody else's dependency: the day rehype-katex stops requiring it, or npm nests it, the article build fails with Cannot find module - the same failure that a missing rehype-katex produced on 2026-09-22. Declaring it downloads nothing new; 0.16.47 was already in the tree and in the lock.",
+    "katex 0.16 declares no engines field, so it places no demand on the Node version this project is pinned to (see engines above, node >=20.0.0 <21). The caret on a 0.x version allows patch and nothing wider, which keeps it that way."
   ],
   "dependencies": {
     "@astrojs/alpinejs": "0.4.9",
@@ -36,6 +38,7 @@
     "@types/alpinejs": "^3.13.11",
     "alpinejs": "^3.17.3",
     "astro": "^4.16.18",
+    "katex": "^0.16.47",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "tailwindcss": "^3.4.17",
