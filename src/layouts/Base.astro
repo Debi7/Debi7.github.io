@@ -6,6 +6,7 @@ import Head from "../components/Head.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SEO from "../components/SEO.astro";
+import ScrollToTop from "../components/ScrollToTop.astro";
 
 import type { SiteConfig, PageLike } from "../lib/seo";
 import { site } from "../config";
@@ -136,5 +137,7 @@ const page: PageLike = {
       id="dsq-count-scr"
       src={`https://${site.disqus.shortname}.disqus.com/count.js`}
       async></script>
+
+    <ScrollToTop />
   </body>
 </html>
