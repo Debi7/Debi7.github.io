@@ -1,0 +1,262 @@
+---
+// The search page, /search/. Added 2026-09-22 at the owner's request, after a reference site he
+// sent (daucloud.com, the same family of theme this port copies) put a magnifier in its header.
+// The owner chose a page over a drop-down: a result list needs room, it has to survive a reload,
+// and a search worth sharing has to have an address.
+//
+// The layout is the reference's, which the owner showed and asked for: the field on top with a
+// Clear button in it, the facets down the left - Category and Tag, each a list of checkboxes with
+// a count beside every name - and the results to the right of them.
+//
+// Nothing is searched here, at build time: this page is markup, and src/scripts/search.ts does the
+// work in the browser against /search/data.json. What IS done at build time is the facet lists:
+// they come from getTerms() in lib/terms.ts, the same function the Tags and Categories pages use,
+// so the names, their order and their spelling cannot drift from those pages. Building them in the
+// browser from the index would have been the other option; this way they are in the HTML, a
+// visitor sees the shape of the site before typing anything, and the counts are the only thing the
+// script has to fill in.
+//
+// The Hugo theme has no search page to port. What it does have is the string used below,
+// `search_placeholder` in themes/void/i18n/en.toml, ported with the rest of the file and never
+// used until now; every other word on this page is written here, in English, like the rest of the
+// site's chrome. It is deliberately not put into src/i18n/strings.ts, which is the theme's en.toml
+// and nothing else - a key invented there would look as if the theme defined it.
+//
+// The stylesheet is a file of its own, and that is not tidiness: Astro scopes a <style> block by
+// stamping an attribute onto the elements the COMPONENT renders, and every result is built by
+// search.ts in the browser, so a scoped rule matches none of them. Measured on 2026-09-22, when
+// the first build came out as unstyled text with the browser's yellow mark. src/styles/carousel.css
+// exists for the same kind of reason.
+import "../../styles/search.css";
+import Base from "../../layouts/Base.astro";
+import { getTerms } from "../../lib/terms";
+import { t } from "../../i18n/strings";
+import { site } from "../../config";
+
+const title = "Search";
+
+// Categories in the order the Categories page shows them (alphabetical by the front-matter name);
+// tags by how many entries carry them, which is the order of the Tags page. Both lists already
+// span the posts and the videos, so a facet cannot offer a term that no page has.
+const categories = await getTerms("categories");
+const tags = (await getTerms("tags")).sort(
+  (a, b) => b.cards.length - a.cards.length,
+);
+---
+
+<Base title={title} description="Search the articles and the video lectures.">
+  <div class="search-page">
+    <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
+
+    {
+      /* A form and not a bare input, so Enter submits and a phone shows a search key on its
+      keyboard. The script cancels the submit - there is nowhere to submit to on a static site -
+      and writes the query into the address bar itself. No action and no method for the same
+      reason: without JavaScript this form has nothing to send, and the note further down says so
+      in plain words. */
+    }
+    <form id="search-form" class="search-field" role="search">
+      <label class="sr-only" for="search-input">{title}</label>
+      <svg
+        class="search-field__icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
+      <input
+        id="search-input"
+        name="q"
+        type="search"
+        autocomplete="off"
+        placeholder={t.search_placeholder}
+        class="search-field__input"
+      />
+      {
+        /* Clears the query and every ticked filter at once, because both narrow what is shown and
+        clearing one while the other stays would look like a broken page. A broom, asked for by the
+        owner on 2026-09-22: the picture says "sweep this clean" without a word of English on a
+        site whose content is Russian. It is hidden until there is something to clear, which the
+        script decides.
+
+        An icon on its own would leave the button nameless, so the label is on the button and the
+        drawing is aria-hidden; title puts the same words in a tooltip. The browser draws its own
+        clear button inside type="search" and the stylesheet hides it - that one empties the text
+        and leaves the ticks standing, which is not what this button means. */
+      }
+      <button
+        id="search-clear"
+        type="button"
+        class="search-field__clear"
+        aria-label="Clear the search and the filters"
+        title="Clear the search and the filters"
+        hidden
+      >
+        <svg
+          class="search-field__broom"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M15.5 3.5l-4.2 4.2"></path>
+          <path d="M9.3 6.6l8.1 8.1"></path>
+          <path
+            d="M8.2 9.1l6.7 6.7-2.1 2.1a3 3 0 0 1-2.1.9H4.9l1.7-2.3a3 3 0 0 0 .6-1.8v-4.6z"
+          ></path>
+          <path d="M10.6 13.9l-2.4 2.4"></path>
+        </svg>
+      </button>
+    </form>
+
+    <div class="search-layout">
+      <aside class="search-facets" aria-label="Filters">
+        {
+          /* <details>, so the sections fold with no script at all and a keyboard reaches them the
+          way it reaches any disclosure. They are written open; search.ts closes them on a narrow
+          screen at load, where seventeen tags above the results would push everything off the
+          page. That is the one thing about them JavaScript decides. */
+        }
+        {
+          /* Section first, because it is the coarsest cut a reader can make - articles or
+          lectures - and the owner asked for it on 2026-09-22 once the other two were working. The
+          two labels come from src/config.ts, the same place the index labels its entries from, so
+          a checkbox cannot offer a word the index never writes. They are not derived from the
+          index, because this page is rendered before any index is fetched, and a filter that
+          appears only after the first query is a filter nobody finds. */
+        }
+        <details class="search-facet" data-facet-section open>
+          <summary class="search-facet__title">Section</summary>
+          <ul class="search-facet__list">
+            {
+              Object.values(site.searchSections).map((label) => (
+                <li>
+                  <label class="search-facet__item">
+                    <input
+                      type="checkbox"
+                      class="search-facet__check"
+                      data-facet="section"
+                      value={label}
+                    />
+                    <span class="search-facet__name">{label}</span>
+                    <span
+                      class="search-facet__count"
+                      data-count-for={label}
+                      data-facet="section"
+                    >
+                      (0)
+                    </span>
+                  </label>
+                </li>
+              ))
+            }
+          </ul>
+        </details>
+
+        <details class="search-facet" data-facet-section open>
+          <summary class="search-facet__title">Category</summary>
+          <ul class="search-facet__list">
+            {
+              categories.map((term) => (
+                <li>
+                  <label class="search-facet__item">
+                    <input
+                      type="checkbox"
+                      class="search-facet__check"
+                      data-facet="category"
+                      value={term.name}
+                    />
+                    <span class="search-facet__name">{term.title}</span>
+                    <span
+                      class="search-facet__count"
+                      data-count-for={term.name}
+                      data-facet="category"
+                    >
+                      ({term.cards.length})
+                    </span>
+                  </label>
+                </li>
+              ))
+            }
+          </ul>
+        </details>
+
+        <details class="search-facet" data-facet-section open>
+          <summary class="search-facet__title">Tag</summary>
+          <ul class="search-facet__list">
+            {
+              tags.map((term) => (
+                <li>
+                  <label class="search-facet__item">
+                    <input
+                      type="checkbox"
+                      class="search-facet__check"
+                      data-facet="tag"
+                      value={term.name}
+                    />
+                    <span class="search-facet__name">{term.title}</span>
+                    <span
+                      class="search-facet__count"
+                      data-count-for={term.name}
+                      data-facet="tag"
+                    >
+                      ({term.cards.length})
+                    </span>
+                  </label>
+                </li>
+              ))
+            }
+          </ul>
+        </details>
+      </aside>
+
+      <div class="search-main">
+        {
+          /* aria-live, so a screen reader hears how many results appeared without the focus
+          leaving the field. The four messages are data attributes rather than strings inside the
+          script: the wording belongs to the page, and {n} and {q} are filled in by search.ts. */
+        }
+        <p
+          id="search-status"
+          class="search-status"
+          aria-live="polite"
+          data-searching="Searching..."
+          data-found="{n} result(s) for {q}"
+          data-empty="No results for {q}"
+          data-filtered="{n} of {total} result(s) for {q}"
+          data-listing="{n} result(s) with these filters"
+          data-empty-filter="No results with these filters"
+          data-failed="The search index could not be loaded. Please try again."
+        >
+        </p>
+
+        <noscript>
+          <p class="search-status">
+            Search needs JavaScript, because this site is static and there is no
+            server to ask. Everything it finds is reachable without it: Posts,
+            Video, Categories and Tags.
+          </p>
+        </noscript>
+
+        <ul id="search-results" class="search-results"></ul>
+      </div>
+    </div>
+  </div>
+</Base>
+
+{
+  /* Top level of the template on purpose. A bundled script inside a {...} expression is not
+  hoisted into the page bundle at all - measured on 2026-09-22 while moving the carousel's script
+  out of its component - and this one returns at once when the form is absent. */
+}
+<script>
+  import "../../scripts/search";
+</script>

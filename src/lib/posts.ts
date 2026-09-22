@@ -15,6 +15,7 @@ import {
   type NavLink,
   type TermKind,
   type TermSource,
+  type SearchSource,
 } from "./lists";
 import { t } from "../i18n/strings";
 
@@ -67,6 +68,15 @@ export function postLink(post: Post): NavLink {
 // the two kinds of entry share code only on plain data (VIDEO-PAGE.md, section 4): posts.ts
 // knows the posts collection and hands out flat data, video.ts does the same for videos, and
 // neither learns about the other.
+
+/** A post as the search index takes it; the shape is SearchSource in lib/lists.ts. */
+export function postSearch(post: Post): SearchSource {
+  return {
+    card: postCard(post),
+    categories: post.data.categories,
+    text: post.body,
+  };
+}
 
 /** Every published post as the term builder takes it: the names it declares, and its card. */
 export async function postTerms(kind: TermKind): Promise<TermSource[]> {

@@ -32,6 +32,13 @@ export const site = {
   // asked to keep separate from the page numbers: up to this many years every year is shown;
   // beyond it the newest, the oldest and the year being shown with its neighbours. See
   // yearSwitcher() in src/lib/posts.ts. scripts/check-pagination.mjs reads all three values.
+  // Added 2026-09-22 with the Section filter on /search/. The search index labels every entry
+  // with the section it belongs to, and the search page prints one checkbox per label; both read
+  // this, so the two cannot drift apart and a translated menu is one edit rather than two. The
+  // words match the menu items below on purpose - a visitor filtering by "Video" is thinking of
+  // the menu item of that name.
+  searchSections: { posts: "Posts", video: "Video" },
+
   pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },
 
   menu: [
