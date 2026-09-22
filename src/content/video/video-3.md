@@ -3,7 +3,7 @@ title: "Лекция третья"
 description: "На этом видео-уроке.."
 date: "2026-06-11"
 videoUrl: "https://youtube.com"
-videoId: "dQww4wWgXcQ"
+videoId: "dQwwWgXcQ"
 heroImage: "/blog-placeholder-about.jpg"
 tags: ["video", "биолокация", "маятник", "новичкам"]
 categories: ["education video"]

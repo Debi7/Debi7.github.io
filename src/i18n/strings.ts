@@ -44,6 +44,9 @@ export const t = {
   list_view_by_category: "View by category",
   list_article_count: (count: number) => `${count} articles in total`,
 
+  // Video page
+  list_watch_video: "Watch the video",
+
   // About page
   about_skills: "Skills",
   about_experience: "Experience",
