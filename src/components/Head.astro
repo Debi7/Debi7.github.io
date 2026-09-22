@@ -96,19 +96,39 @@ const pageTitle = title ? `${title} | ${site.title}` : site.title;
   starts once and the table of contents opens and closes. The integration is pinned to 0.4.9 -
   see README, section on @astrojs/alpinejs being pinned to 0.4.9. */
 }
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
-/>
-<script
-  is:inline
-  defer
-  src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script
-  is:inline
-  defer
-  src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
-  onload="renderMathInElement(document.body);"></script>
+{
+  /* The three KaTeX CDN tags that stood here - the stylesheet, katex.min.js and the auto-render
+  extension - were removed on 2026-09-22, when the owner chose build-time math. rehype-katex now
+  typesets the formulas while the page is built (astro.config.mjs explains the choice and what was
+  broken before it), so the browser has nothing to fetch and nothing to run: the markup arrives
+  finished. The stylesheet KaTeX's markup needs is imported in Base.astro from the npm package.
+
+  What this buys beyond the repair: a page with a formula no longer depends on jsdelivr answering,
+  shows no flash of untypeset source, and ships no third-party JavaScript for maths. Do not put the
+  tags back; if math ever needs client-side rendering again, the question is why the build cannot
+  do it. */
+}
+{
+  /* Changed 2026-09-22: the onload="renderMathInElement(document.body);" attribute that used to
+  sit on the tag below is gone. It made every page render its math twice. KaTeX's auto-render
+  ships with $$...$$, \(...\) and \[...\] as its delimiters and no others, so that first pass
+  typeset the display formulas and walked away from every $...$ inline one; the real call, the one
+  in src/scripts/site.js, then walked the same document again with the delimiter list the theme
+  uses, which does include $...$. Two passes over document.body, the second doing all the work the
+  visitor sees.
+
+  Removing it changes nothing on screen: the site.js call is a superset of what the attribute did.
+  What it also removes is an inline event handler, which is the one thing a Content-Security-Policy
+  header cannot allow without unsafe-inline - worth having gone before the site gets a CSP.
+
+  The tag stays `defer` and stays in the head: site.js does its work inside DOMContentLoaded, and
+  deferred scripts all run before that event fires, so renderMathInElement is defined by then.
+
+  Superseded later the same day: the tag that note describes is gone as well, together with the
+  call in site.ts, because the owner chose to typeset at build time. The note is kept because it
+  records why the attribute went first and what it cost - the same reasoning applies to any inline
+  handler someone is tempted to add here. */
+}
 
 <!-- Busuanzi page/site view counter (load early to avoid delayed render) -->
 <script

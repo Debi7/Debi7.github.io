@@ -64,6 +64,16 @@
 // template literal had a second problem as well: prettier-plugin-tailwindcss reads a class
 // template literal as a class list and can eat the space inside it (see CLAUDE.md).
 import Base from "./Base.astro";
+// Added 2026-09-22 with the move to build-time math (astro.config.mjs): rehype-katex emits KaTeX
+// markup, which is unreadable without this stylesheet - it used to come from a CDN tag in
+// Head.astro. It is imported from the npm package rehype-katex installs, so the fonts are hashed
+// into _astro/ with the rest of the build and a formula no longer waits on jsdelivr.
+//
+// Imported here and not in Base.astro, which would have put it on all 107 pages: an article body is
+// the only place a formula can appear. The lists show summaries, and a summary is the Markdown
+// source truncated to plain text, so it never carries KaTeX markup. Astro bundles CSS per page, so
+// this keeps the stylesheet off every page that cannot use it.
+import "katex/dist/katex.min.css";
 import ShareWidget from "../components/ShareWidget.astro";
 import TableOfContents from "../components/TableOfContents.astro";
 import PostNav from "../components/PostNav.astro";
@@ -360,7 +370,9 @@ for (const heading of headings) {
     </div>
 
     {
-      /* Динамическое оглавление (Sidebar)
+      /* (English, added 2026-09-22 next to the original heading: the dynamic table of contents,
+      the sidebar.)
+      Динамическое оглавление (Sidebar)
 
     Changed 2026-09-18: the note above was an HTML comment, which is sent to every visitor with
     the page. It is an Astro comment now, so it stays in the source and out of the output. */

@@ -50,15 +50,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // the theme switch, and every block ported into this file after it, would stop working because
   // a third-party host was down. `typeof` on an undeclared name is the one test that does not
   // throw by itself.
-  if (typeof renderMathInElement === "function") {
-    renderMathInElement(document.body, {
-      delimiters: [
-        { left: "$$", right: "$$", display: true },
-        { left: "$", right: "$", display: false },
-      ],
-      throwOnError: false,
-    });
-  }
+  //
+  // Superseded later the same day, by the owner's decision: there is no call here any more. The
+  // math is typeset by rehype-katex while the page is built (astro.config.mjs has the reasoning),
+  // so by the time this file runs the formulas are already KaTeX markup and there is nothing for a
+  // client-side pass to find. The KaTeX CDN tags in Head.astro went with it. The notes above are
+  // kept because they explain a real trap: client-side typesetting had never actually worked on
+  // this site, since remark-math consumes the dollars that auto-render looks for. Anyone tempted
+  // to put the call back should read them first.
 
   (function themeInit() {
     // Added with the .ts rename on 2026-09-22: the two values a theme can have, written down

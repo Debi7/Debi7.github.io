@@ -36,11 +36,10 @@ interface Window {
 // The options type is our own description of KaTeX 0.16.9's documented contract, like
 // DisqusPageConfig above: auto-render ships no type definitions with the CDN build, so nothing
 // here is verified against the real thing.
-type KatexAutoRenderOptions = {
-  delimiters?: { left: string; right: string; display: boolean }[];
-  throwOnError?: boolean;
-};
-
-declare const renderMathInElement:
-  | ((element: HTMLElement, options?: KatexAutoRenderOptions) => void)
-  | undefined;
+// Removed later the same day, together with the call it was written for: the math is typeset at
+// build time by rehype-katex now, KaTeX is no longer loaded in the browser, and a declaration for a
+// global that nothing can reference is worse than none - it would tell the next reader that the
+// CDN tags are still there. The reasoning for the move is in astro.config.mjs. The note above is
+// kept as the worked example of how a third party's global is declared here, should another one
+// ever arrive: name it, type it from the vendor's documentation, and mark it `| undefined` when it
+// comes from a tag that can fail to load.
