@@ -22,3 +22,25 @@ interface DisqusPageConfig {
 interface Window {
   disqus_config?: (this: DisqusPageConfig) => void;
 }
+
+// Added 2026-09-22, when src/scripts/site.js became site.ts and came under astro check. KaTeX's
+// auto-render extension publishes renderMathInElement as a global; it is loaded from a CDN tag in
+// src/components/Head.astro, so nothing in the module graph declares it and TypeScript would
+// otherwise report "Cannot find name 'renderMathInElement'".
+//
+// Declared as possibly undefined on purpose, rather than as a plain function. The CDN may fail to
+// answer, and then the global is simply not there - that is not a hypothetical, it is what any
+// blocked or slow third-party host does. Typing it as `| undefined` makes the compiler insist on
+// the guard in site.ts instead of leaving it to a reviewer to remember why it is there.
+//
+// The options type is our own description of KaTeX 0.16.9's documented contract, like
+// DisqusPageConfig above: auto-render ships no type definitions with the CDN build, so nothing
+// here is verified against the real thing.
+type KatexAutoRenderOptions = {
+  delimiters?: { left: string; right: string; display: boolean }[];
+  throwOnError?: boolean;
+};
+
+declare const renderMathInElement:
+  | ((element: HTMLElement, options?: KatexAutoRenderOptions) => void)
+  | undefined;

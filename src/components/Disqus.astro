@@ -1,15 +1,49 @@
 ---
 // Компонент принимает два обязательных параметра: URL страницы и её уникальный ID (обычно слаг/slug поста)
+// (English, added 2026-09-22 next to the original note: the component takes two required props,
+// the page URL and its unique id, normally the entry's slug. Both are documented on Props below.)
+//
+// The Disqus comment widget: the button that reveals it, the thread container embed.js fills,
+// and the script that loads embed.js on the first reveal. One page carries one of these.
+//
+// Changed 2026-09-22: the button used to be written out by every route that wanted comments.
+// src/pages/posts/[slug].astro and src/pages/video/[slug].astro each held the same block of
+// markup with the same two labels, while the script below - which lives here - looked that
+// button up by id. A component whose script depends on markup the caller has to remember to
+// repeat has a contract nothing checks: only a grep kept the two copies' ids and labels in
+// step. The button is part of the widget now, so a route needs one tag and cannot get it wrong.
+//
+// The labels stay literals in this file instead of moving to src/i18n/strings.ts. That file is a
+// faithful copy of the theme's en.toml and its header forbids inventing keys in it; the theme has
+// no comment widget, so there is no key to port. This is the same rule the other ported
+// components follow for a Hugo `| default "literal"`.
 import { site } from "../config";
 
 export interface Props {
+  /** The canonical address of the page being commented on; Disqus keys a thread by it. */
   url: string;
+  /** The stable id of the thread - the entry's slug, so the thread survives a title change. */
   identifier: string;
 }
 
 const { url, identifier } = Astro.props;
 const { shortname } = site.disqus;
 ---
+
+{
+  /* Moved here verbatim on 2026-09-22 from the two article routes, classes and label included,
+  so that the rendered page is byte-identical to what those routes produced. The ids are the ones
+  the script below and Disqus itself expect: embed.js looks for #disqus_thread by name, and
+  #toggle-disqus-btn is what the listener binds to. */
+}
+<div id="disqus_loader_container" class="my-6 flex flex-col items-center">
+  <button
+    id="toggle-disqus-btn"
+    class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
+  >
+    Показать комментарии
+  </button>
+</div>
 
 <div
   id="disqus_thread"
@@ -33,6 +67,7 @@ const { shortname } = site.disqus;
     // runs only when both elements exist, so an empty branch does the same job; it is what this
     // branch held before d0dbbd1. Note that "npm run check" did not report it - only the build did.
     // ничего не делаем, если элементов нет
+    // (English, added 2026-09-22: do nothing when either element is missing.)
   } else {
     const url = thread.dataset.disqusUrl;
     const identifier = thread.dataset.disqusIdentifier;
@@ -44,7 +79,12 @@ const { shortname } = site.disqus;
       if (disqusLoaded || !url || !identifier || !shortname) return;
       disqusLoaded = true;
 
-      (window as any).disqus_config = function (this: any) {
+      // Changed 2026-09-22: `(window as any)` with a `this: any` parameter became the declared
+      // global. src/env.d.ts has carried the shape since 2026-09-17 - `interface Window` with
+      // `disqus_config`, and `DisqusPageConfig` for its `this` - so the cast was asserting away a
+      // type the project already had, while the house rule forbids `any` outright. Now a typo in
+      // one of the two fields below is a compile error rather than a thread that loads empty.
+      window.disqus_config = function (this: DisqusPageConfig) {
         this.page.url = url;
         this.page.identifier = identifier;
       };
@@ -78,4 +118,9 @@ const { shortname } = site.disqus;
 {
   // ? Добавьте #disqus_thread к href-атрибуту в ваших ссылках. Это укажет Disqus, какие ссылки
   // искать и возвращать количество комментариев. Например: // <a href="http://foo.com/bar.html#disqus_thread">Link</a>. */
+  //
+  // English, added 2026-09-22 next to the note above: end a link's href with #disqus_thread and
+  // the count script loaded in Base.astro replaces that link's text with the number of comments on
+  // the page it points at. Nothing on the site does this yet, which is the only thing count.js is
+  // there for.
 }

@@ -8,7 +8,7 @@
 // id in the front matter.
 import type { InferGetStaticPropsType } from "astro";
 import VideoLayout from "../../layouts/VideoLayout.astro";
-import { getVideos } from "../../lib/video";
+import { getVideos, videoUrl } from "../../lib/video";
 import Disqus from "../../components/Disqus.astro";
 
 export async function getStaticPaths() {
@@ -24,21 +24,24 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { video, prev, next } = Astro.props;
 const { Content, headings } = await video.render();
 
-const videoUrl = new URL(`/video/${video.slug}/`, Astro.site).toString();
-const videoIdentifier = video.slug;
+// Changed 2026-09-22: the address comes from videoUrl() in lib/video.ts, which is where a video's
+// address is decided - the list cards and the previous/next links already go through it - instead
+// of being assembled here from the slug. The Disqus thread is keyed by this URL, so a copy of the
+// pattern left behind in this file would orphan every comment on a video the day /video/ moves.
+// The local name is commentsUrl, since videoUrl is now the imported function; the videoIdentifier
+// alias is gone, because passing video.slug directly says what the alias was there to say (the
+// header note below explains why it was not called videoId).
+const commentsUrl = new URL(videoUrl(video), Astro.site).toString();
 ---
 
 <VideoLayout video={video} headings={headings} prev={prev} next={next}>
   <Content />
   <hr class="my-8 border-gray-200" />
 
-  <div id="disqus_loader_container" class="my-6 flex flex-col items-center">
-    <button
-      id="toggle-disqus-btn"
-      class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
-    >
-      Показать комментарии
-    </button>
-  </div>
-  <Disqus url={videoUrl} identifier={videoIdentifier} />
+  {
+    /* Changed 2026-09-22: the reveal button that stood here moved into Disqus.astro, next to the
+    script that binds to it; this file was one of the two copies of that block. The rendered
+    markup is unchanged. */
+  }
+  <Disqus url={commentsUrl} identifier={video.slug} />
 </VideoLayout>

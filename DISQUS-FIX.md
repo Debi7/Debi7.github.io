@@ -75,8 +75,15 @@ interface Window {
 ### 2.1 The route supplies the two values
 
 ```js
+// Until 2026-09-22; see section 10 for what replaced it and why.
 const postUrl = new URL(`/posts/${post.slug}/`, Astro.site).toString();
 const postIdentifier = post.slug;
+```
+
+```js
+// Since 2026-09-22: the path comes from postUrl() in src/lib/posts.ts, the identifier is passed
+// straight through as post.slug. The video route does the same with videoUrl().
+const commentsUrl = new URL(postUrl(post), Astro.site).toString();
 ```
 
 Disqus files every comment under a thread, and the thread is keyed by an identifier and a URL. Both have to be the
@@ -419,7 +426,43 @@ identifier must not collide with one.
 
 The shortname needs no attention: the component reads it from `src/config.ts`.
 
-One component is not ready for this. `src/components/DisqusLazy.astro`, the loader that waits until the block
-scrolls into view, is a sketch and is wired nowhere. It still carries a `YOUR_SHORTNAME` placeholder, it never
-publishes `disqus_config`, so it would load a thread with no configuration at all, and it uses the same
-`id="disqus_thread"`, so it cannot share a page with `Disqus.astro`.
+There is no second component to choose from. `src/components/DisqusLazy.astro`, a sketch of a loader that waited
+until the block scrolled into view, was deleted on 2026-09-22: it was wired nowhere, it never published
+`disqus_config`, so a thread loaded through it would have had no configuration at all, it used the same
+`id="disqus_thread"` and so could not share a page with `Disqus.astro`, and it still pointed at
+`https://YOUR_SHORTNAME.disqus.com/embed.js`. Anyone who had reached for it would have loaded a stranger's widget.
+Lazy loading is worth having; it belongs in `Disqus.astro`, where the configuration already lives.
+
+## 10. Changes of 2026-09-22
+
+A pass of Astro best practice over what existed, at the owner's request. The built pages are unchanged: the same
+markup, the same ids, the same label. Sections 2.1 and 2.3 describe the old shape and are annotated above; this is
+what replaced it.
+
+**The component renders its own button.** The reveal button used to be written out by `src/pages/posts/[slug].astro`
+and `src/pages/video/[slug].astro`, one copy each, while the script inside `Disqus.astro` bound to it by id. A
+component whose script depends on markup its caller has to remember means a contract nothing checks - the two
+copies were kept in step by grep alone, and adding comments to a third page meant copying the block again. The
+button, its classes and its two labels are in `Disqus.astro` now, and a page that wants comments renders one tag:
+
+```astro
+<Disqus url={commentsUrl} identifier={post.slug} />
+```
+
+**The thread URL comes from `lib/`.** `postUrl()` and `videoUrl()` are where an entry's address is decided, and the
+routes now call them instead of assembling `/posts/<slug>/` again. The Disqus thread is keyed by this URL: two
+definitions of it are two chances for the site to move and leave every comment filed under an address that no
+longer resolves.
+
+**The count script reads the shortname from the config.** `Base.astro` had `//biolocation-club.disqus.com/count.js`
+spelled out, which made the layout a second place that decided which Disqus account the site belongs to, while
+`Disqus.astro` had been reading `src/config.ts` since 2026-09-18. It is `https://${site.disqus.shortname}...` now.
+The tag keeps the inline behaviour it always had - Astro implies `is:inline` for any script carrying an attribute
+other than `src`, and this one has `id` and `async` - and the directive is written out so that it does not depend on
+that attribute list.
+
+**`(window as any)` is gone.** `src/env.d.ts` has declared `Window.disqus_config` and `DisqusPageConfig` since
+2026-09-17, so the cast was asserting away a type the project already had, and the house rules bar `any` outright.
+The callback is `function (this: DisqusPageConfig)` and `astro check` reports no errors, which means a typo in
+`this.page.identifier` is now a build failure rather than a thread that quietly loads empty. Section 2.3's
+explanation of the narrowing still holds.

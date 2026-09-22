@@ -104,13 +104,33 @@ const page: PageLike = {
       <Footer />
     </footer>
 
+    {
+      /* Changed 2026-09-22: the path lost its .js extension when src/scripts/site.js became
+      site.ts. Written without an extension rather than as "./site.ts" because TypeScript rejects
+      an import path ending in .ts unless allowImportingTsExtensions is set, which this project's
+      preset does not set; Vite resolves the extension either way. */
+    }
     <script>
-      import "../scripts/site.js";
+      import "../scripts/site";
     </script>
 
+    {
+      /* Disqus's comment-count script. Changed 2026-09-22: the shortname was written into the
+      address here as a literal, which made this the second place that decided which Disqus
+      account the site belongs to - src/config.ts holds the first, and Disqus.astro has read it
+      from there since 2026-09-18 (DISQUS-FIX.md). Moving the account to another shortname used
+      to mean remembering this line. The protocol-relative "//" went with it: it dates from mixed
+      http/https hosting, and the site is https-only.
+
+      The tag keeps its is:inline behaviour either way - Astro implies the directive for any
+      script carrying an attribute other than src, and this one carries id and async (Astro 4,
+      "Template Directives Reference"). It is written out so that the intent is not a side effect
+      of the attribute list. */
+    }
     <script
+      is:inline
       id="dsq-count-scr"
-      src="//biolocation-club.disqus.com/count.js"
+      src={`https://${site.disqus.shortname}.disqus.com/count.js`}
       async></script>
   </body>
 </html>

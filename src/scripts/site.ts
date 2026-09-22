@@ -1,5 +1,21 @@
 // Site-wide client script. Imported once from src/layouts/Base.astro; Astro bundles it.
 //
+// Was site.js until 2026-09-22. Renamed to .ts so that `npm run check` looks at it: as a .js file
+// it was compiled by Vite and shipped to every visitor without a single type ever being checked,
+// which is the one part of the tree where a typo survived all three commands in the workflow. The
+// project's tsconfig does set allowJs, so it was not invisible to the editor - but astro check
+// reports no diagnostics for a plain .js file, and this is the file where a wrong property name on
+// a DOM node fails silently in the browser instead of loudly at build time.
+//
+// What the rename cost, and it is the point of doing it: the annotations below. Each one records a
+// contract the JavaScript only implied - which two strings a theme can be, that a click target is
+// not always a Node, that the KaTeX global may be missing. The bodies are unchanged.
+//
+// This is the "typing the ported scripts" item that CLAUDE.md parked behind the parity question;
+// that question was answered on 2026-09-16 (Hugo is a checkpoint, the project adopts Astro
+// practice), which is what makes the rename allowed now. Nothing about the emitted bundle changes:
+// TypeScript annotations are erased, and the browser gets the same code as before.
+//
 // TODO(migration §7): copy, verbatim, the remaining inline script blocks in
 //   ../klub_biolocation/themes/void/layouts/partials/head/js.html
 //     (code copy buttons, footnote back-links, hash highlight, TOC active state,
@@ -21,15 +37,37 @@ document.addEventListener("DOMContentLoaded", function () {
   // `$...$` is not among them. The theme enables it with this second call, so without it a
   // formula written as `$E = mc^2$` stays visible as source text. That shows up on the Posts
   // page, whose summary for article.md contains exactly that.
-  renderMathInElement(document.body, {
-    delimiters: [
-      { left: "$$", right: "$$", display: true },
-      { left: "$", right: "$", display: false },
-    ],
-    throwOnError: false,
-  });
+  //
+  // Changed 2026-09-22: the first sentence above no longer holds. The CDN tag in Head.astro does
+  // not call renderMathInElement at all now - its onload attribute was removed, because it ran a
+  // whole typesetting pass with the default delimiters that this call then repeated properly. The
+  // rest of the note still applies: this is where the single `$...$` delimiter is enabled, and it
+  // is now the only pass over the document.
+  //
+  // Guarded for the same reason. Until today two independent things called into KaTeX, so a CDN
+  // that failed to answer cost only the formulas. With one call left, an undefined
+  // renderMathInElement would throw here and take the whole DOMContentLoaded listener with it -
+  // the theme switch, and every block ported into this file after it, would stop working because
+  // a third-party host was down. `typeof` on an undeclared name is the one test that does not
+  // throw by itself.
+  if (typeof renderMathInElement === "function") {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+      throwOnError: false,
+    });
+  }
 
   (function themeInit() {
+    // Added with the .ts rename on 2026-09-22: the two values a theme can have, written down
+    // once. apply() used to take an unannotated parameter and compare it to the string "dark" in
+    // three places, so "Dark" or "drak" was a silent no-op that left the toggle out of step with
+    // the class on <html>. localStorage still hands back a plain string, which is why currentPref()
+    // below tests both values explicitly rather than casting what it read.
+    type Theme = "dark" | "light";
+
     const storageKey = "theme";
     const root = document.documentElement;
     // Two buttons, not one: the header row carries a switch at 640px and up, the responsive
@@ -45,16 +83,20 @@ document.addEventListener("DOMContentLoaded", function () {
       );
     }
 
-    function currentPref() {
+    function currentPref(): Theme {
       const v = localStorage.getItem(storageKey);
       if (v === "dark") return "dark";
       if (v === "light") return "light";
       return systemPrefersDark() ? "dark" : "light";
     }
 
-    function apply(theme) {
+    function apply(theme: Theme) {
       root.classList.toggle("dark", theme === "dark");
-      Array.prototype.forEach.call(btns, function (btn) {
+      // `btn: Element` is the annotation the .ts rename needs here. Array.prototype.forEach.call
+      // is the theme's own way of walking a NodeList - kept as ported - and `call` gives the
+      // callback no element type of its own, so without this the parameter would be an implicit
+      // any and the two setAttribute calls below would go unchecked.
+      Array.prototype.forEach.call(btns, function (btn: Element) {
         btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
         btn.setAttribute(
           "aria-label",
@@ -66,7 +108,11 @@ document.addEventListener("DOMContentLoaded", function () {
     let theme = currentPref();
     apply(theme);
 
-    Array.prototype.forEach.call(btns, function (btn) {
+    // Same annotation as in apply(), and for the same reason; HTMLElement rather than Element
+    // because this loop calls blur(), which only an HTMLElement has. The markup behind
+    // [data-theme-toggle] is a <button> in both places (ThemeToggle.astro), so the narrower type
+    // is the truth here - and if it ever stops being one, this line is where it will be reported.
+    Array.prototype.forEach.call(btns, function (btn: HTMLElement) {
       btn.addEventListener("mousedown", function (e) {
         e.preventDefault();
       });
@@ -110,7 +156,16 @@ document.addEventListener("DOMContentLoaded", function () {
     const iconOpen = btn.querySelector('[data-menu-icon="open"]');
     const iconClose = btn.querySelector('[data-menu-icon="close"]');
 
-    function setOpen(open) {
+    // Changed with the .ts rename on 2026-09-22: setOpen and isOpen were function declarations
+    // and are arrow functions held in a const now. The bodies are untouched; what changes is that
+    // TypeScript can see the `if (!btn || !panel) return;` guard above them. A function
+    // declaration is hoisted, so it could in principle run before that line, and the compiler
+    // therefore refuses to carry the narrowing into it - btn and panel stayed
+    // `HTMLElement | null` inside, and every use of them was an error. An arrow function assigned
+    // after the guard cannot exist before it, so the narrowing holds. The alternatives were a
+    // non-null assertion on six uses, which the house rules bar, or re-testing for null inside
+    // functions that only ever run once both elements are known to exist.
+    const setOpen = (open: boolean) => {
       panel.hidden = !open;
       btn.setAttribute("aria-expanded", open ? "true" : "false");
       btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
@@ -119,11 +174,9 @@ document.addEventListener("DOMContentLoaded", function () {
       // headless browser before this was written.
       if (iconOpen) iconOpen.classList.toggle("hidden", open);
       if (iconClose) iconClose.classList.toggle("hidden", !open);
-    }
+    };
 
-    function isOpen() {
-      return btn.getAttribute("aria-expanded") === "true";
-    }
+    const isOpen = () => btn.getAttribute("aria-expanded") === "true";
 
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
@@ -135,6 +188,14 @@ document.addEventListener("DOMContentLoaded", function () {
     // immediately close it again.
     document.addEventListener("click", function (e) {
       if (!isOpen()) return;
+      // Added with the .ts rename on 2026-09-22: Node.contains() takes a Node, and e.target is
+      // EventTarget | null, which a click on the document need not fill with an element at all.
+      // The instanceof test is what narrows it; a cast would have hidden the same question. When
+      // the target is not a node there is nothing the panel could contain, so closing is right.
+      if (!(e.target instanceof Node)) {
+        setOpen(false);
+        return;
+      }
       if (panel.contains(e.target)) return;
       if (btn.contains(e.target)) return;
       setOpen(false);

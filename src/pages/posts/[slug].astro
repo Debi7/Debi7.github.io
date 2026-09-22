@@ -1,7 +1,7 @@
 ---
 import type { InferGetStaticPropsType } from "astro";
 import Post from "../../layouts/Post.astro";
-import { getPosts } from "../../lib/posts";
+import { getPosts, postUrl } from "../../lib/posts";
 import Disqus from "../../components/Disqus.astro";
 
 export async function getStaticPaths() {
@@ -17,21 +17,25 @@ type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 const { post, prev, next } = Astro.props;
 const { Content, headings } = await post.render();
 
-const postUrl = new URL(`/posts/${post.slug}/`, Astro.site).toString();
-const postIdentifier = post.slug;
+// Changed 2026-09-22: the address is built from postUrl() in lib/posts.ts instead of being
+// assembled here out of the slug. lib/posts.ts is where a post's address is decided - the list
+// cards and the previous/next links already go through it - and a second copy of the pattern in
+// this file would have to be found and changed by hand if /posts/ ever moves. A Disqus thread is
+// keyed by this URL, so the two drifting apart would orphan every comment on the site. The local
+// name is commentsUrl because postUrl is now the imported function.
+const commentsUrl = new URL(postUrl(post), Astro.site).toString();
 ---
 
 <Post post={post} headings={headings} prev={prev} next={next}>
   <Content />
   <hr class="my-8 border-gray-200" />
 
-  <div id="disqus_loader_container" class="my-6 flex flex-col items-center">
-    <button
-      id="toggle-disqus-btn"
-      class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
-    >
-      Показать комментарии
-    </button>
-  </div>
-  <Disqus url={postUrl} identifier={postIdentifier} />
+  {
+    /* Changed 2026-09-22: the reveal button that stood here is inside Disqus.astro now, together
+    with the script that binds to it - it was a copy of the block in video/[slug].astro, and this
+    file had no reason to know the widget's ids or its label. The rendered markup is unchanged.
+    The identifier is passed as post.slug directly: the local postIdentifier alias only restated
+    the prop's name, which Disqus.astro now documents on the prop itself. */
+  }
+  <Disqus url={commentsUrl} identifier={post.slug} />
 </Post>
