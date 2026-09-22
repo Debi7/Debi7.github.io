@@ -246,10 +246,12 @@ Added 2026-09-22 at the owner's request, after a reference site he sent (dauclou
 
 Four pieces, and each one does a single thing:
 
-- `src/pages/search-index.json.ts` writes `/search-index.json` from `getPosts()` and `getVideos()` through their own `lib/` files, the way `src/lib/terms.ts` does. Every entry carries its address, title, date, section label, tags, summary and **the whole body as plain text**, through the `plainifyMarkdown()` that `summary()` already used (exported for this, so there is no second "strip the Markdown"). 41 entries, 93KB, 22KB over the wire.
-- `src/pages/search.astro` is `/search/`: the form, the status line and an empty list. A page, not a drop-down, because a result list needs room, has to survive a reload and should have an address that can be shared.
+- `src/pages/search/data.json.ts` writes `/search/data.json` from `getPosts()` and `getVideos()` through their own `lib/` files, the way `src/lib/terms.ts` does. Every entry carries its address, title, date, section label, tags, summary and **the whole body as plain text**, through the `plainifyMarkdown()` that `summary()` already used (exported for this, so there is no second "strip the Markdown"). 41 entries, 93KB, 22KB over the wire.
+- `src/pages/search/index.astro` is `/search/`: the field, the three filter lists, the status line and an empty result list. The filters - Section, Category, Tag - are rendered at build time from `getTerms()`, the same function the Tags and Categories pages use, so a checkbox can never offer a term those pages do not have; the script only fills in the counts. Section comes from `site.searchSections` in `src/config.ts`, which is also where the index takes its labels, so the two cannot drift. A page, not a drop-down, because a result list needs room, has to survive a reload and should have an address that can be shared.
 - `src/scripts/search.ts` does the matching in the browser. Imported by that page alone, so it is 3.2KB no other page pays for, and the index is fetched on the first query rather than on load.
-- The magnifier in `Header.astro`, first of the three controls - search, menu, theme - which is the order in the reference at every width.
+- The magnifier in `Header.astro`, first of the three controls - search, menu, theme - which is the order in the reference at every width. A broom in the search field clears the query and every filter at once.
+
+Both files sit under `src/pages/search/`, because `src/pages` is the site's map of addresses (Astro 4, "Project structure") and grouping by address is what `src/pages/video/` already does. The endpoint is `data.json.ts` and **not** `index.json.ts`: the latter collides with `index.astro` in the same folder, the page wins, and the build silently writes no JSON at all - `dist/search/` held `index.html` alone and the page reported that the index could not be loaded. Astro has an error page for that collision, and its advice is the one taken here.
 
 No dependency, the owner's decision of 2026-09-22 out of three options (this, Fuse.js for fuzzy matching, Pagefind for a real index). The index is the same in all three, so changing the matcher later costs the matching code and not the data.
 
@@ -261,7 +263,19 @@ How it matches, so that a change to the ranking is a decision rather than a gues
 - Results are sorted by score, then by the site's own order, which the index is already in.
 - The snippet is a window of the body around the first match, and the matched words are wrapped in `<mark>` - by building text nodes, never `innerHTML`, because the index carries whatever an author wrote.
 
-Two things worth knowing before touching it:
+**Adding a third kind of entry**, should the site ever grow one, touches five places and no more - the search was built so that this list is short:
+
+1. A collection in `src/content/config.ts` (`defineCollection()` with its schema, exported in the `collections` object - Astro 4, "Content Collections").
+2. A `lib/` file for it, beside `posts.ts` and `video.ts`, exporting its own `getX()`, `xCard()`, `xTerms()` and `xSearch()`. Nothing outside that file learns what the new entry is.
+3. One line in `src/lib/terms.ts`, so its tags and categories join the term pages and the two filter lists.
+4. One label in `site.searchSections` (`src/config.ts`) and one line in `src/pages/search/data.json.ts`, which puts its entries into the index under that label; the Section filter grows a checkbox by itself, because the page renders one per label.
+5. Its own routes under `src/pages/`.
+
+None of the shared code changes: `collectTerms()`, `CardList.astro` and the search client take flat data and cannot tell one kind of entry from another.
+
+Three things worth knowing before touching it:
+
+- **The index has two addresses, and the code picks one at build time.** `trailingSlash: "always"` in `astro.config.mjs` sets, in Astro's own words, "the route matching behavior of the dev server", where `always` means "Only match URLs that include a trailing slash". So `npm run dev` serves the index at `/search/data.json/` and answers 404 without the slash, while the built site is a real file at `/search/data.json` and answers 404 with one. `src/scripts/search.ts` chooses with `import.meta.env.DEV`, which is replaced at build time, so each bundle carries exactly one address. The same is true of `/rss.xml` and `/video/rss.xml` in dev - nothing fetches those, so nothing had noticed until the search did.
 
 - **A scoped `<style>` cannot reach these results.** Astro scopes CSS by stamping an attribute onto the elements the component renders, and every result is created by the script in the browser, so a scoped rule matches nothing: the first build came out as unstyled text with the browser's yellow `mark`. The rules are `src/styles/search.css`, a plain global file, for the same reason `src/styles/carousel.css` is one.
 - **The magnifier cost the header 32px**, and measurement found exactly one band where that did not fit: from 640px, where the full menu replaces the hamburger, to 676px, the row wanted 651px against 616px. The site title may shrink below 1024px now (`min-w-0`, no `flex-shrink-0`), so it gives up as many pixels as the row is short and `truncate` ends it in an ellipsis - about 35px at 640px, nothing at 680px and above. The alternative is to keep the hamburger until 768px instead of 640px, which is the owner's call.

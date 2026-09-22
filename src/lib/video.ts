@@ -11,6 +11,7 @@ import {
   type NavLink,
   type TermKind,
   type TermSource,
+  type SearchSource,
 } from "./lists";
 import { summary } from "./summary";
 import { t } from "../i18n/strings";
@@ -55,4 +56,13 @@ export async function videoTerms(kind: TermKind): Promise<TermSource[]> {
     names: video.data[kind],
     card: videoCard(video),
   }));
+}
+
+/** A video as the search index takes it; the shape is SearchSource in lib/lists.ts. */
+export function videoSearch(video: Video): SearchSource {
+  return {
+    card: videoCard(video),
+    categories: video.data.categories,
+    text: video.body,
+  };
 }

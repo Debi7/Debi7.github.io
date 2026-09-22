@@ -30,7 +30,7 @@ function typographer(text: string): string {
 // Roughly Hugo's `plainify` applied to rendered Markdown: block elements become lines,
 // inline syntax disappears, and the text survives.
 //
-// Exported since 2026-09-22: src/pages/search-index.json.ts needs the body of an entry as plain
+// Exported since 2026-09-22: src/pages/search/data.json.ts needs the body of an entry as plain
 // text, and a second implementation of "strip the Markdown" would drift from this one the first
 // time a rule here changed. summary() is still what a card shows; the search index wants the
 // whole text, so it calls this directly.

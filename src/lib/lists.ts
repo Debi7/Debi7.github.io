@@ -330,6 +330,21 @@ export type Term = {
   cards: Card[];
 };
 
+/**
+ * What the search index holds of an entry, built by postSearch() and videoSearch() in the two
+ * collection files. Added 2026-09-22 with the facets on /search/: the index needs an entry's
+ * categories, which a Card does not carry because no card prints them, and its whole text, which
+ * a Card carries only as a truncated summary. Rather than widen Card - a list would gain two
+ * fields nothing renders - the search has a shape of its own, on the same terms as every other
+ * shape here: plain data, built by each collection for itself.
+ */
+export type SearchSource = {
+  card: Card;
+  categories: string[];
+  /** The body as plain text; the endpoint is what strips the Markdown. */
+  text: string;
+};
+
 /** One entry as the term builder sees it: the names it declares, and the card that renders it. */
 export type TermSource = { names: string[]; card: Card };
 
