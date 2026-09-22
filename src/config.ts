@@ -36,9 +36,9 @@ export const site = {
 
   menu: [
     { name: "Home", url: "/" },
-    { name: "Categories", url: "/categories/" },
     { name: "Posts", url: "/posts/" },
     { name: "Video", url: "/video/" },
+    { name: "Categories", url: "/categories/" },
     { name: "Tags", url: "/tags/" },
     { name: "About", url: "/about/" },
   ],
