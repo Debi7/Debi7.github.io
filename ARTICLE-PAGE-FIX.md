@@ -8,7 +8,7 @@ break the build, and brings the output in line with the Hugo template the compon
 
 ## 0. What is already applied
 
-Updated on 2026-09-16. Everything below that is not listed here is still open.
+Updated on 2026-09-16 and again on 2026-09-22; the last paragraph of this section is the current state.
 
 Applied, as a separate "make the checks pass" change:
 
@@ -26,11 +26,16 @@ Applied, as a separate "make the checks pass" change:
 After that change `npm run check` is green (0 errors, 0 warnings), `npm run build` is green, and `npm run dev`
 starts without the dependency-scan error.
 
-Still open: the wiring itself (steps 1, 2, 4 to 9), the Hugo-faithful markup of `Terms.astro` and
-`TableOfContents.astro`, the deletion of `Content.astro` and `DisqusLazy.astro`, the theme link typo in the footer
-(part B, item 3), and everything in section 7.
+Updated on 2026-09-22. The wiring (steps 1, 2 and 4 to 9) went in with the colleague's commit `1941a5c` of
+2026-09-17, which also deleted `SocialMeta.astro` and `Content.astro`; the sidebar followed on 2026-09-18 and the
+frame moved to plain props on 2026-09-22 (VIDEO-PAGE.md, section 4). Still open: the theme link typo in the footer
+(part B, item 3); `DisqusLazy.astro`, which nothing imports; and from section 7, a post still carries `og:type`
+`website` with no `article:*` meta (7.1; the head itself renders once now - one title, one description, one
+`og:title` in the build of 2026-09-22) and the `telegram` placeholder (7.2).
 
 ## 1. Summary
+
+The state of 2026-09-15, kept as written; section 0 says what has changed since.
 
 - The post route `src/pages/posts/[slug].astro` renders `src/layouts/Post.astro`, which is still the `TODO` stub: a
   bare `<h1>` and the body. The live page `/posts/article/` shows exactly that.
@@ -164,7 +169,9 @@ Differences from the Hugo template found by comparing the built page with `../kl
 - The reading time was `1 min read`; Hugo prints `0 min read`. Hugo does not clamp the value, and
   `readingTime()` in `src/lib/posts.ts` already ports its formula, so use it instead of `Math.max(1, ...)`.
 - The category link had a trailing slash. Hugo prints `/categories/blog` without one (string concatenation, the same
-  quirk as the tag links on the list pages).
+  quirk as the tag links on the list pages). **Superseded on 2026-09-19 evening:** the slash is back, on this link and
+  on the tag links, because Astro's dev and preview servers answer the slash-less address with 404 and the owner
+  reported it; see `REVIEW-FIXES.md` section 5.
 - The share widget was wrapped in an extra `div` (step 6).
 - The Disqus block was rendered. `hugo.toml` sets no Disqus shortname, so Hugo leaves the `theme-card` div empty and
   loads no script. `DisqusLazy.astro` requested `YOUR_SHORTNAME.disqus.com` instead. Delete
@@ -200,6 +207,8 @@ Replace `src/layouts/ArticleLayout.astro` with:
 // Decisions that look like mistakes but match Hugo:
 // - The category link has no trailing slash (/categories/blog). Hugo concatenates the string,
 //   exactly as for the tag links on the list pages. Do not add the slash.
+//   (Superseded on 2026-09-19 evening: the slash was added after all, because the slash-less
+//   address is a 404 on Astro's dev and preview servers; REVIEW-FIXES.md, section 5.)
 // - The reading time can be 0 ("0 min read"). Hugo does not clamp it.
 // - shareText is cut with slice(0, 120). Hugo's truncate also avoids splitting a word and adds an
 //   ellipsis; the result is identical for every current post, all shorter than 120 characters.

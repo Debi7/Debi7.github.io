@@ -16,7 +16,10 @@ on save. Before committing run `npm run fix` and `npm run check` (see [README.md
 - Posts: `src/content/posts/<name>.md`, one file per post. The file name is the address: `/posts/<name>/`.
 - Templates for new posts: `templates/`; see "Create a post" below.
 - Images for posts: `public/images/`, shown at `/images/...`; see "Images in a post" below.
-- The Posts list, the tag pages and the category pages: generated from the posts. Nothing to create by hand.
+- Videos: `src/content/video/<name>.md`, one file per lecture. The file name is the address: `/video/<name>/`.
+- The Posts list, the Video list, the tag pages and the category pages: generated from the entries. Nothing to
+  create by hand.
+- The search index: generated too, at `/search/data.json`. Nothing to create or update by hand; see "Search".
 - The number of posts on one page of a list: `pagination.pageSize` in `src/config.ts`, 5 today.
 - The fields a post may have, and which are required: the schema in `src/content/config.ts`.
 
@@ -102,10 +105,10 @@ The Hugo guide also lists `slug`, `aliases` and `cover`. This site does not supp
 
 ### The posts list page
 
-The Posts list is split by year. The buttons under its title choose a year: `/posts/2025/` lists only the posts of
-2025, five to a page, and Previous, Next and the page numbers at the foot move between the pages of that year only.
-`/posts/` itself shows the newest year. A post appears in the year of its `date`. The tag pages and the category
-pages use the same order, pages of five and page numbers, across all years. Details are in
+Every list is split by year: the Posts list, each tag page and each category page. The buttons under the title choose
+a year: `/posts/2025/` lists only the posts of 2025, five to a page, and Previous, Next and the page numbers at the
+foot move between the pages of that year only; `/tags/<tag>/2025/` does the same for one tag. `/posts/` and
+`/tags/<tag>/` themselves show the newest year. A post appears in the year of its `date`. Details are in
 [PAGINATION.md](PAGINATION.md).
 
 The order:
@@ -141,6 +144,53 @@ The page title "Posts" is written in `src/pages/posts/[...page].astro`.
 - Not rendered in a post yet: formulas between dollar signs, which come out as code, and the callout boxes of the Hugo
   theme, which come out as raw text. Both are waiting on `MIGRATION-PLAN.md` §6.
 
+## Videos
+
+A video lecture is a file in `src/content/video/`, and everything about it works like a post: same front matter, same
+dates, same drafts, same tags and categories. What it adds is a player at the top of the page.
+
+### Create a video
+
+1. Copy `templates/video.md` to `src/content/video/<name>.md`. The file name becomes the address, so
+   `my-lecture.md` is `/video/my-lecture/`: lower-case Latin letters, digits and hyphens, never a bare year.
+2. Fill in `title`, `date` and `videoId`.
+3. Set `draft: false` when it is ready.
+
+`videoId` is the YouTube id and not the whole address - the part after `watch?v=`. In
+`https://www.youtube.com/watch?v=dQw4w9WgXcQ` the id is `dQw4w9WgXcQ`. The schema does not require it, so a file
+without one still builds, and the page then carries an empty player: it is the field to check first when a lecture
+looks broken.
+
+### Front matter reference
+
+- `title` - required.
+- `date` - required, with `+03:00` at the end. A date in the future keeps the lecture off the published site until
+  then; `npm run dev` shows it anyway.
+- `videoId` - the YouTube id. Treat it as required.
+- `description` - one sentence. It is what the card, the feed and the search result show; without it the first words
+  of the text are used.
+- `duration` - free text printed on the card, usually `"12:34"`.
+- `tags`, `categories` - lists, lower-cased for tags by the build. See "Categories and tags".
+- `draft` - `true` keeps it out of the published site.
+- `videoUrl`, `thumbnail`, `heroImage`, `videoPlatform` - accepted by the schema and unused by the page today. Only
+  YouTube is rendered.
+
+The text under the `---` is optional. It appears below the player, and it is what the search matches on, so a few
+sentences are worth writing even for a lecture that speaks for itself.
+
+### Where a new video appears by itself
+
+Nothing has to be registered anywhere. Once the file is in `src/content/video/` and the site is rebuilt, it is on:
+
+- `/video/`, and the year page for its date, `/video/2026/`;
+- a numbered page of that year if the year holds more than five lectures (`/video/2026/page/2/`);
+- `/tags/<tag>/` and `/categories/<category>/` for every term it declares, beside the articles that share them;
+- `/video/rss.xml`, if it is among the newest twenty;
+- `/sitemap-0.xml` and the site's search.
+
+The lists are newest first. Renaming the file changes the address, and the old one becomes a 404, so rename only
+what nobody has linked to yet.
+
 ## Images in a post
 
 1. Name the image after the post, before uploading it: `pendulum-exercises-1.jpg`, `pendulum-exercises-2.jpg`, in
@@ -170,11 +220,107 @@ Both are set in the front matter of the posts, and nothing else is needed: the b
 `/categories/<name>/`, `/tags/` and `/tags/<name>/`. A tag with a space gets a hyphen in its address, so the tag
 `water search` lives at `/tags/water-search/`. A tag used only by drafts gets no page on the published site.
 
+Since 2026-09-22 the videos count too, and a term page lists both kinds of entry together, newest first: a lecture
+tagged `биолокация` appears on `/tags/биолокация/` beside the articles, and a click on it from the Categories page
+opens the lecture rather than a post. So a category or a tag exists from the moment **any** entry names it, and stops
+existing when the last entry drops it - there is no list of them to maintain.
+
+Two things decide how a new term looks:
+
+- **The address** comes from the name, lower-cased, with spaces turned into hyphens. A Russian name keeps its
+  letters: `обучающее видео` is `/categories/обучающее-видео/`, written out in full in the address bar and
+  percent-encoded when copied.
+- **The label** on the page is the name with each word capitalised, which is what the Hugo theme did: `обучающее
+видео` prints as "Обучающее Видео". Write the name in the front matter the way it should read, in lower case.
+
+A term is a subject, not a place: prefer an existing one to a near-synonym, because two tags that mean the same thing
+split the entries between two pages.
+
+## Search
+
+The site has its own search at `/search/`, reached by the magnifier in the header. There is nothing to do by hand for
+a new post or lecture: every build writes `/search/data.json` from the published entries, and the page searches that
+file in the visitor's browser.
+
+What it searches, in order of weight: the title, the tags, the description or summary, and the whole text of the
+entry. A word found in the title counts for more than the same word in the text, and the text counts once however
+often the word appears, so a long article cannot outrank a page that is really about the subject.
+
+### What to add so it appears in the filters
+
+Nothing is registered anywhere, and there is no list of filters to edit. The three lists are built from the entries
+themselves every time the site is built. In practice:
+
+| What you add                      | What you write                                        | What appears in the search                                      |
+| --------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------- |
+| A post                            | a file in `src/content/posts/`                        | a result, and +1 on every filter it carries; Section "Posts" +1 |
+| A lecture                         | a file in `src/content/video/`                        | a result, and +1 on every filter it carries; Section "Video" +1 |
+| A new tag                         | `tags: ["new tag"]` in any published entry            | a new checkbox under Tag, with its count                        |
+| A new category                    | `categories: ["new category"]` in any published entry | a new checkbox under Category, with its count                   |
+| The last use of a tag or category | remove it from the front matter                       | the checkbox disappears, with the term's page                   |
+
+Three rules behind that table, and they are the same three that decide whether a page exists at all:
+
+1. **Published only.** `draft: true`, or a date still in the future, keeps an entry out of the site, out of the index
+   and out of the counts. A tag carried only by drafts has no checkbox, because it has no page either.
+2. **Rebuilt.** The index is written when the site is built. On your own machine that is `npm run build` (or
+   `npm run dev`, which rebuilds as you save); on the site it is the GitHub Actions run that follows a push to
+   `main`. Until it finishes, the search shows what the previous build knew.
+3. **Spelled the same.** `маятник` and `Маятник` are one term - the build lower-cases tags - but `маятники` is a
+   second one and gets its own checkbox with its own count. Two spellings split the entries between two filters.
+
+The Section list is the one that does not grow: the site has articles and lectures, so it has two boxes. A third kind
+of entry is a change to the code, not to the content - README, "Search", says what it takes.
+
+### The filters on the left
+
+Down the left of the search page stand three lists of checkboxes - Section, Category and Tag - with a number beside
+every name. Section is the coarsest: it separates the articles (Posts) from the lectures (Video), and it is the one
+list that never changes, because the site has those two kinds of entry and no more.
+They are built when the site is built, from the same categories and tags the `/categories/` and `/tags/` pages show,
+so a new term needs nothing done to it here either:
+
+- **A new category or tag appears as a checkbox** as soon as one published entry names it and the site is rebuilt -
+  a post or a lecture, since both feed the same lists. Drop the term from the last entry that carries it, and the
+  checkbox disappears with the term's page.
+- **A term used only by drafts, or only by entries dated in the future, has no checkbox.** It has no page either;
+  the search knows exactly what the published site knows.
+- **The number beside a name** is how many of the current results carry that term, so it answers "what would this
+  filter leave me". With an empty search box the numbers are how many entries carry the term on the whole site.
+- **Ticking two boxes in one list** means either of them; ticking boxes in two lists means both conditions at once -
+  Section "Video" with tag `маятник` is "lectures about the pendulum".
+- **The broom button** in the search field empties the box and unticks every filter in one go. It appears only when
+  there is something to clear.
+- **The address carries all of it**: `/search/?q=маятник&section=Video` opens the page with that search already run,
+  so a search can be sent to somebody.
+- **The lists can be long**, so both fold, and on a phone they open folded: seventeen tags above the results would
+  push the first answer off the screen.
+
+Nothing about a term is configured on the search page: it is named in the front matter of an entry, and the page
+follows. The one thing worth keeping in mind is spelling - `маятник` and `Маятник` are the same term, but `маятники`
+is a second one, and it gets its own checkbox with its own count.
+
+What it will not find:
+
+- a draft, or an entry dated in the future - neither is in the published site, so neither is in the index;
+- an entry added since the last build. The index is built with the site, so a new lecture appears in the search when
+  the GitHub Actions build has finished, not when the file is committed;
+- words in an image, and words in front matter fields other than the ones above;
+- a different form of a word. `маятник` does not find `маятника`: the search matches the letters as typed, with only
+  the case folded and `ё` read as `е`. Two words in one query are an AND - both have to appear.
+
+A search can be linked to: `/search/?q=маятник` opens the page with that query already run.
+
+If something you expect is missing, check it in this order: `draft: false`, then the date, then that the build has
+run, then the spelling.
+
 ## Checklist before publishing
 
 1. Read the post once with `npm run dev`, or in the preview of the GitHub editor.
 2. `draft: false`, and `date` set to a moment that has already passed, with `+03:00` at the end.
 3. The file name is lower-case Latin letters, digits and hyphens, and is not a year.
+   3a. For a lecture: `videoId` is the id and not the whole YouTube address, and the player shows the right video in
+   `npm run dev`.
 4. Every image is in `public/images/`, and its address in the text matches the file name exactly, letter case
    included.
 5. If you work on your own computer: `npm run fix`, `npm run check`, `npm run build`, `npm run check:pages`.

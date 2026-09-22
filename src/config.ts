@@ -22,13 +22,30 @@ export const site = {
   // /posts/, /tags/<tag>/ and /categories/<category>/. Hugo's default is 10; the owner chose 5.
   // Lowering it is also the quickest way to see several pages with only a few posts. See
   // PAGINATION.md.
-  pagination: { pageSize: 5 },
+  //
+  // everyNumberUpTo - added later on 2026-09-19, the owner's rule for the page numbers between
+  // Previous and Next: a list with at most this many pages shows every page number; a longer one
+  // shows only the first, the current and the last page, with an ellipsis between them. See
+  // pageNumbers() in src/lib/posts.ts.
+  //
+  // everyYearUpTo - the same day, for the year switcher above the Posts list, which the owner
+  // asked to keep separate from the page numbers: up to this many years every year is shown;
+  // beyond it the newest, the oldest and the year being shown with its neighbours. See
+  // yearSwitcher() in src/lib/posts.ts. scripts/check-pagination.mjs reads all three values.
+  // Added 2026-09-22 with the Section filter on /search/. The search index labels every entry
+  // with the section it belongs to, and the search page prints one checkbox per label; both read
+  // this, so the two cannot drift apart and a translated menu is one edit rather than two. The
+  // words match the menu items below on purpose - a visitor filtering by "Video" is thinking of
+  // the menu item of that name.
+  searchSections: { posts: "Posts", video: "Video" },
+
+  pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },
 
   menu: [
     { name: "Home", url: "/" },
-    { name: "Categories", url: "/categories/" },
     { name: "Posts", url: "/posts/" },
     { name: "Video", url: "/video/" },
+    { name: "Categories", url: "/categories/" },
     { name: "Tags", url: "/tags/" },
     { name: "About", url: "/about/" },
   ],

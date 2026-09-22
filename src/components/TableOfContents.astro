@@ -1,14 +1,18 @@
 ---
 import type { MarkdownHeading } from "astro";
 import { t } from "../i18n/strings";
-import { tocHtml } from "../lib/toc";
+// Changed 2026-09-22: tocHtml() became tocTree(), which returns the headings as data, and
+// TocList.astro renders them. See the note in src/lib/toc.ts for why the markup stopped being
+// built as a string here.
+import { tocTree } from "../lib/toc";
+import TocList from "./TocList.astro";
 
 interface Props {
   headings: MarkdownHeading[];
 }
 
 const { headings } = Astro.props;
-const toc = tocHtml(headings);
+const toc = tocTree(headings);
 
 // Changed 2026-09-16: Props are typed, and the button label reads t.table_of_contents, because
 // `t` in src/i18n/strings.ts is an object, not a function.
@@ -71,7 +75,23 @@ const toc = tocHtml(headings);
     x-transition
     class="mt-3 rounded-md border border-gray-100 bg-white p-4 text-sm leading-relaxed"
   >
-    <div class="prose prose-sm max-w-none" set:html={toc} />
+    {
+      /* Changed 2026-09-22: was `set:html={toc}` with a string of markup built in lib/toc.ts. The
+      <nav id="TableOfContents"> wrapper that string carried is written out here now, because the
+      id is what the theme's CSS and the sidebar script look for; TocList.astro renders one list at
+      any depth and does not know it is the outermost one. An article with no headings renders no
+      nav at all, as before - the caller already checks for that, and tocTree() would return an
+      empty list anyway. */
+    }
+    <div class="prose prose-sm max-w-none">
+      {
+        toc.length > 0 && (
+          <nav id="TableOfContents">
+            <TocList nodes={toc} />
+          </nav>
+        )
+      }
+    </div>
   </div>
 </div>
 

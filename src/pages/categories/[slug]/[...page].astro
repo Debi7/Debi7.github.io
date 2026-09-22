@@ -1,7 +1,7 @@
 ---
 // One category, e.g. /categories/blog/. Hugo has no category-specific template, so it falls
 // back to ../klub_biolocation/themes/void/layouts/_default/list.html - the same one /posts/
-// uses, which is why this route renders PostList.astro with a different title.
+// uses, which is why this route renders CardList.astro with a different title.
 // MIGRATION-PLAN.md §4.1.
 //
 // Nothing links here: the Categories page is an accordion that expands in place and links
@@ -12,21 +12,33 @@
 // was src/pages/categories/[slug].astro. As a rest-parameter route it renders page 1 at
 // /categories/<slug>/ and page n at /categories/<slug>/page/<n>/, Hugo's shape. The page
 // links are built from the encoded slug, like every other hand-built link to a term page
-// (see encodeSlug in lib/urlize.ts). No year switcher here: the owner asked for it on /posts/
-// only. See PAGINATION.md.
+// (see encodeSlug in lib/urlize.ts).
+//
+// Changed later on 2026-09-19, asked for by the owner: the list is split by year like /posts/,
+// through the same paginateByYear() - /categories/<slug>/ is the newest year's first page,
+// /categories/<slug>/<year>/ a year, /categories/<slug>/<year>/page/<n>/ a further page of
+// it - and gets the year switcher, which until then was on /posts/ only. See PAGINATION.md.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../../layouts/Base.astro";
-import PostList from "../../../components/PostList.astro";
-import { getTerms, pageParam, paginateList } from "../../../lib/posts";
+// Changed 2026-09-22 (VIDEO-PAGE.md, section 4): the list component is CardList.astro (it was
+// PostList.astro) and renders Cards, plain data this route builds with postCard(); the split by
+// year comes from lib/lists.ts, shared with the Video list.
+import CardList from "../../../components/CardList.astro";
+// Changed 2026-09-22: the terms come from lib/terms.ts, which collects them over the posts
+// and the videos, instead of from lib/posts.ts, which saw the posts only. A term now holds
+// cards rather than posts, so this route no longer maps anything - the entries arrive flat
+// and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
+import { getTerms } from "../../../lib/terms";
+import { paginateByYear } from "../../../lib/lists";
 import { encodeSlug } from "../../../lib/urlize";
 
 export async function getStaticPaths() {
   const terms = await getTerms("categories");
   return terms.flatMap((term) =>
-    paginateList(term.posts, `/categories/${encodeSlug(term.slug)}/`).map(
-      (page) => ({
-        params: { slug: term.slug, page: pageParam(page.number) },
-        props: { term, page },
+    paginateByYear(term.cards, `/categories/${encodeSlug(term.slug)}/`).map(
+      (entry) => ({
+        params: { slug: term.slug, page: entry.param },
+        props: { term, ...entry },
       }),
     ),
   );
@@ -34,9 +46,9 @@ export async function getStaticPaths() {
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { term, page } = Astro.props;
+const { term, page, years, year } = Astro.props;
 ---
 
 <Base title={term.title}>
-  <PostList title={term.title} page={page} />
+  <CardList title={term.title} page={page} years={years} currentYear={year} />
 </Base>

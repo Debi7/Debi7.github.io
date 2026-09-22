@@ -44,9 +44,17 @@ const { Content } = await about.render();
       {
         site.avatar && (
           <div class="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full shadow-sm ring-2 ring-gray-200 dark:ring-slate-700 md:h-28 md:w-28">
+            {/* width and height added 2026-09-22: without them the browser cannot reserve the
+            avatar's box before the file arrives, so the heading below it jumps when it does. The
+            numbers are the CSS box at the wider of the two sizes this wrapper uses, h-28 w-28
+            (7rem, 112px); the classes still decide what is displayed, and object-cover still
+            crops whatever the real file's aspect ratio is. The other two images in the tree,
+            in Header.astro and Carousel.astro, have carried theirs from the start. */}
             <img
               src={site.avatar}
               alt={site.title}
+              width="112"
+              height="112"
               class="h-full w-full object-cover"
             />
           </div>

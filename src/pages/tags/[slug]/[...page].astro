@@ -1,9 +1,10 @@
 ---
 // One tag, e.g. /tags/hugo/. Port of
 // ../klub_biolocation/themes/void/layouts/taxonomy/tag.html (MIGRATION-PLAN.md §4.1).
-// Class attributes are copied verbatim.
+// Class attributes are copied verbatim, with one exception: the pagination block at the foot is
+// the shared components/Pagination.astro, with list.html's buttons - see PAGINATION, below.
 //
-// This looks like PostList.astro but is deliberately NOT it: tag.html has its own year badge
+// This looks like CardList.astro but is deliberately NOT it: tag.html has its own year badge
 // (with a decorative halo and a thicker rule), a date cell without the calendar icon, a
 // summary without `line-clamp-2`, pill-shaped tag chips that highlight the current tag, and
 // two navigation links at the foot. Sharing a component would mean parameterising all of
@@ -21,51 +22,70 @@
 //                                 that comparison is FALSE for every chip on the live site.
 //                                 See the note at the chip below.
 //   i18n "all_tags"            -> t.all_tags; the link is Hugo's `{{ "tags" | relURL }}`,
-//                                 which resolves to "/tags" without a trailing slash.
+//                                 which resolves to "/tags" without a trailing slash. Since
+//                                 the evening of 2026-09-19 it is "/tags/": the slash-less
+//                                 address is a 404 on Astro's dev and preview servers, the
+//                                 owner reported it, and the tag chips below got their slash
+//                                 with it. See the note in CardList.astro.
 //
 // PAGINATION - changed 2026-09-19, asked for by the owner. This used to read "NOT PORTED",
-// for the same reason as in PostList.astro: Hugo emitted nothing for it until a tag had more
+// for the same reason as in CardList.astro: Hugo emitted nothing for it until a tag had more
 // than ten posts. The owner has since asked for pages of 5 posts:
 //
 //   .Paginator.HasPrev / .HasNext / .Prev.URL / .Next.URL
 //                              -> page.prevUrl / page.nextUrl, from paginateList() in
-//                                 lib/posts.ts. The block before the navigation links is
-//                                 tag.html's, classes verbatim.
+//                                 lib/posts.ts, rendered before the navigation links by
+//                                 components/Pagination.astro since later on 2026-09-19,
+//                                 with list.html's buttons and tag.html's arrows (see the
+//                                 note at the block).
 //
-// - This file was src/pages/tags/[slug].astro. As a rest-parameter route it renders page 1 at
-//   /tags/<slug>/ and page n at /tags/<slug>/page/<n>/, Hugo's shape, with the page links built
-//   from the encoded slug like every other hand-built link to a tag.
-// - The year groups are built from `page.items`, the posts of this page. tag.html ranges over
-//   `.Pages`, every post with the tag, so on the Hugo site every page would repeat the whole
-//   list; see the same note in PostList.astro. The count under the title stays the total.
-// - No year switcher: the owner asked for it on /posts/ only.
+// - This file was src/pages/tags/[slug].astro. As a rest-parameter route it renders, since the
+//   evening of 2026-09-19 when the owner asked for every list to be split by year like /posts/:
+//   /tags/<slug>/ (the newest year's first page), /tags/<slug>/<year>/ and
+//   /tags/<slug>/<year>/page/<n>/, from paginateByYear() in lib/posts.ts, with the links built
+//   from the encoded slug like every other hand-built link to a tag. For a few hours that day
+//   it was /tags/<slug>/page/<n>/ across all years.
+// - The year groups are built from `page.items`, the posts of this page - one year now.
+//   tag.html ranges over `.Pages`, every post with the tag, so on the Hugo site every page
+//   would repeat the whole list; see the same note in CardList.astro. The count under the
+//   title stays the total across years.
+// - The year switcher and the page buttons come from ListByYear.astro, the same as on /posts/;
+//   the pagination block that stood here before it (tag.html's, with list.html's buttons since
+//   the reviewer's remark, REVIEW-FIXES.md section 1) is in that component and Pagination.astro.
 // See PAGINATION.md.
 import type { InferGetStaticPropsType } from "astro";
 import Base from "../../../layouts/Base.astro";
-import {
-  getTerms,
-  groupByYear,
-  pageParam,
-  paginateList,
-} from "../../../lib/posts";
+// Changed 2026-09-22 (VIDEO-PAGE.md, section 4): the cards of a page are Cards, plain data
+// built with postCard(), and the split by year comes from lib/lists.ts, shared with the Video
+// list; until then the page held the posts themselves and this file read their fields.
+// Changed 2026-09-22: the terms come from lib/terms.ts, which collects them over the posts
+// and the videos, instead of from lib/posts.ts, which saw the posts only. A term now holds
+// cards rather than posts, so this route no longer maps anything - the entries arrive flat
+// and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
+import { getTerms } from "../../../lib/terms";
+import { groupByYear, paginateByYear } from "../../../lib/lists";
 import { formatMonthDay } from "../../../lib/date";
-import { summary } from "../../../lib/summary";
 import { urlize, encodeSlug } from "../../../lib/urlize";
 import { t } from "../../../i18n/strings";
+// Added later on 2026-09-19: the year switcher and the page buttons around the list, through
+// one component shared with CardList.astro; see its header.
+import ListByYear from "../../../components/ListByYear.astro";
 
 export async function getStaticPaths() {
   const terms = await getTerms("tags");
   return terms.flatMap((term) =>
-    paginateList(term.posts, `/tags/${encodeSlug(term.slug)}/`).map((page) => ({
-      params: { slug: term.slug, page: pageParam(page.number) },
-      props: { term, page },
-    })),
+    paginateByYear(term.cards, `/tags/${encodeSlug(term.slug)}/`).map(
+      (entry) => ({
+        params: { slug: term.slug, page: entry.param },
+        props: { term, ...entry },
+      }),
+    ),
   );
 }
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { term, page } = Astro.props;
+const { term, page, years, year } = Astro.props;
 const groups = groupByYear(page.items);
 ---
 
@@ -92,209 +112,130 @@ const groups = groupByYear(page.items);
           {term.title}
         </h1>
       </div>
+      {
+        /* Changed 2026-09-22: cards, not posts. The count now includes the video lectures that
+      carry the tag, because the term pages span both collections (lib/terms.ts). The label is
+      still t.articles, the theme's own string - with lectures counted in it, the wording is a
+      question for the owner rather than something to invent a key for. */
+      }
       <div class="text-sm text-gray-600">
-        {term.posts.length}
+        {term.cards.length}
         {t.articles}
       </div>
     </div>
 
-    <!-- Posts grouped by year -->
-    <div class="space-y-16">
-      {
-        groups.map((group) => (
-          <div class="relative">
-            {/* Year indicator */}
-            <div class="mb-8 flex items-center">
-              <div class="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-50 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
-                <span class="relative z-10">{group.year}</span>
-                {/* Decorative halo */}
-                <div class="absolute inset-0 rounded-full bg-blue-200 opacity-20 blur-sm dark:bg-slate-600" />
+    {
+      /* Changed 2026-09-19 evening: the list sits inside ListByYear.astro, which puts the year
+      switcher above it and the page buttons below it, as on /posts/. */
+    }
+    <ListByYear page={page} years={years} currentYear={year}>
+      <!-- Posts grouped by year -->
+      <div class="space-y-16">
+        {
+          groups.map((group) => (
+            <div class="relative">
+              {/* Year indicator */}
+              <div class="mb-8 flex items-center">
+                <div class="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-50 text-xl font-bold text-blue-700 shadow-sm dark:from-slate-700/40 dark:to-slate-800/40 dark:text-blue-300">
+                  <span class="relative z-10">{group.year}</span>
+                  {/* Decorative halo */}
+                  <div class="absolute inset-0 rounded-full bg-blue-200 opacity-20 blur-sm dark:bg-slate-600" />
+                </div>
+                <div class="ml-4 h-0.5 flex-grow bg-gradient-to-r from-blue-200 via-blue-100 to-transparent" />
               </div>
-              <div class="ml-4 h-0.5 flex-grow bg-gradient-to-r from-blue-200 via-blue-100 to-transparent" />
-            </div>
 
-            {/* Article list */}
-            <div class="ml-8 space-y-6">
-              {group.posts.map((post) => (
-                <div class="relative">
-                  <a
-                    href={`/posts/${post.slug}/`}
-                    class="absolute inset-0 z-10"
-                    aria-label={post.data.title}
-                  />
-                  <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
-                    <div class="p-5">
-                      <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
-                        <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
-                          {post.data.title}
-                        </h3>
-                        <time class="mt-1 text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
-                          {formatMonthDay(post.data.date)}
-                        </time>
-                      </div>
-
-                      {summary(post.body) && (
-                        <div class="text-sm text-gray-600 dark:text-gray-300">
-                          {summary(post.body)}
+              {/* Article list. The theme's `ml-8` became `sm:ml-8` on 2026-09-19 evening
+              (REVIEW-FIXES.md, section 9): the 2rem timeline indent under the year badge put the
+              cards 80px from the left edge of a phone and 48px from the right, which the reviewer
+              read as "shifted right". Below 640px the cards now span the column; from 640px up
+              the class is what it was, so nothing changes on a laptop. Hugo renders the indent at
+              every width. */}
+              <div class="space-y-6 sm:ml-8">
+                {/* Cards since 2026-09-22 (was `group.posts`, the posts themselves): url,
+                title, date, summary, tags and the last line come ready from postCard(). */}
+                {group.items.map((card) => (
+                  <div class="relative">
+                    <a
+                      href={card.url}
+                      class="absolute inset-0 z-10"
+                      aria-label={card.title}
+                    />
+                    <div class="group overflow-hidden rounded-lg bg-white shadow-sm transition-shadow duration-300 hover:shadow-md dark:bg-slate-900">
+                      <div class="p-5">
+                        <div class="mb-3 flex flex-col justify-between sm:flex-row sm:items-baseline">
+                          <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
+                            {card.title}
+                          </h3>
+                          <time class="mt-1 text-sm text-gray-500 dark:text-gray-400 sm:ml-4 sm:mt-0">
+                            {formatMonthDay(card.date)}
+                          </time>
                         </div>
-                      )}
 
-                      {post.data.tags.length > 0 && (
-                        <div class="relative z-20 mt-3 flex flex-wrap gap-2">
-                          {post.data.tags.map((tag) => (
-                            /* Hugo's `$isCurrentTag` compares the lower-case front matter
+                        {card.summary && (
+                          <div class="text-sm text-gray-600 dark:text-gray-300">
+                            {card.summary}
+                          </div>
+                        )}
+
+                        {card.tags.length > 0 && (
+                          <div class="relative z-20 mt-3 flex flex-wrap gap-2">
+                            {card.tags.map((tag) => (
+                              /* Hugo's `$isCurrentTag` compares the lower-case front matter
                             tag with the title-cased page title, so it never matches and the
                             "current tag" styling never appears. The comparison is kept
                             faithful here rather than fixed: making it work would highlight a
-                            chip the live site leaves plain. */
-                            <a
-                              href={`/tags/${encodeSlug(urlize(tag))}`}
-                              class:list={[
-                                "tag-chip inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors",
-                                tag === term.title
-                                  ? "bg-blue-100 text-blue-700 dark:bg-slate-800 dark:text-blue-300"
-                                  : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700",
-                              ]}
-                              onclick="event.stopPropagation();"
-                            >
-                              {tag}
-                            </a>
-                          ))}
-                        </div>
-                      )}
+                            chip the live site leaves plain. The href's trailing slash was
+                            added the evening of 2026-09-19; see the note in CardList.astro. */
+                              <a
+                                href={`/tags/${encodeSlug(urlize(tag))}/`}
+                                class:list={[
+                                  "tag-chip inline-flex items-center rounded-full px-2.5 py-1 text-xs transition-colors",
+                                  tag === term.title
+                                    ? "bg-blue-100 text-blue-700 dark:bg-slate-800 dark:text-blue-300"
+                                    : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700",
+                                ]}
+                                onclick="event.stopPropagation();"
+                              >
+                                {tag}
+                              </a>
+                            ))}
+                          </div>
+                        )}
 
-                      <div class="mt-4">
-                        <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
-                          {t.list_read_more}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="ml-1 h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M14 5l7 7m0 0l-7 7m7-7H3"
-                            />
-                          </svg>
-                        </span>
+                        <div class="mt-4">
+                          <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
+                            {card.action}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="ml-1 h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"
+                              />
+                            </svg>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))
-      }
-    </div>
-
-    {
-      /* Added 2026-09-19: tag.html's pagination block, which was not ported before; see the
-      note at the top. Like Hugo, it renders only when there is a neighbouring page, and an
-      empty div keeps Next on the right when there is no Previous.
-
-      The numbered page links in the middle are new, asked for by the owner, and are placed
-      the same way as in PostList.astro; see the note on its pagination block. Here they are
-      round, like this template's Previous and Next, and the current page uses the year
-      switcher's highlighted colours. */
-      (page.prevUrl || page.nextUrl) && (
-        <div class="mt-10 flex flex-wrap items-center justify-between gap-y-4 sm:grid sm:grid-cols-[1fr_auto_1fr]">
-          {page.prevUrl ? (
-            <a
-              href={page.prevUrl}
-              class="flex items-center rounded-full bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:justify-self-start"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="mr-1 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-              {t.pagination_previous}
-            </a>
-          ) : (
-            <div />
-          )}
-          {/* Two copies of the numbers: the full one from 640px up, the compact one below;
-          see pageNumbers() in lib/posts.ts for why. Only one is ever displayed. */}
-          {[page.numbers, page.numbersCompact].map((numbers, index) => (
-            <div
-              class:list={[
-                "order-last w-full flex-wrap justify-center gap-1 sm:order-none sm:w-auto",
-                index === 0 ? "hidden sm:flex" : "flex sm:hidden",
-              ]}
-            >
-              {numbers.map((entry) =>
-                entry.kind === "gap" ? (
-                  <span
-                    aria-hidden="true"
-                    class="px-1 py-1 text-sm text-gray-500 dark:text-gray-400"
-                  >
-                    &hellip;
-                  </span>
-                ) : entry.current ? (
-                  <span
-                    aria-current="page"
-                    class="rounded-full bg-blue-50 px-3 py-1 text-sm text-blue-700 shadow-sm dark:bg-slate-700 dark:text-blue-300"
-                  >
-                    {entry.number}
-                  </span>
-                ) : (
-                  <a
-                    href={entry.url}
-                    aria-label={t.pagination_page(entry.number)}
-                    class="rounded-full bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-                  >
-                    {entry.number}
-                  </a>
-                ),
-              )}
-            </div>
-          ))}
-          {page.nextUrl ? (
-            <a
-              href={page.nextUrl}
-              class="flex items-center rounded-full bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:justify-self-end"
-            >
-              {t.pagination_next}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="ml-1 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </a>
-          ) : (
-            <div />
-          )}
-        </div>
-      )
-    }
+          ))
+        }
+      </div>
+    </ListByYear>
 
     <!-- Navigation links -->
     <div class="mt-8 flex justify-center space-x-8">
       <a
-        href="/tags"
+        href="/tags/"
         class="text-gray-600 transition-colors hover:text-blue-600"
       >
         {t.all_tags}

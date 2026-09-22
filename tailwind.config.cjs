@@ -13,11 +13,17 @@ module.exports = {
     extend: {
       // Same stacks as the @theme block in themes/void/assets/css/main.css.
       // Mirrored as CSS variables in src/styles/main.css for rules that use var(--font-*).
-      colors: {
-        "bio-mint": "#f2f7f5", // Серый с легким мятным/зеленым дыханием
-        "bio-lavender": "#f4f3f7", // Серый с тончайшим лавандовым (духовным) отливом
-        "bio-warm": "#f7f6f3", // Очень мягкий, благородный серо-кремовый
-      },
+      // Changed 2026-09-19: the three colours below were added in commit 125643b as a second
+      // `colors` key of this `extend` object. A JavaScript object literal keeps only the last
+      // of two equal keys, and the pinned palette further down is the last, so Tailwind never
+      // saw them and no `bio-*` class existed - checked by loading this file in node, which
+      // listed the five pinned colour keys and none of these. They now sit, unchanged, at the
+      // top of that `colors` block; the original lines stay here for the record:
+      // colors: {
+      //   "bio-mint": "#f2f7f5", // Серый с легким мятным/зеленым дыханием
+      //   "bio-lavender": "#f4f3f7", // Серый с тончайшим лавандовым (духовным) отливом
+      //   "bio-warm": "#f7f6f3", // Очень мягкий, благородный серо-кремовый
+      // },
       fontFamily: {
         bilingual: [
           '"Source Serif 4"',
@@ -62,6 +68,13 @@ module.exports = {
       // the first time in a later step will NOT be listed here: re-derive the table from
       // reference/hugo-main.css when new colour classes appear. See MIGRATION-PLAN.md 3.2.
       colors: {
+        // Added in commit 125643b (2026-09-19) as candidate light backgrounds with a faint
+        // tint - mint, lavender and warm cream on grey - and moved here from the duplicate
+        // `colors` key above, see the note there. Not used by any class yet, so they are not
+        // in the Hugo stylesheet and there is nothing to check them against.
+        "bio-mint": "#f2f7f5",
+        "bio-lavender": "#f4f3f7",
+        "bio-warm": "#f7f6f3",
         blue: {
           200: "#bedbff",
           300: "#8ec5ff",

@@ -22,6 +22,11 @@
   --page-bg: #f5f5f4; /* page background, and the footer strip */
   --panel-bg: #fafaf9; /* top header bar, post cards, About card */
 }
+/* Changed in commit 125643b (2026-09-19): the two values above are no longer the theme's
+   defaults the comment before the block describes. The page is Tailwind's stone-100 and the
+   panels stone-50, a warmer grey than the theme's gray-50 (#f9fafb) and white (#ffffff).
+   The dark palette below is untouched. Recorded as a design departure in MIGRATION-PLAN.md,
+   section 9; the anti-flash style in Head.astro reads --page-bg, so it needs no change. */
 
 /* Dark theme palette. Hugo puts class="dark" on the <html> element when the
    visitor switches the theme with the sun/moon button in the header.

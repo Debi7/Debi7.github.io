@@ -6,6 +6,7 @@ import Head from "../components/Head.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SEO from "../components/SEO.astro";
+import ScrollToTop from "../components/ScrollToTop.astro";
 
 import type { SiteConfig, PageLike } from "../lib/seo";
 import { site } from "../config";
@@ -56,6 +57,10 @@ const page: PageLike = {
   permalink: new URL(Astro.url.pathname, Astro.site).toString(),
   isHome: Astro.url.pathname === "/",
   isPage: Boolean(isArticle),
+  // Added 2026-09-22: `isVideo` was accepted as a prop and then dropped here, so it was the one
+  // value this layout took and never used - `astro check` said so, and Open Graph called a video
+  // page a website. It travels to SEO.astro now, which turns it into `og:type` `video.other`.
+  isVideo: Boolean(isVideo),
   publishDate,
   updatedDate,
   tags,
@@ -80,9 +85,19 @@ const page: PageLike = {
       <Header />
     </header>
 
+    {
+      /* `isolate` on main was added on 2026-09-19 (REVIEW-FIXES.md, section 8). The tag chips
+      and the year badges carry z-10/z-20, and with no stacking context between them and the
+      root they are painted after the footer. Chromium then rasterises them again, text
+      antialiasing included, for as long as a footer icon's hover transform is animating,
+      which the reviewer saw as the chip text flickering. With main as its own stacking context
+      they are painted where they stand, before the footer. Nothing in main has to stack
+      against the header or the footer, so the class changes no picture. Hugo has the same
+      flicker. */
+    }
     <div class="flex min-h-screen flex-1 flex-col pt-24">
       <main
-        class="mx-auto w-full max-w-4xl flex-1 overflow-x-auto px-8 sm:overflow-visible sm:px-10"
+        class="isolate mx-auto w-full max-w-4xl flex-1 overflow-x-auto px-8 sm:overflow-visible sm:px-10"
       >
         <slot />
       </main>
@@ -94,13 +109,35 @@ const page: PageLike = {
       <Footer />
     </footer>
 
+    {
+      /* Changed 2026-09-22: the path lost its .js extension when src/scripts/site.js became
+      site.ts. Written without an extension rather than as "./site.ts" because TypeScript rejects
+      an import path ending in .ts unless allowImportingTsExtensions is set, which this project's
+      preset does not set; Vite resolves the extension either way. */
+    }
     <script>
-      import "../scripts/site.js";
+      import "../scripts/site";
     </script>
 
+    {
+      /* Disqus's comment-count script. Changed 2026-09-22: the shortname was written into the
+      address here as a literal, which made this the second place that decided which Disqus
+      account the site belongs to - src/config.ts holds the first, and Disqus.astro has read it
+      from there since 2026-09-18 (DISQUS-FIX.md). Moving the account to another shortname used
+      to mean remembering this line. The protocol-relative "//" went with it: it dates from mixed
+      http/https hosting, and the site is https-only.
+
+      The tag keeps its is:inline behaviour either way - Astro implies the directive for any
+      script carrying an attribute other than src, and this one carries id and async (Astro 4,
+      "Template Directives Reference"). It is written out so that the intent is not a side effect
+      of the attribute list. */
+    }
     <script
+      is:inline
       id="dsq-count-scr"
-      src="//biolocation-club.disqus.com/count.js"
+      src={`https://${site.disqus.shortname}.disqus.com/count.js`}
       async></script>
+
+    <ScrollToTop />
   </body>
 </html>

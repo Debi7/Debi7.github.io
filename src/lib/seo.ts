@@ -25,6 +25,14 @@ export interface PageLike {
   permalink: string;
   isHome: boolean;
   isPage: boolean;
+  /**
+   * The page shows a video as its subject, so Open Graph calls it `video.other` rather than
+   * `article`. Added 2026-09-22: `Base.astro` had accepted an `isVideo` prop since the video
+   * section was built, but nothing carried it any further, and it was the one warning
+   * `astro check` reported (`isVideo is declared but its value is never read`). A plain flag
+   * rather than the entry itself, so that nothing here learns what a collection is.
+   */
+  isVideo?: boolean;
   publishDate?: Date;
   updatedDate?: Date;
   tags?: string[];

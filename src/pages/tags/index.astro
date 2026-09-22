@@ -14,7 +14,11 @@
 //   .Count                 -> term.posts.length.
 //   i18n "back_to_home"    -> t.back_to_home.
 import Base from "../../layouts/Base.astro";
-import { getTerms } from "../../lib/posts";
+// Changed 2026-09-22: the terms come from lib/terms.ts, which collects them over the posts
+// and the videos, instead of from lib/posts.ts, which saw the posts only. A term now holds
+// cards rather than posts, so this route no longer maps anything - the entries arrive flat
+// and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
+import { getTerms } from "../../lib/terms";
 import { encodeSlug } from "../../lib/urlize";
 import { t } from "../../i18n/strings";
 
@@ -24,7 +28,7 @@ const title = "Tags";
 // already sorts by name, so a stable sort on the count alone produces Hugo's order - checked
 // against the Hugo build, where all six tags have one post and come out alphabetically.
 const tags = (await getTerms("tags")).sort(
-  (a, b) => b.posts.length - a.posts.length,
+  (a, b) => b.cards.length - a.cards.length,
 );
 ---
 
@@ -49,7 +53,7 @@ const tags = (await getTerms("tags")).sort(
                 the same note in src/pages/categories/index.astro. */}
                 <span
                   class="count-badge ml-2 rounded-full bg-white px-2 py-0.5 text-xs text-blue-600 dark:bg-slate-700 dark:text-blue-300"
-                  set:html={String(tag.posts.length)}
+                  set:html={String(tag.cards.length)}
                 />
               </div>
             </a>
