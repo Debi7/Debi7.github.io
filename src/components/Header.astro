@@ -34,7 +34,23 @@ const initials = site.title
   .toUpperCase();
 ---
 
-<div class="mx-auto w-full max-w-4xl overflow-x-auto px-6 sm:overflow-visible">
+{
+  /* max-w-5xl, not the max-w-4xl the rest of the site uses. The owner allowed this on 2026-09-22,
+  after the reviewer found the bar crowded: Video made a sixth menu item, and six items plus the
+  title and the theme toggle inside 896px pushed everything towards the middle. 1024px gives back
+  roughly what the new item took.
+
+  This is the only element on the site wider than max-w-4xl - main and the footer in Base.astro
+  keep it - so the header no longer lines up with the article card below it above 1024px. That is
+  the price of the change and it was accepted. It is also a departure from the Hugo header, which
+  has one width for everything; REVIEW-VIDEO.md remark 4 records the decision.
+
+  No bespoke class was needed, although the reviewer asked for one: this wrapper has lived in this
+  component since 2026-09-09 (the note at the top of the file says why), so it is already separate
+  from the page's width. Tailwind's own step is the class; a hand-made one would hide the value
+  from anyone reading the markup. */
+}
+<div class="mx-auto w-full max-w-5xl overflow-x-auto px-6 sm:overflow-visible">
   <div class="flex items-center justify-between py-3">
     {
       /* max-w-[70%] below 640px instead of Hugo's max-w-[40%]: the logo takes room the
@@ -59,13 +75,21 @@ const initials = site.title
           twice is worse than not announcing the image at all. */
         }
         {
+          /* Changed 2026-09-22, which makes the sentence above half true: sm:hidden is gone. The
+          owner asked for the same logo at every width (REVIEW-VIDEO.md remark 5), so the desktop
+          header is deliberately no longer byte-identical to Hugo's - that parity was the only
+          reason the image was hidden there. It shrinks rather than disappears: h-8 w-8 below
+          640px as before, h-6 w-6 from there up, about the size of a favicon, so the height of
+          the bar stays decided by the text and not by the picture. */
+        }
+        {
           site.avatar && (
             <img
               src={site.avatar}
               alt=""
               width="32"
               height="32"
-              class="mr-2 inline-block h-8 w-8 rounded-full object-cover align-middle ring-1 ring-gray-200 dark:ring-slate-700 sm:hidden"
+              class="mr-2 inline-block h-8 w-8 rounded-full object-cover align-middle ring-1 ring-gray-200 dark:ring-slate-700 sm:h-6 sm:w-6"
             />
           )
         }
@@ -124,7 +148,12 @@ const initials = site.title
 </div>
 
 <div id="site-menu" class="sm:hidden" hidden>
-  <div class="mx-auto w-full max-w-4xl px-6 pb-4">
+  {
+    /* Widened with the bar above on 2026-09-22 so the two cannot drift apart. Nothing visible
+    changes here: the panel only exists below 640px, where the viewport is narrower than either
+    limit and mx-auto has nothing to centre. */
+  }
+  <div class="mx-auto w-full max-w-5xl px-6 pb-4">
     <Menu variant="panel" />
     <div
       class="mt-2 flex items-center justify-between border-t border-gray-200 px-2 pt-3 dark:border-slate-700"

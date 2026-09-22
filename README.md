@@ -138,6 +138,8 @@ What that buys over the other repair (dropping `remark-math` so the dollars reac
 
 `rehype-katex@7` is the one dependency this added (25 KB; it brings `katex` itself, 2.8 MB in `node_modules`, most of it the fonts, of which only the faces a page actually uses are ever downloaded).
 
+`katex` is declared in `package.json` as well, added the same day at version `^0.16.47`. Nothing in the code imports the library - only its stylesheet, `katex/dist/katex.min.css` in `ArticleLayout.astro` - and that path used to resolve only because `rehype-katex` depends on `katex` and npm hoists it to the root of `node_modules`. A path that works by hoisting is a path that breaks silently: the day `rehype-katex` drops the dependency or npm nests it, articles stop building with `Cannot find module`. Declaring it downloads nothing new - it is the same 0.16.47 that was already installed and locked - and `katex@0.16` declares no `engines`, so it asks nothing of the Node version in `engines` above (`>=20.0.0 <21`).
+
 ### The carousel runs under the header, and Hugo's does not
 
 This is the one place where the port shows something different from Hugo on purpose, so do not "fix" it back.
@@ -147,6 +149,14 @@ This is the one place where the port shows something different from Hugo on purp
 It is written this way rather than as a measured offset because the header's height depends on the viewport, and the requirement was that the carousel meet the header at any screen size. With the carousel starting at zero there is no gap to measure and nothing to keep in sync. Trimming `pt-24` instead was rejected: that value is verbatim theme markup and every page uses it.
 
 The practical consequence is that `/` can no longer be diffed against the Hugo screenshot as a whole. Everything below the carousel still matches; the reference image for the home page has to be retaken from the Astro build.
+
+### The header is wider than the page, and the logo shows at every width
+
+Since 2026-09-22, both at the owner's decision after the reviewer asked for them (`REVIEW-VIDEO.md`, remarks 4 and 5).
+
+`Header.astro` wraps the bar in `max-w-5xl` (1024px) while `main` and the footer keep the site's `max-w-4xl` (896px). Video made a sixth menu item, and six items plus the title and the theme toggle inside 896px pushed everything towards the middle. No new class was invented, although the remark asked for one: the wrapper has stood inside `Header.astro` since 2026-09-09 - it carries `overflow-x-auto` and the drop-down panel has to be its sibling - so it was already separate from the page's width, and Tailwind's own step is the class. The price, accepted: above 1024px the header no longer lines up with the article card under it.
+
+The avatar in the bar used to carry `sm:hidden`, so it appeared only below 640px where the wordmark alone had to hold the bar; hiding it above that was what kept the desktop header byte-identical to Hugo's. It is shown at every width now, `h-8 w-8` below 640px and `h-6 w-6` (about a favicon) above, so the height of the bar is still decided by the text. `/images/avatar.png` is the About page's portrait, which at 24px reads as little more than a dot: a mark drawn for the club belongs here when there is one.
 
 ### The menu collapses into a hamburger below 640px
 
