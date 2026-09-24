@@ -2,20 +2,17 @@ import { defineConfig } from "astro/config";
 import tailwind from "@astrojs/tailwind";
 import mdx from "@astrojs/mdx";
 import remarkMath from "remark-math";
-// Added 2026-09-22: rehype-katex typesets the math nodes remark-math produces. See the note in
-// the markdown block below for why the site moved to build-time rendering.
 import rehypeKatex from "rehype-katex";
 import alpinejs from "@astrojs/alpinejs";
-// Added 2026-09-22, once the deploy address was settled (DEPLOY.md section 0). The integration
-// writes sitemap-index.xml and sitemap-0.xml from the routes of the build, using `site` above as
-// the origin, which is why it could not be added while that value was still a placeholder.
-//
-// Pinned to exactly 3.6.0 in package.json, not a caret: 3.7 depends on sitemap@9, which requires
-// Node 20.19.5, and this project is on 20.19.0 with engine-strict set. The note in package.json
-// says the same, so raising one raises the other.
 import sitemap from "@astrojs/sitemap";
+import node from "@astrojs/node";
 
 export default defineConfig({
+  output: "server", // Переводит проект в режим SSR
+  adapter: node({
+    mode: "standalone",
+  }),
+
   // Публичный адрес деплоя на GitHub Pages (без базового пути)
   // (English, added 2026-09-22 next to the original note: the public GitHub Pages address, with no
   // base path. DEPLOY.md section 2 holds the placeholders and says a project site would need

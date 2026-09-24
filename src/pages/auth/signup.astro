@@ -1,0 +1,90 @@
+---
+import { createClient } from "../../lib/supabase";
+
+const supabase = createClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const { data } = await supabase.auth.getUser();
+
+if (data?.user) {
+  return Astro.redirect("/dashboard");
+}
+---
+
+<html>
+  <head>
+    <title>Sign Up</title>
+  </head>
+  <body>
+    <h1>Sign Up</h1>
+
+    <div id="message"></div>
+
+    <form id="signup-form">
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          placeholder="your@email.com"
+          required
+        />
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          placeholder="At least 6 characters"
+          required
+        />
+      </div>
+      <button type="submit" id="signup-btn">Sign Up</button>
+    </form>
+    <p>
+      Already have an account? <a href="/auth/signin">Sign in</a>
+    </p>
+  </body>
+</html>
+
+<script>
+  import { actions } from "astro:actions";
+
+  const form = document.querySelector("#signup-form") as HTMLFormElement;
+  const btn = document.getElementById("signup-btn") as HTMLButtonElement;
+  const messageEl = document.getElementById("message") as HTMLDivElement;
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = "Signing up...";
+    messageEl.textContent = "";
+
+    try {
+      const formData = new FormData(form);
+      const result = await actions.signUp(formData);
+
+      if (!result.data?.success) {
+        btn.disabled = false;
+        btn.textContent = "Sign Up";
+        messageEl.textContent = result.data?.message || "Sign up failed";
+        messageEl.style.color = "red";
+        return;
+      }
+
+      messageEl.textContent = result.data.message;
+      messageEl.style.color = "green";
+      btn.textContent = "Sign Up";
+    } catch (error) {
+      btn.disabled = false;
+      btn.textContent = "Sign Up";
+      messageEl.textContent = "An error occurred. Please try again.";
+      messageEl.style.color = "red";
+      console.error(error);
+    }
+  });
+</script>

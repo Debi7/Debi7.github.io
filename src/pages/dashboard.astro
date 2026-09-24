@@ -1,0 +1,58 @@
+---
+import { createClient } from "../lib/supabase";
+
+const supabase = createClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const { data } = await supabase.auth.getUser();
+const user = data?.user;
+
+if (!user) {
+  return Astro.redirect("/auth/signin");
+}
+---
+
+<html>
+  <head>
+    <title>Dashboard</title>
+  </head>
+  <body>
+    <h1>Welcome!</h1>
+    <p>Email: {user.email}</p>
+    <p>User ID: {user.id}</p>
+
+    <button id="signout-btn">Sign Out</button>
+  </body>
+</html>
+
+<script>
+  import { actions } from "astro:actions";
+
+  const btn = document.getElementById("signout-btn") as HTMLButtonElement;
+
+  btn?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = "Signing out...";
+
+    try {
+      const result = await actions.signOut();
+
+      if (!result.data?.success) {
+        btn.disabled = false;
+        btn.textContent = "Sign Out";
+        alert("Failed to sign out");
+        return;
+      }
+
+      // Redirect to signin page
+      window.location.href = "/auth/signin";
+    } catch (error) {
+      btn.disabled = false;
+      btn.textContent = "Sign Out";
+      console.error(error);
+    }
+  });
+</script>

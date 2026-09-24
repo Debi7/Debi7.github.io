@@ -1,13 +1,4 @@
 ---
-// Port of ../klub_biolocation/layouts/_default/home.html (the root override): the full-bleed
-// carousel followed by the centred title block and the round menu buttons. MIGRATION-PLAN.md §4.
-// Class attributes are copied verbatim.
-//
-// Changed 2026-09-22: the tag cloud below the carousel. It is the first thing on this page that
-// Hugo never had, so it is a deviation from parity rather than a port - the owner asked for it
-// after a reference site, chose this place for it over /about/ and /tags/ because it is the
-// quickest navigation a visitor can be given, and the component carries the rest of the
-// reasoning. MIGRATION-PLAN.md section 9 lists it with the other departures.
 import Base from "../layouts/Base.astro";
 import Carousel from "../components/Carousel.astro";
 import TagCloud from "../components/TagCloud.astro";

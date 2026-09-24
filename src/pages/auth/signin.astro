@@ -1,0 +1,89 @@
+---
+import { createClient } from "../../lib/supabase";
+
+const supabase = createClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const { data } = await supabase.auth.getUser();
+
+if (data?.user) {
+  return Astro.redirect("/dashboard");
+}
+---
+
+<html>
+  <head>
+    <title>Sign In</title>
+  </head>
+  <body>
+    <h1>Sign In</h1>
+
+    <div id="message"></div>
+
+    <form id="signin-form">
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          placeholder="your@email.com"
+          required
+        />
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          placeholder="Your password"
+          required
+        />
+      </div>
+      <button type="submit" id="signin-btn">Sign In</button>
+    </form>
+    <p>
+      Don't have an account? <a href="/auth/signup">Sign up</a>
+    </p>
+  </body>
+</html>
+
+<script>
+  import { actions } from "astro:actions";
+
+  const form = document.querySelector("#signin-form") as HTMLFormElement;
+  const btn = document.getElementById("signin-btn") as HTMLButtonElement;
+  const messageEl = document.getElementById("message") as HTMLDivElement;
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = "Signing in...";
+    messageEl.textContent = "";
+
+    try {
+      const formData = new FormData(form);
+      const result = await actions.signIn(formData);
+
+      if (!result.data?.success) {
+        btn.disabled = false;
+        btn.textContent = "Sign In";
+        messageEl.textContent = result.data?.message || "Sign in failed";
+        messageEl.style.color = "red";
+        return;
+      }
+
+      // Redirect to dashboard on successful sign in
+      window.location.href = "/dashboard";
+    } catch (error) {
+      btn.disabled = false;
+      btn.textContent = "Sign In";
+      messageEl.textContent = "An error occurred. Please try again.";
+      messageEl.style.color = "red";
+      console.error(error);
+    }
+  });
+</script>
