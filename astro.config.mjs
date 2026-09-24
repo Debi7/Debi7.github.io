@@ -32,11 +32,6 @@ export default defineConfig({
     mdx(),
     alpinejs(),
     sitemap({
-      // A draft or a future-dated entry is not in the build at all - published() in lib/lists.ts
-      // filters it out - so the sitemap cannot leak one. What it would otherwise list is the
-      // paginated machinery: /posts/2025/page/2/ and its like are real pages, but they are
-      // navigation, and a search engine that indexes them competes with itself for the entries
-      // they hold. The entry pages, the year pages and the term pages stay.
       filter: (page) => !/\/page\/\d+\/$/.test(page),
     }),
   ],

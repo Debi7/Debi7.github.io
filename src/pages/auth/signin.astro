@@ -52,8 +52,6 @@ if (data?.user) {
 </html>
 
 <script>
-  import { actions } from "astro:actions";
-
   const form = document.querySelector("#signin-form") as HTMLFormElement;
   const btn = document.getElementById("signin-btn") as HTMLButtonElement;
   const messageEl = document.getElementById("message") as HTMLDivElement;
@@ -66,12 +64,18 @@ if (data?.user) {
 
     try {
       const formData = new FormData(form);
-      const result = await actions.signIn(formData);
 
-      if (!result.data?.success) {
+      const res = await fetch("/api/signin", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (!result.success) {
         btn.disabled = false;
         btn.textContent = "Sign In";
-        messageEl.textContent = result.data?.message || "Sign in failed";
+        messageEl.textContent = result.message || "Sign in failed";
         messageEl.style.color = "red";
         return;
       }

@@ -20,7 +20,7 @@ if (!user) {
   </head>
   <body>
     <h1>Welcome!</h1>
-    <p>Email: {user.email}</p>
+    <p>EmailEmail: {user.email}</p>
     <p>User ID: {user.id}</p>
 
     <button id="signout-btn">Sign Out</button>
@@ -28,8 +28,6 @@ if (!user) {
 </html>
 
 <script>
-  import { actions } from "astro:actions";
-
   const btn = document.getElementById("signout-btn") as HTMLButtonElement;
 
   btn?.addEventListener("click", async (e) => {
@@ -38,9 +36,13 @@ if (!user) {
     btn.textContent = "Signing out...";
 
     try {
-      const result = await actions.signOut();
+      const res = await fetch("/api/signout", {
+        method: "POST",
+      });
 
-      if (!result.data?.success) {
+      const result = await res.json();
+
+      if (!result.success) {
         btn.disabled = false;
         btn.textContent = "Sign Out";
         alert("Failed to sign out");
