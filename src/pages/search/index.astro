@@ -229,6 +229,7 @@ const tags = (await getTerms("tags")).sort(
           class="search-status"
           aria-live="polite"
           data-searching="Searching..."
+          data-too-short={`Type at least ${site.search.minQuery} characters to search`}
           data-found="{n} result(s) for {q}"
           data-empty="No results for {q}"
           data-filtered="{n} of {total} result(s) for {q}"
@@ -246,7 +247,19 @@ const tags = (await getTerms("tags")).sort(
           </p>
         </noscript>
 
-        <ul id="search-results" class="search-results"></ul>
+        {
+          /* data-tag-prefix is the wording of the line a result carries when the query was found
+          in its tags rather than in its title or its text - the reviewer hit exactly that case,
+          searched "мая" and got a lecture with no such word on the card, because its tag is
+          "маятник". Here for the same reason as the status templates above: the words a reader
+          sees belong to the page, and search.ts fills them in. */
+        }
+        <ul
+          id="search-results"
+          class="search-results"
+          data-tag-prefix="Found in tags:"
+        >
+        </ul>
       </div>
     </div>
   </div>

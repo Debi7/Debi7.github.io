@@ -63,7 +63,9 @@ import Base from "../../../layouts/Base.astro";
 // cards rather than posts, so this route no longer maps anything - the entries arrive flat
 // and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
 import { getTerms } from "../../../lib/terms";
-import { groupByYear, paginateByYear } from "../../../lib/lists";
+// termLabel added 2026-09-22 with the same change in CardList.astro: these chips are that
+// component's chips copied, so they print a tag the same way it is printed everywhere else.
+import { groupByYear, paginateByYear, termLabel } from "../../../lib/lists";
 import { formatMonthDay } from "../../../lib/date";
 import { urlize, encodeSlug } from "../../../lib/urlize";
 import { t } from "../../../i18n/strings";
@@ -196,7 +198,11 @@ const groups = groupByYear(page.items);
                                 ]}
                                 onclick="event.stopPropagation();"
                               >
-                                {tag}
+                                {/* Changed 2026-09-22, see the same chip in CardList.astro. The
+                                comparison above still weighs the raw front-matter word against
+                                the term title, which is Hugo's never-matching test and stays
+                                that way; only what is printed changed. */}
+                                {termLabel(tag)}
                               </a>
                             ))}
                           </div>

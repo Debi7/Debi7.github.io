@@ -1,0 +1,89 @@
+---
+interface Props {
+  href?: string;
+  className?: string;
+}
+
+const { pathname } = Astro.url;
+
+// Проверяем, является ли текущая страница главной
+const isHomePage = pathname === "/" || pathname === "";
+---
+
+<div class="flex flex-1 justify-end">
+  {
+    !isHomePage && (
+      <button type="button" id="auth-btn">
+        <a
+          href="/login"
+          class="ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
+          aria-label="Войти на сайт"
+        >
+          <svg
+            xmlns="http://w3.org"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="h-6 w-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+            />
+          </svg>
+        </a>
+      </button>
+    )
+  }
+</div>
+
+<script>
+  const authButton = document.getElementById(
+    "auth-btn",
+  ) as HTMLButtonElement | null;
+
+  if (authButton) {
+    authButton.addEventListener("click", () => {
+      const form = document.querySelector("#signin-form") as HTMLFormElement;
+      const btn = document.getElementById("signin-btn") as HTMLButtonElement;
+      const messageEl = document.getElementById("message") as HTMLDivElement;
+
+      form?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        btn.disabled = true;
+        btn.textContent = "Signing in...";
+        messageEl.textContent = "";
+
+        try {
+          const formData = new FormData(form);
+
+          const res = await fetch("/api/signin", {
+            method: "POST",
+            body: formData,
+          });
+
+          const result = await res.json();
+
+          if (!result.success) {
+            btn.disabled = false;
+            btn.textContent = "Sign In";
+            messageEl.textContent = result.message || "Sign in failed";
+            messageEl.style.color = "red";
+            return;
+          }
+
+          // Redirect to dashboard on successful sign in
+          window.location.href = "/dashboard";
+        } catch (error) {
+          btn.disabled = false;
+          btn.textContent = "Sign In";
+          messageEl.textContent = "An error occurred. Please try again.";
+          messageEl.style.color = "red";
+          console.error(error);
+        }
+      });
+    });
+  }
+</script>

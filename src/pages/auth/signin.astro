@@ -1,0 +1,52 @@
+---
+import { createClient } from "../../lib/supabase";
+
+const supabase = createClient({
+  request: Astro.request,
+  cookies: Astro.cookies,
+});
+
+const { data } = await supabase.auth.getUser();
+
+if (data?.user) {
+  return Astro.redirect("/dashboard");
+}
+---
+
+<html>
+  <head>
+    <title>Sign In</title>
+  </head>
+  <body>
+    <h1>Sign In</h1>
+
+    <div id="message"></div>
+
+    <form id="signin-form">
+      <div>
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          placeholder="your@email.com"
+          required
+        />
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          name="password"
+          placeholder="Your password"
+          required
+        />
+      </div>
+      <button type="submit" id="signin-btn">Sign In</button>
+    </form>
+    <p>
+      Don't have an account? <a href="/auth/signup">Sign up</a>
+    </p>
+  </body>
+</html>
