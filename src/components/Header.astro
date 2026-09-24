@@ -1,31 +1,9 @@
 ---
-// Port of ../klub_biolocation/themes/void/layouts/partials/header.html (MIGRATION-PLAN.md §4):
-// site title link, the menu, and the theme toggle. Class attributes and the SVG icons are
-// copied verbatim; the <header> element itself lives in src/layouts/Base.astro.
-//
-// This component also owns the max-w-4xl wrapper that used to sit in Base.astro. It was moved
-// here on 2026-09-09 for a concrete reason, not for tidiness: that wrapper carries
-// `overflow-x-auto`, and `overflow-x: auto` forces `overflow-y` to compute to `auto` as well,
-// so a drop-down panel rendered inside it would be clipped instead of hanging below the
-// header. The panel therefore has to be the wrapper's SIBLING, which means one component has
-// to emit both. The emitted markup is unchanged for the wrapper itself.
-//
-// Responsive behaviour, added 2026-09-09 at the owner's request (see MIGRATION-PLAN.md §9):
-// at 640px and up the header is what Hugo renders - the horizontal menu plus the theme
-// toggle. Below 640px both are replaced by a hamburger that opens the panel underneath, and
-// the theme toggle moves inside that panel. The behaviour is in src/scripts/site.js.
 import Menu from "./Menu.astro";
 import ThemeToggle from "./ThemeToggle.astro";
+import AuthButton from "./AuthButton.astro";
 import { site } from "../config";
 
-// The two icons swap through Tailwind's `hidden` class, not the `hidden` attribute. That is
-// deliberate: `hidden` is defined on HTMLElement, and an inline SVG is an SVGElement, so
-// `svg.hidden = true` in script sets a plain JavaScript property and changes nothing on the
-// page. Measured in a headless browser: the attribute stayed absent and the computed display
-// stayed `block`. A class survives the round trip. See src/scripts/site.js.
-
-// "Radiesthesia Club" -> "RC". Derived rather than written down so that renaming the site in
-// src/config.ts cannot leave a stale monogram behind.
 const initials = site.title
   .split(/\s+/u)
   .filter(Boolean)
@@ -209,6 +187,7 @@ const initials = site.title
         still 3px wider than the space it had. Measured, like the rest of this band. */
       }
       <ThemeToggle class="ml-1 inline-flex lg:ml-2" />
+      <AuthButton />
     </div>
   </div>
 </div>
