@@ -39,6 +39,40 @@ export const site = {
   // the menu item of that name.
   searchSections: { posts: "Posts", video: "Video" },
 
+  // Added 2026-09-22 after the reviewer asked for it: how many characters have to be typed before
+  // /search/ looks anything up. One or two letters match almost every entry on the site, so the
+  // page used to redraw the whole list on the first keystroke and show a result count that meant
+  // nothing. Below this length the text is ignored - the filters on the left still work, and the
+  // status line says what is missing. Both the script and the wording of that line read this, so
+  // the number is written once.
+  search: { minQuery: 3 },
+
+  // Added 2026-09-22 with the tag cloud under the carousel (src/components/TagCloud.astro): the
+  // tags that cloud leaves out. These three are leftovers from the skeleton's test posts and say
+  // nothing to a reader. "video" is deliberately not among them - the owner keeps it in the cloud
+  // for now and may replace it with something else later. A name here is matched against the
+  // front-matter name, which the schema lower-cases, not against the title-cased label, and it
+  // hides a tag from the cloud alone: its page, the Tags page and the search filters are
+  // untouched.
+  tagCloud: { hidden: ["hugo", "void", "draft"] },
+
+  // Added 2026-09-22 at the owner's request, with the tag cloud: the word a tag or a category is
+  // SHOWN by, where that should differ from the word the front matter writes. Empty on purpose -
+  // every term reads well title-cased today - and it is here for the day one does not.
+  //
+  //   termLabels: { "маятник": "Маятник и рамки", "video": "Лекции" },
+  //
+  // The key is the front-matter name in lower case (the schema lower-cases every tag; write a
+  // category key in lower case too, the lookup does the same to it). The value is printed as it
+  // stands, so it decides its own capitals.
+  //
+  // This renames nothing else. The address stays /tags/<the front-matter name>/, the filters on
+  // /search/ keep matching on that name, and an entry still declares the tag by that name in its
+  // front matter - which is what makes this safe to change at any time: no link anywhere breaks.
+  // To change the address as well, rename the tag in the front matter of every entry that carries
+  // it; CONTENT.md, "Renaming a tag", has both procedures side by side.
+  termLabels: {},
+
   pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },
 
   menu: [

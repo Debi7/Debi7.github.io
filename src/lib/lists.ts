@@ -370,6 +370,28 @@ export type TermSource = { names: string[]; card: Card };
 //
 // push, not `[...(byName.get(name) ?? []), card]`: the old line rebuilt the array of a term
 // once per entry that carried it, which was on the list of things to tidy up.
+/**
+ * The word a tag or a category is printed by: the override in `site.termLabels` if there is one,
+ * otherwise the front-matter name title-cased the way Hugo cases a taxonomy term.
+ *
+ * Added 2026-09-22, at the owner's request for a way to change what a tag is called without
+ * touching the entries that carry it. It is one function and not a rule spelled out at each call
+ * site, because the label is printed in four places - the cloud on the home page, the Tags and
+ * Categories pages, the heading of a term page and the filter list on /search/ - and a term that
+ * reads one way on one of them and another way on the next is worse than no override at all.
+ *
+ * What it deliberately does not touch: the address, which comes from urlize() over the same name,
+ * and the value the search filters match on, which is the name itself. So an override is safe to
+ * add, change or remove at any time - no link and no bookmark depends on it.
+ *
+ * The lookup lower-cases, because the schema lower-cases every tag but leaves a category as
+ * written, and one rule for both is easier to explain than two.
+ */
+export function termLabel(name: string): string {
+  const labels: Readonly<Record<string, string>> = site.termLabels;
+  return labels[name.toLowerCase()] ?? titleize(name);
+}
+
 export function collectTerms(sources: TermSource[]): Term[] {
   const byName = new Map<string, Card[]>();
   for (const { names, card } of sources) {
@@ -382,7 +404,9 @@ export function collectTerms(sources: TermSource[]): Term[] {
   return [...byName]
     .map(([name, cards]) => ({
       name,
-      title: titleize(name),
+      // Changed 2026-09-22: titleize(name) until then, and it is still what termLabel() falls
+      // back to. The indirection is what lets a term be renamed for the reader in one place.
+      title: termLabel(name),
       slug: urlize(name),
       cards: cards.sort((a, b) => b.date.getTime() - a.date.getTime()),
     }))

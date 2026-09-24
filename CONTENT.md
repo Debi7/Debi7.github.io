@@ -236,6 +236,64 @@ Two things decide how a new term looks:
 A term is a subject, not a place: prefer an existing one to a near-synonym, because two tags that mean the same thing
 split the entries between two pages.
 
+### The tag cloud on the home page
+
+Under the carousel on the home page stands a cloud of tags. There is no list of words to keep: the cloud is built
+from the tags of the published entries, every time the site is built.
+
+**A new tag needs nothing done to it.** Write it in the front matter of a post or a lecture, publish, and the next
+build puts it in the cloud, on `/tags/`, in the filters on `/search/` and on a page of its own. There is no register
+to add it to and no file to edit; a tag that no entry carries any more disappears from all four by the same rule.
+
+- **A new tag appears by itself**, as soon as one published entry carries it, and the word links to the tag's own page.
+- **The size says how much there is.** The more entries a tag carries, the larger the word; resting the pointer on it
+  shows the count itself. All the words are one colour on purpose, so that the size is the only thing saying which tag
+  the site is really about.
+- **Three tags are not shown**: `hugo`, `void` and `draft`, which are leftovers from the test posts of the port. The
+  list lives in `src/config.ts` under `tagCloud.hidden`. A tag named there keeps its page, its place on `/tags/` and its
+  filter in the search, and drops out of the cloud alone. `video` is not in that list deliberately, so the lectures are
+  reachable from the home page by their tag.
+- **It turns.** The cloud is a globe: it drifts by itself and follows the pointer, faster the
+  further the pointer is from the middle. A visitor whose system asks for less motion sees the
+  same words standing still in a row, and so does one with JavaScript turned off.
+- **The cloud is the narrow-screen half.** Below 640px the cloud is what the home page shows under the title; from
+  640px up it gives way to the row of round menu links, and the two are never on screen together.
+
+### Renaming a tag or a category
+
+There are two different things people mean by renaming, and they have different costs, so pick deliberately.
+
+**1. Change only the word people read** - the address stays as it is, and nothing can break. Add a line to
+`termLabels` in `src/config.ts`:
+
+```js
+termLabels: { "маятник": "Маятник и рамки", "video": "Лекции" },
+```
+
+The key is the tag as the front matter writes it, in lower case. The value is printed exactly as you type it, so it
+decides its own capitals. It changes the word in the cloud, on `/tags/` and `/categories/`, in the heading of the
+tag's own page and in the filter list on `/search/`. It changes nothing else: the address stays
+`/tags/маятник/`, every link and bookmark keeps working, the filters keep finding the same entries, and the front
+matter of the entries is not touched. Remove the line and the old word is back.
+
+**2. Change the tag itself** - the address changes with it, which is why this one has a cost. Edit the front matter
+of every entry that carries the tag, everywhere it appears. After the next build the old address `/tags/<old name>/`
+no longer exists, so any link to it from outside the site, and any bookmark, is a 404; inside the site nothing
+breaks, because every link to a tag is generated. Do this when the old name was wrong, not when it merely reads
+badly - for reading, the first way is free.
+
+A few things to know either way:
+
+- **One entry, one spelling.** `Маятник` and `маятник` are the same tag (the build lower-cases tags), but `маятники`
+  is a second tag with a page and a filter of its own. Two spellings split the entries between two tags, and the
+  cloud shows both.
+- **Categories keep their capitals** as the front matter writes them, tags do not. Write a `termLabels` key in lower
+  case in both cases; the lookup does the same to whatever it is given.
+- **The same word everywhere.** Since 2026-09-22 the small tag chips under a card in a list follow the map too, so
+  there is no longer a corner of the site that calls a tag something else. That also means every chip is now
+  capitalised - "Биолокация" where it used to read "биолокация" - which is the one visible consequence of the
+  change and was the owner's decision.
+
 ## Search
 
 The site has its own search at `/search/`, reached by the magnifier in the header. There is nothing to do by hand for
@@ -245,6 +303,18 @@ file in the visitor's browser.
 What it searches, in order of weight: the title, the tags, the description or summary, and the whole text of the
 entry. A word found in the title counts for more than the same word in the text, and the text counts once however
 often the word appears, so a long article cannot outrank a page that is really about the subject.
+
+**The search starts at the third character.** One or two letters match almost everything on the site, so until there
+are three the page says so and leaves the list alone. The filters on the left work at any time, with or without
+anything typed.
+
+**A result may be found by its tag.** The search looks in the tags as well as in the title and the text, so a lecture
+whose text says nothing about pendulums still answers a search for one when it is tagged `маятник`. When that is why
+an entry is in the list, the card says "Found in tags:" and names them, so a result is never there for a reason you
+cannot see.
+
+**The whole card is a link.** Clicking anywhere on a result opens the entry; the tags printed on it are text, not
+links.
 
 ### What to add so it appears in the filters
 

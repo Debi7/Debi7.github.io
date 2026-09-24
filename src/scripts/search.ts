@@ -11,6 +11,11 @@
 // node fails the build instead of reaching a visitor. Astro erases the annotations, so the bundle
 // is the same JavaScript either way.
 
+// The shortest query the page will look up, from the one place the page itself reads it, so the
+// number in the hint on screen and the number the code obeys cannot drift apart. Added 2026-09-22
+// with the rule itself.
+import { site } from "../config";
+
 /** One entry of /search/data.json; the shape is written out in the endpoint that builds it. */
 type IndexEntry = {
   url: string;
@@ -28,6 +33,9 @@ type Hit = {
   score: number;
   /** Where the first match sits in the body text, for the snippet; -1 when it is not in the body. */
   at: number;
+  /** The entry's tags that the query matched, so the card can say why it is here. Empty when the
+   * match was in the title or the body, and when there is no query at all. */
+  tags: string[];
 };
 
 // Case is folded and ё is read as е. Russian writes both for the same sound and a reader typing
@@ -60,6 +68,11 @@ function scoreEntry(entry: IndexEntry, terms: string[]): Hit | null {
 
   let score = 0;
   let at = -1;
+  // Which of the entry's tags answered the query. Added 2026-09-22: a tag is matched but never
+  // shown, so a result whose only match was a tag looked like a random entry in a sorted list -
+  // the reviewer searched "мая", got "Лекция шестая", and could not find the word anywhere on
+  // the card. It matched on the tag "маятник". The filter was right and the card was silent.
+  const matchedTags = new Set<string>();
 
   for (const term of terms) {
     let found = false;
@@ -68,9 +81,13 @@ function scoreEntry(entry: IndexEntry, terms: string[]): Hit | null {
       score += weights.title;
       found = true;
     }
-    if (tags.some((tag) => tag.includes(term))) {
+    const taggedWith = entry.tags.filter((_, index) =>
+      tags[index].includes(term),
+    );
+    if (taggedWith.length > 0) {
       score += weights.tag;
       found = true;
+      for (const tag of taggedWith) matchedTags.add(tag);
     }
     if (summary.includes(term)) {
       score += weights.summary;
@@ -92,7 +109,7 @@ function scoreEntry(entry: IndexEntry, terms: string[]): Hit | null {
   if (title.includes(phrase)) score += weights.title;
   else if (text.includes(phrase)) score += weights.text * 2;
 
-  return { entry, score, at };
+  return { entry, score, at, tags: [...matchedTags] };
 }
 
 // A window of the body around the first match, cut on spaces so no word is halved.
@@ -256,6 +273,20 @@ function formatDate(iso: string): string {
       const item = document.createElement("li");
       item.className = "search-result";
 
+      // The whole card answers a click since 2026-09-22, at the reviewer's remark that only the
+      // title did. It is the pattern the site already uses for a card in a list - an anchor
+      // stretched over the card by CSS, under the title rather than over it, so the title keeps
+      // its own hover - and this one is hidden from assistive technology and skipped by the Tab
+      // key, because the title beside it is the same link and announcing it twice would be
+      // worse than not announcing it at all. The tags on the card were left alone: the owner
+      // decided a tag should not be a second destination inside a result.
+      const cover = document.createElement("a");
+      cover.className = "search-result__cover";
+      cover.href = hit.entry.url;
+      cover.tabIndex = -1;
+      cover.setAttribute("aria-hidden", "true");
+      item.append(cover);
+
       const link = document.createElement("a");
       link.href = hit.entry.url;
       link.className = "search-result__title";
@@ -277,6 +308,23 @@ function formatDate(iso: string): string {
       body.append(withMarks(snippet, terms));
       item.append(body);
 
+      // Why this entry is in the list, when the answer is nowhere else on the card. A tag is
+      // searched but was never printed here, so an entry whose only match was a tag looked like
+      // something the filter had let through by accident. The tags are text and not links: the
+      // owner decided a result should lead to one place, the entry itself. The wording lives on
+      // the page, like the status line's, so the page stays the one file that speaks to a reader.
+      if (hit.tags.length > 0) {
+        const why = document.createElement("p");
+        why.className = "search-result__why";
+        const prefix = results.dataset.tagPrefix;
+        if (prefix) why.append(prefix + " ");
+        hit.tags.forEach((tag, index) => {
+          if (index > 0) why.append(", ");
+          why.append(withMarks(tag, terms));
+        });
+        item.append(why);
+      }
+
       results.append(item);
     }
   };
@@ -291,7 +339,14 @@ function formatDate(iso: string): string {
 
   const run = (push: boolean) => {
     const query = input.value.trim();
-    const terms = words(query);
+    // Added 2026-09-22, the reviewer's remark: the page used to look up the first letter typed,
+    // and a single Russian letter matches nearly every entry on the site, so the whole list
+    // redrew itself and the count said "42 result(s) for м", which is not an answer to anything.
+    // Below site.search.minQuery the text is simply not searched - the facets still are, so
+    // ticking a box while two letters stand in the box behaves exactly as if the box were empty -
+    // and the status line says what is missing.
+    const searching = query.length >= site.search.minQuery;
+    const terms = searching ? words(query) : [];
     const inSections = picked("section");
     const inCategories = picked("category");
     const inTags = picked("tag");
@@ -318,10 +373,14 @@ function formatDate(iso: string): string {
     // site again.
     if (!terms.length && !filtering) {
       results.textContent = "";
-      status.textContent = "";
+      // Two letters and no filter is not "nothing asked for" - somebody is typing - so the line
+      // says why nothing happened rather than going blank on them.
+      status.textContent = query ? message("tooShort", {}) : "";
       loadIndex()
         .then((entries) =>
-          showCounts(entries.map((e) => ({ entry: e, score: 0, at: -1 }))),
+          showCounts(
+            entries.map((e) => ({ entry: e, score: 0, at: -1, tags: [] })),
+          ),
         )
         .catch(() => undefined);
       return;
@@ -335,7 +394,12 @@ function formatDate(iso: string): string {
           ? entries
               .map((item) => scoreEntry(item, terms))
               .filter((hit): hit is Hit => hit !== null)
-          : entries.map((item) => ({ entry: item, score: 0, at: -1 }));
+          : entries.map((item) => ({
+              entry: item,
+              score: 0,
+              at: -1,
+              tags: [],
+            }));
 
         showCounts(hits);
 
@@ -363,6 +427,11 @@ function formatDate(iso: string): string {
         } else {
           status.textContent = message("found", { n, q: query });
         }
+
+        // The last word, when the box holds something too short to search: what is listed below
+        // came from the filters alone, and saying so is better than a count that looks like an
+        // answer to what was typed.
+        if (query && !searching) status.textContent = message("tooShort", {});
       })
       .catch(() => {
         results.textContent = "";

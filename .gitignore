@@ -1,6 +1,7 @@
 # Astro build output and generated types
 dist/
 .astro/
+.env.local
 
 # Node
 node_modules/

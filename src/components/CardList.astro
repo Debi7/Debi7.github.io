@@ -86,6 +86,10 @@
 // `Post | Video` entries and this file chose by the entry's collection.
 import {
   groupByYear,
+  // Added 2026-09-22: the chips under a card printed the front-matter word itself, which made
+  // them the one place on the site where a tag renamed in site.termLabels would still read the
+  // old way. The owner asked for them to follow the map like everything else.
+  termLabel,
   type Card,
   type ListPage,
   type YearLink,
@@ -196,7 +200,13 @@ const groups = groupByYear(page.items);
                               class="tag-chip rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700"
                               onclick="event.stopPropagation();"
                             >
-                              {tag}
+                              {/* Changed 2026-09-22: the raw front-matter word until then, as
+                              Hugo prints it. It is termLabel() now, so the chip agrees with the
+                              tag cloud, the Tags page and the tag's own heading - and with the
+                              rename map behind all three. The side effect is visible and the
+                              owner asked for it knowing so: a chip reads "Биолокация" where it
+                              used to read "биолокация", on every list page. */}
+                              {termLabel(tag)}
                             </a>
                           ))}
                         </div>

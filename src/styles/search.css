@@ -241,12 +241,43 @@
 }
 
 .search-result {
+  position: relative;
   border-radius: 0.5rem;
   background: #fff;
   padding: 1rem 1.25rem;
   box-shadow:
     0 1px 2px 0 rgb(0 0 0 / 0.05),
     0 1px 3px 0 rgb(0 0 0 / 0.1);
+  transition: box-shadow 0.3s;
+}
+
+/* The card is one target. Added 2026-09-22, after the reviewer asked why only the title of a
+   result could be clicked: the anchor is stretched over the whole card, and the title is lifted
+   above it so that it keeps its own hover colour and its own focus ring. Same arrangement as a
+   card in a list (CardList.astro), where the stretched anchor is written into the markup; here
+   it is built by src/scripts/search.ts with the rest of the result.
+
+   The price is the usual one for this pattern and is worth knowing before someone reports it as
+   a fault: text under the stretched anchor cannot be selected with the mouse. */
+.search-result__cover {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.search-result:hover {
+  box-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.05),
+    0 4px 10px 0 rgb(0 0 0 / 0.12);
+}
+
+.search-result:hover .search-result__title {
+  color: #2563eb;
+}
+
+.dark .search-result:hover .search-result__title {
+  color: #93c5fd;
 }
 
 .search-result + .search-result {
@@ -258,6 +289,10 @@
 }
 
 .search-result__title {
+  /* Above the stretched anchor, so the title is the one thing on the card with a hover and a
+     focus ring of its own. Everything else is the card, and the card is the link. */
+  position: relative;
+  z-index: 2;
   font-size: 1.125rem;
   font-weight: 600;
   color: #1f2937;
@@ -304,6 +339,18 @@
 
 .dark .search-result__snippet {
   color: #cbd5e1;
+}
+
+/* The line that says the query was found in the entry's tags. Smaller and quieter than the
+   snippet: it is an explanation of the result, not part of it. Added 2026-09-22. */
+.search-result__why {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.dark .search-result__why {
+  color: #94a3b8;
 }
 
 /* mark carries a yellow background of the browser's own, which is the one colour on the page
