@@ -94,7 +94,7 @@ Decision record:
 
 ## 3. What is on GitHub right now (observed 2026-09-13)
 
-- Remote: `git@github.com:Debi7/klub_biolocation_astro.git`. Public repository, default branch `main`.
+- Remote: `git@github.com:Debi7/Debi7.github.io.git` (corrected 2026-09-25: this line said `klub_biolocation_astro.git`, the name observed on 2026-09-13, and the repository has been `Debi7.github.io` since at least 2026-09-22, the name the merge commits carry). Public repository, default branch `main`.
 - Branches on the remote: `main` and `gh-pages"` (the quote is part of the name). Both point at the same commit,
   `04b5631`.
 - Commit `04b5631` ("github-pages") changed only `package.json` and `package-lock.json`. It added

@@ -129,10 +129,17 @@ const initials = site.title
         controls at every width - search, menu, theme - which is the order in the reference the
         owner sent. The label is on the link, since an aria-hidden icon leaves it without a name. */
       }
+      {
+        /* members-only, added the evening of 2026-09-25 with the guest gate (AUTH.md section 10):
+        the search reads the index of the articles and the lectures, which a guest does not get,
+        and the owner's header for a guest is Home, the theme switch and the sign-in icon. Hidden
+        by custom.css until the gate in Base.astro marks the document kb-member; /search/ itself
+        is a closed page anyway. */
+      }
       <a
         href="/search/"
         aria-label="Search"
-        class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center text-gray-700 no-underline transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-300"
+        class="members-only relative inline-flex h-7 w-7 cursor-pointer items-center justify-center text-gray-700 no-underline transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-300"
       >
         <svg
           class="h-5 w-5"
@@ -148,10 +155,17 @@ const initials = site.title
         </svg>
       </a>
 
+      {
+        /* members-only, added later on the evening of 2026-09-25 at the owner's word: a guest keeps
+        the theme switch and the sign-in icon and nothing else in the bar, so the hamburger goes with
+        the menu it opens (every item but Home is hidden for a guest already, and the panel would show
+        one word). Hidden by custom.css until the gate in Base.astro marks the document kb-member
+        (AUTH.md section 10). */
+      }
       <button
         id="menu-toggle"
         type="button"
-        class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-gray-700 focus:outline-none dark:text-gray-200 sm:hidden"
+        class="members-only relative inline-flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-gray-700 focus:outline-none dark:text-gray-200 sm:hidden"
         aria-label="Open menu"
         aria-expanded="false"
         aria-controls="site-menu"

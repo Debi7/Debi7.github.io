@@ -9,14 +9,11 @@ interface Window {
   disqus_config?: (this: DisqusPageConfig) => void;
 }
 
-interface ImportMetaEnv {
-  readonly PUBLIC_SUPABASE_URL: string;
-  readonly PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
-}
+// Removed 2026-09-25: the declarations of PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY
+// that the colleague added on 2026-09-24. The two values moved into src/config.ts, where the
+// comment above them says why they are public, and nothing reads import.meta.env for them any
+// more; a declaration for an environment variable that no build supplies would only tell the next
+// reader to go looking for an .env file that is not there.
 
 // Added 2026-09-22, when src/scripts/site.js became site.ts and came under astro check. KaTeX's
 // auto-render extension publishes renderMathInElement as a global; it is loaded from a CDN tag in

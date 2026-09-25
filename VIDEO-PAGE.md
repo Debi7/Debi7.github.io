@@ -200,6 +200,15 @@ Where the ids live and who answers step 4:
    similar) that holds the mapping, validates the service's session and returns the address. Either way the
    repository holds no id of a paid video and no secret: the function's keys stay on its host.
 
+   Amended 2026-09-25 (AUTH.md; the consilium verdict of that day). The service is Supabase, and the server code
+   this step asked for exists there already: a table of entitlements that only the owner writes, and a Row Level
+   Security policy on the table of video ids that answers a row only when the visitor's account has an
+   entitlement for that slug. The browser asks for the row with the visitor's own session, as the members-only
+   demo on /auth/dashboard/ does today, and gets it or an empty answer. No serverless function is needed for a
+   stored YouTube id. A function comes back into the picture only when the address has to be computed with a
+   secret - a signed, expiring URL from a host such as Vimeo, the last point of section 6 - because RLS returns
+   stored data and cannot sign anything, and a secret never goes to the browser.
+
 What this does and does not protect:
 
 10. It closes the page: a visitor who has not paid never receives the id. It does not stop a paying visitor from

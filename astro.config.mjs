@@ -5,13 +5,25 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import alpinejs from "@astrojs/alpinejs";
 import sitemap from "@astrojs/sitemap";
-import node from "@astrojs/node";
+// Disabled 2026-09-25, together with the output and adapter lines below; the reason is there.
+// import node from "@astrojs/node";
 
 export default defineConfig({
-  output: "server", // Переводит проект в режим SSR
-  adapter: node({
-    mode: "standalone",
-  }),
+  // Disabled 2026-09-25 (AUTH.md section 5; the consilium verdict of that day in
+  // .specify/consilium/2026-09-25-supabase-auth-static.md). The colleague switched the project to
+  // on-demand rendering on 2026-09-24 for the Supabase sign-in, but the site is hosted on GitHub
+  // Pages, which serves files and runs no Node process: the build then wrote dist/client/ and
+  // dist/server/ instead of dist/index.html, the Pages artifact had no page at its root, and the
+  // live site answered 404 from the merge of 2026-09-25 while the workflow reported success. With
+  // the lines below commented out, output falls back to Astro's default, "static", which is what
+  // the workflow uploads and what every check script expects of dist/. The sign-in runs in the
+  // browser now (src/scripts/auth.ts), so nothing needs a server. Her lines are kept as written,
+  // with her note, so the history reads in place; @astrojs/node itself left package.json the same
+  // day.
+  // output: "server", // Переводит проект в режим SSR
+  // adapter: node({
+  //   mode: "standalone",
+  // }),
 
   // Публичный адрес деплоя на GitHub Pages (без базового пути)
   // (English, added 2026-09-22 next to the original note: the public GitHub Pages address, with no
@@ -32,7 +44,14 @@ export default defineConfig({
     mdx(),
     alpinejs(),
     sitemap({
-      filter: (page) => !/\/page\/\d+\/$/.test(page),
+      // Extended 2026-09-25: the four pages under /auth/ (sign-up, sign-in, the mail callback and
+      // the member's page) are for a visitor with a reason to be there, not for a search engine;
+      // a crawler that indexed the callback would only ever see "the link is invalid".
+      // Changed 2026-09-25, late evening, the owner's decision (AUTH.md section 10): the site is closed
+      // to guests, so the sitemap lists the home page alone - the one page a guest may see and a search
+      // engine may index. The filter it replaces:
+      //   filter: (page) => !/\/page\/\d+\/$/.test(page) && !/\/auth\//.test(page),
+      filter: (page) => new URL(page).pathname === "/",
     }),
   ],
 

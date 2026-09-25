@@ -1,88 +1,147 @@
 ---
-import { createClient } from "../../lib/supabase";
-
-const supabase = createClient({
-  request: Astro.request,
-  cookies: Astro.cookies,
-});
-
-const { data } = await supabase.auth.getUser();
-
-if (data?.user) {
-  return Astro.redirect("/dashboard");
-}
+// /auth/signup/ - registration with an email address and a password.
+//
+// Rewritten on 2026-09-25 as a static page in the site's frame (AUTH.md section 5; the consilium
+// verdict of that day). The colleague's version of 2026-09-24 was a server-rendered page: its
+// frontmatter built a Supabase client from the request cookies and redirected a signed-in visitor,
+// and its form posted to an endpoint under src/pages/api/. None of that can run on GitHub Pages,
+// which serves files and runs no Node process, so the frontmatter and the endpoint are gone and the
+// work happens in the script block below, in the visitor's browser, against Supabase directly. The
+// deletion of the server-side code is explained in the commit message, as CLAUDE.md allows for a
+// pure deletion; the fact that mattered there - every address carries a trailing slash because the
+// dev server answers 404 without one under trailingSlash "always" - now lives in src/config.ts, where
+// the addresses are.
+//
+// The page is inside Base.astro on the owner's decision of 2026-09-25: it has no Hugo counterpart
+// and no parity to keep, so it borrows the site's header, theme and a minimal set of the theme's
+// classes, nothing more. The strings are Russian, the language of the site (site.language in
+// src/config.ts), also the owner's decision that day; they are written here rather than in
+// src/i18n/strings.ts, which is the Hugo theme's en.toml and nothing else.
+//
+// Colours: gray, slate and blue-600 are the shades the theme already uses, so they take the pinned
+// Tailwind 4 values (README, "The palette is pinned"). red-600 for the error line is new to the
+// tree; Hugo never printed an error, so there is no reference value to pin it to, and Tailwind 3's
+// own red-600 is used. A future pass may pin it if the difference ever matters.
+import Base from "../../layouts/Base.astro";
+import { site } from "../../config";
 ---
 
-<html>
-  <head>
-    <title>Sign Up</title>
-  </head>
-  <body>
-    <h1>Sign Up</h1>
+{
+  /* openToGuests: a guest has to reach the registration, or the gate in Base.astro (added the
+  evening of 2026-09-25, AUTH.md section 10) would send them to the sign-in page from here. */
+}
+<Base title="Регистрация" openToGuests>
+  <section class="mx-auto max-w-md">
+    <h1 class="mb-6 text-2xl font-bold">Регистрация</h1>
 
-    <div id="message"></div>
-
-    <form id="signup-form">
+    <form id="signup-form" class="space-y-4">
       <div>
-        <label for="email">Email</label>
+        <label for="email" class="mb-1 block text-sm">Электронная почта</label>
         <input
           id="email"
-          type="email"
           name="email"
-          placeholder="your@email.com"
+          type="email"
           required
+          autocomplete="email"
+          class="w-full rounded border border-gray-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
         />
       </div>
       <div>
-        <label for="password">Password</label>
+        <label for="password" class="mb-1 block text-sm">Пароль</label>
+        {
+          /* minlength mirrors the project's password rule: 8 since the evening of 2026-09-25, the
+          owner's decision after the Supabase password guide ("anything less than 8 characters is
+          not recommended"); it was 6, the service default, that morning. The owner sets the same
+          number in the dashboard (AUTH.md section 4) and the two move together: a form that allows
+          less than the service lets the visitor read the service's refusal instead of the browser's
+          hint. The sign-in page has no minimum on purpose - an account made under an older rule
+          must still get in. */
+        }
         <input
           id="password"
-          type="password"
           name="password"
-          placeholder="At least 6 characters"
+          type="password"
           required
+          minlength="8"
+          autocomplete="new-password"
+          placeholder="Не менее 8 символов"
+          class="w-full rounded border border-gray-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
         />
       </div>
-      <button type="submit" id="signup-btn">Sign Up</button>
+      <button
+        id="signup-btn"
+        type="submit"
+        class="rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        Зарегистрироваться
+      </button>
     </form>
-    <p>
-      Already have an account? <a href="/auth/signin">Sign in</a>
+
+    <p id="message" class="mt-4 text-sm" role="status" aria-live="polite"></p>
+
+    <p class="mt-6 text-sm">
+      Уже есть аккаунт?
+      <a href={site.auth.signIn} class="text-blue-600 hover:underline">Войти</a>
     </p>
-  </body>
-</html>
+  </section>
+</Base>
 
 <script>
-  const form = document.querySelector("#signup-form") as HTMLFormElement;
-  const btn = document.getElementById("signup-btn") as HTMLButtonElement;
-  const messageEl = document.getElementById("message") as HTMLDivElement;
+  import { getSupabase } from "../../scripts/auth";
+  import { site } from "../../config";
 
-  form?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    btn.disabled = true;
-    btn.textContent = "Signing up...";
-    messageEl.textContent = "";
+  const form = document.getElementById("signup-form");
+  const button = document.getElementById("signup-btn");
+  const message = document.getElementById("message");
 
-    try {
-      const formData = new FormData(form);
+  function say(text: string, tone: "ok" | "error"): void {
+    if (message === null) return;
+    message.textContent = text;
+    message.classList.toggle("text-red-600", tone === "error");
+    message.classList.toggle("text-green-600", tone === "ok");
+  }
 
-      const res = await fetch("/api/signup", {
-        method: "POST",
-        body: formData,
+  if (form instanceof HTMLFormElement && button instanceof HTMLButtonElement) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      button.textContent = "Отправляем...";
+      say("", "ok");
+
+      const data = new FormData(form);
+      const email = String(data.get("email") ?? "");
+      const password = String(data.get("password") ?? "");
+
+      // emailRedirectTo is this origin plus the callback route, so the same build serves the dev
+      // server and the deployed site. Supabase honours it only when the address is on the project's
+      // redirect allow-list; the "Confirm signup" mail template decides whether the link goes
+      // through it (AUTH.md section 4 has both settings).
+      const { data: result, error } = await getSupabase().auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: new URL(site.auth.callback, location.origin).href,
+        },
       });
 
-      const result = await res.json();
-      messageEl.textContent = result.data.message;
-      messageEl.style.color = "green";
-
-      if (!result.success) {
-        btn.disabled = false;
+      if (error) {
+        button.disabled = false;
+        button.textContent = "Зарегистрироваться";
+        say(error.message, "error");
+        return;
       }
-    } catch (error) {
-      btn.disabled = false;
-      btn.textContent = "Sign Up";
-      messageEl.textContent = "An error occurred. Please try again.";
-      messageEl.style.color = "red";
-      console.error(error);
-    }
-  });
+
+      // A session comes back only while "Confirm email" is off in the project. With it on - the
+      // setting the owner keeps - the account waits for the link in the mail, and this page says so
+      // instead of sending the visitor to a dashboard that would show them the invitation to sign in.
+      if (result.session !== null) {
+        location.href = site.auth.dashboard;
+        return;
+      }
+      say(
+        "Проверьте почту: мы отправили письмо со ссылкой для подтверждения адреса.",
+        "ok",
+      );
+    });
+  }
 </script>

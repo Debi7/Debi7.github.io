@@ -2,7 +2,12 @@
 import Base from "../layouts/Base.astro";
 ---
 
-<Base title="404">
+{
+  /* openToGuests, added the evening of 2026-09-25 with the guest gate (AUTH.md section 10): a page
+  that says "there is nothing here" is not members-only, and a guest who mistypes an address should
+  read that rather than be asked to sign in for a page that does not exist. */
+}
+<Base title="404" openToGuests>
   <h1>404</h1>
   <p><a href="/">Home</a></p>
 </Base>

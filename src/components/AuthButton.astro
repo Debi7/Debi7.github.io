@@ -1,89 +1,73 @@
 ---
-interface Props {
-  href?: string;
-  className?: string;
-}
-
-const { pathname } = Astro.url;
+// The sign-in icon in the header, added by the colleague on 2026-09-25 (commit 35e8f80).
+//
+// Rewritten the same day with the browser-side sign-in (AUTH.md section 5; the consilium verdict
+// of 2026-09-25). What changed and why:
+//
+// - The link goes to the sign-in page, and to the member's page once a session exists. It read
+//   "/login" before, a route that never existed, so the icon led to a 404.
+// - The script reads only the small flag the auth pages keep in localStorage
+//   (src/scripts/auth-flag.ts) and never imports the Supabase client: this component is on every
+//   page through Header.astro, and the client weighs 55 KB gzip against 70 KB of JavaScript on the
+//   whole site, with a refresh timer that would tick on every page. The flag is a hint for the icon;
+//   what a visitor may read is decided at the service by Row Level Security.
+// - The markup is a link and nothing else. The earlier version wrapped the <a> in a <button>, which
+//   HTML does not allow, declared Props (href, className) that nothing read, and gave the SVG a
+//   namespace that is not the SVG namespace; all three are gone.
+// - The submit handler that used to end this file bound to a form on another page and could never
+//   run; it lives in src/pages/auth/signin.astro now, next to its form.
+//
+// The icon used to be hidden on the home page, the colleague's choice (her note below describes the
+// check), with no reason recorded. Changed the evening of 2026-09-25 at the owner's word: the home
+// page is now the one page a guest sees - the carousel and a header of Home, the theme switch and
+// this icon (AUTH.md section 10) - so the icon is the way in and shows there too. The check went
+// with the condition it served; her note stays, as CLAUDE.md asks of existing comments.
+import { site } from "../config";
 
 // Проверяем, является ли текущая страница главной
-const isHomePage = pathname === "/" || pathname === "";
+// (The two lines that followed this note, reading Astro.url.pathname and computing isHomePage,
+// were removed on the evening of 2026-09-25; see the paragraph above. The note is kept as it was.)
 ---
 
 <div class="flex flex-1 justify-end">
-  {
-    !isHomePage && (
-      <button type="button" id="auth-btn">
-        <a
-          href="/login"
-          class="ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
-          aria-label="Войти на сайт"
-        >
-          <svg
-            xmlns="http://w3.org"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="h-6 w-6"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-            />
-          </svg>
-        </a>
-      </button>
-    )
-  }
+  <a
+    id="auth-link"
+    href={site.auth.signIn}
+    data-dashboard-href={site.auth.dashboard}
+    class="ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
+    aria-label="Войти на сайт"
+    title="Войти на сайт"
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke-width="1.5"
+      stroke="currentColor"
+      class="h-6 w-6"
+      aria-hidden="true"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+      ></path>
+    </svg>
+  </a>
 </div>
 
 <script>
-  const authButton = document.getElementById(
-    "auth-btn",
-  ) as HTMLButtonElement | null;
+  // Top level of the template, never inside a `{cond && (...)}` expression (the link sat in one
+  // until the evening of 2026-09-25): a bundled script inside such a block is not hoisted at all
+  // (CLAUDE.md, measured 2026-09-22). The script decides for itself whether there is a link to
+  // update.
+  import { readAuthFlag } from "../scripts/auth-flag";
 
-  if (authButton) {
-    authButton.addEventListener("click", () => {
-      const form = document.querySelector("#signin-form") as HTMLFormElement;
-      const btn = document.getElementById("signin-btn") as HTMLButtonElement;
-      const messageEl = document.getElementById("message") as HTMLDivElement;
-
-      form?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        btn.disabled = true;
-        btn.textContent = "Signing in...";
-        messageEl.textContent = "";
-
-        try {
-          const formData = new FormData(form);
-
-          const res = await fetch("/api/signin", {
-            method: "POST",
-            body: formData,
-          });
-
-          const result = await res.json();
-
-          if (!result.success) {
-            btn.disabled = false;
-            btn.textContent = "Sign In";
-            messageEl.textContent = result.message || "Sign in failed";
-            messageEl.style.color = "red";
-            return;
-          }
-
-          // Redirect to dashboard on successful sign in
-          window.location.href = "/dashboard";
-        } catch (error) {
-          btn.disabled = false;
-          btn.textContent = "Sign In";
-          messageEl.textContent = "An error occurred. Please try again.";
-          messageEl.style.color = "red";
-          console.error(error);
-        }
-      });
-    });
+  const link = document.getElementById("auth-link");
+  if (link instanceof HTMLAnchorElement && readAuthFlag()) {
+    const dashboard = link.dataset.dashboardHref;
+    if (dashboard !== undefined) link.href = dashboard;
+    link.setAttribute("aria-label", "Личный кабинет");
+    link.title = "Личный кабинет";
   }
 </script>

@@ -126,3 +126,21 @@ html.dark {
   scrollbar-color: #1f3f6b var(--page-bg);
 }
 /* === end of trial: scrollbar colour ======================================== */
+
+/* === Guest gate (added 2026-09-25 evening, AUTH.md section 10) ===============
+   The owner's decision: a guest sees the carousel on the home page and nothing
+   else, the rest of the site only after signing in. The inline block at the top
+   of the head in Base.astro marks the document kb-member while the auth pages'
+   flag is valid; until then nothing carrying members-only is painted - the home
+   page below the carousel, every menu item but Home, the search icon. Closed
+   pages never get this far: the same block replaces them with the sign-in page.
+
+   display:none and not visibility, so the hidden blocks take no space.
+   !important for the same reason as the rest of this file: Tailwind's flex,
+   sm:flex and friends on those elements would otherwise win. Presentation only:
+   the data is protected by Row Level Security at Supabase, this rule keeps a
+   guest from seeing the frame.
+   ============================================================================ */
+html:not(.kb-member) .members-only {
+  display: none !important;
+}
