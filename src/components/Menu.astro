@@ -96,7 +96,16 @@ const isPanel = variant === "panel";
     <nav class="w-full" aria-label="Site">
       <ul class="flex list-none flex-col">
         {site.menu.map((item) => (
-          <li class="text-base text-gray-600 dark:text-gray-200">
+          <li
+            class:list={[
+              "text-base text-gray-600 dark:text-gray-200",
+              // members-only on every item but Home, added the evening of 2026-09-25: a guest's
+              // header shows Home, the theme switch and the sign-in icon (the owner's list), and
+              // custom.css hides the class until the gate in Base.astro marks the document
+              // kb-member (AUTH.md section 10). The bar variant below does the same.
+              item.url !== "/" && "members-only",
+            ]}
+          >
             <a
               class:list={[
                 "block rounded px-2 py-3 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-slate-800 dark:hover:text-white",
@@ -132,7 +141,13 @@ const isPanel = variant === "panel";
         padding on the links and this note. Nothing of hers was dropped. */}
       <ul class="flex list-none flex-row items-center space-x-1 py-2 lg:space-x-3">
         {site.menu.map((item) => (
-          <li class="text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg">
+          <li
+            class:list={[
+              "text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg",
+              // Same as the panel variant above (2026-09-25 evening, the guest gate).
+              item.url !== "/" && "members-only",
+            ]}
+          >
             <a
               class:list={[
                 // lg:px-3 dropped 2026-09-22 with the gap above: half of it is the px-1.5 this

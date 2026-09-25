@@ -1,0 +1,148 @@
+---
+// /auth/dashboard/ - the member's page, and the members-only demo.
+//
+// Added 2026-09-25 in place of src/pages/dashboard.astro, the colleague's server-rendered page of
+// 2026-09-24. The owner kept the name and asked for it under the /auth/ prefix with the other three
+// pages, which also lets one sitemap rule and one allow-list entry cover them all. The reasoning
+// shared by the four pages is in signup.astro; the part that is this page's own follows.
+//
+// What the page proves. The HTML below is public, like every file of a static site: a visitor who
+// is not signed in sees it too. What they do not get is the row under "Materials for members": the
+// script asks Supabase for it with the visitor's own session, and the table's Row Level Security
+// policy answers only a signed-in user (AUTH.md section 8 has the table and the policy). That is the
+// whole mechanism the paid lectures will use later (VIDEO-PAGE.md section 6.1): the page is for
+// everyone, the payload is for the entitled, and hiding a link in a menu is only presentation.
+//
+// The script branches on the session, not on the data. A policy that matches no rows answers an
+// empty array with status 200, not an error, so "empty" cannot tell "not allowed" from "nothing
+// there"; the session says who the visitor is, and the fetch result then says only whether the
+// service answered. The three states are written out in the markup and toggled with the hidden
+// attribute, so the page needs no stylesheet for script-built elements (CLAUDE.md, the scoped-style
+// pitfall).
+import Base from "../../layouts/Base.astro";
+import { site } from "../../config";
+---
+
+{
+  /* openToGuests: the page has a guest state of its own, the invitation, and keeps it. The gate in
+  Base.astro (added the evening of 2026-09-25, AUTH.md section 10) is presentation; this page
+  branches on the real session, which is the check that matters. */
+}
+<Base title="Личный кабинет" openToGuests>
+  <section class="mx-auto max-w-md">
+    <h1 class="mb-6 text-2xl font-bold">Личный кабинет</h1>
+
+    <p id="state-loading" class="text-sm">Загрузка...</p>
+
+    <div id="state-anon" hidden>
+      <p>Эта страница доступна только вошедшим участникам клуба.</p>
+      <p class="mt-4 text-sm">
+        <a href={site.auth.signIn} class="text-blue-600 hover:underline"
+          >Войти</a
+        >
+        или
+        <a href={site.auth.signUp} class="text-blue-600 hover:underline"
+          >зарегистрироваться</a
+        >
+      </p>
+    </div>
+
+    <div id="state-member" hidden>
+      <p>Вы вошли как <span id="member-email" class="font-semibold"></span>.</p>
+
+      <h2 class="mt-6 text-lg font-bold">Материалы для участников</h2>
+      <p id="member-row" class="mt-2 rounded bg-gray-100 p-4 dark:bg-slate-800">
+        Загружаем...
+      </p>
+
+      <button
+        id="signout-btn"
+        type="button"
+        class="mt-6 rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        Выйти
+      </button>
+      <p id="message" class="mt-4 text-sm" role="status" aria-live="polite"></p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { getSupabase } from "../../scripts/auth";
+  import { site } from "../../config";
+
+  const loading = document.getElementById("state-loading");
+  const anon = document.getElementById("state-anon");
+  const member = document.getElementById("state-member");
+  const emailEl = document.getElementById("member-email");
+  const rowEl = document.getElementById("member-row");
+  const signOutButton = document.getElementById("signout-btn");
+  const message = document.getElementById("message");
+
+  function show(target: HTMLElement | null): void {
+    for (const block of [loading, anon, member]) {
+      if (block !== null) block.hidden = block !== target;
+    }
+  }
+
+  // The demo table has one text column; anything else that comes back is treated as "no row"
+  // rather than trusted. A guard, not a cast: the client is untyped and the house rules forbid
+  // reaching for `any`.
+  function hasMessage(row: unknown): row is { message: string } {
+    return (
+      typeof row === "object" &&
+      row !== null &&
+      "message" in row &&
+      typeof row.message === "string"
+    );
+  }
+
+  const supabase = getSupabase();
+  const { data: current } = await supabase.auth.getSession();
+  const session = current.session;
+
+  if (session === null) {
+    show(anon);
+  } else {
+    if (emailEl !== null) emailEl.textContent = session.user.email ?? "";
+    show(member);
+
+    const { data: rows, error } = await supabase
+      .from(site.auth.demoTable)
+      .select("message")
+      .limit(1);
+
+    if (rowEl !== null) {
+      if (error) {
+        // The service did not answer as expected (offline, a missing table, a revoked grant). The
+        // wording stays generic on the page; the cause goes to the console for whoever is testing.
+        rowEl.textContent = "Сервис недоступен. Попробуйте позже.";
+        console.error(error);
+      } else {
+        const first: unknown = rows[0];
+        rowEl.textContent = hasMessage(first)
+          ? first.message
+          : "Записей пока нет.";
+      }
+    }
+  }
+
+  if (signOutButton instanceof HTMLButtonElement) {
+    signOutButton.addEventListener("click", async () => {
+      signOutButton.disabled = true;
+      signOutButton.textContent = "Выходим...";
+      // signOut() without a scope is "global": it revokes the visitor's refresh tokens on every
+      // device, not only here. Chosen on purpose for a shared or borrowed computer; "local" is the
+      // alternative if members ever ask to stay signed in elsewhere.
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        signOutButton.disabled = false;
+        signOutButton.textContent = "Выйти";
+        if (message !== null)
+          message.textContent = "Не удалось выйти: " + error.message;
+        return;
+      }
+      location.href = site.auth.signIn;
+    });
+  }
+</script>

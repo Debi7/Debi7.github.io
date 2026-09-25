@@ -12,6 +12,7 @@
     "check:astro": "astro check",
     "check:pages": "node scripts/check-pagination.mjs",
     "check:pages:stress": "node scripts/check-pagination.mjs --stress",
+    "check:auth": "npm run build && node --experimental-websocket scripts/check-auth-browser.mjs",
     "fix": "prettier --write ."
   },
   "engines": {
@@ -26,17 +27,17 @@
     "Added 2026-09-22: @astrojs/sitemap is pinned to exactly 3.6.0, without a caret, for the same kind of reason as @astrojs/alpinejs above. From 3.7.0 it depends on sitemap@9, which declares node >=20.19.5; this project runs Node 20.19.0 and .npmrc sets engine-strict, so npm ci refuses to install it. 3.6.0 depends on sitemap@8, which asks for node >=14. Raise the pin only together with the Node version.",
     "Added 2026-09-22: @astrojs/rss powers /rss.xml and /video/rss.xml. It has no such constraint and is left on a caret.",
     "Added 2026-09-22: katex is listed although nothing imports the library in code. src/layouts/ArticleLayout.astro imports katex/dist/katex.min.css, the stylesheet the markup rehype-katex emits needs, and until now that path resolved only because rehype-katex depends on katex and npm hoists it to the root of node_modules. That is a dependency on somebody else's dependency: the day rehype-katex stops requiring it, or npm nests it, the article build fails with Cannot find module - the same failure that a missing rehype-katex produced on 2026-09-22. Declaring it downloads nothing new; 0.16.47 was already in the tree and in the lock.",
-    "katex 0.16 declares no engines field, so it places no demand on the Node version this project is pinned to (see engines above, node >=20.0.0 <21). The caret on a 0.x version allows patch and nothing wider, which keeps it that way."
+    "katex 0.16 declares no engines field, so it places no demand on the Node version this project is pinned to (see engines above, node >=20.0.0 <21). The caret on a 0.x version allows patch and nothing wider, which keeps it that way.",
+    "Changed 2026-09-25 (AUTH.md; the consilium verdict of that day): @astrojs/node and @supabase/ssr are gone, and with them the overrides block that forced @supabase/ssr to accept the installed @supabase/supabase-js (its peer range asked for 2.114 or newer). GitHub Pages runs no server, so the on-demand mode they served produced a build the host could not publish and the live site answered 404.",
+    "@supabase/supabase-js stays and is used in the browser only, from src/scripts/auth.ts: sign-up, sign-in, the confirmation of an email address and one read under Row Level Security. It must never be constructed in frontmatter: on this project's Node 20 the 2.109 client throws at construction (no native WebSocket), which is also why nothing here needs the ws package. The URL and the publishable key it uses are public by design and live in src/config.ts."
   ],
   "dependencies": {
     "@astrojs/alpinejs": "0.4.9",
     "@astrojs/check": "^0.9.4",
     "@astrojs/mdx": "^3.1.9",
-    "@astrojs/node": "^8.3.4",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "3.6.0",
     "@astrojs/tailwind": "^5.1.3",
-    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.109.0",
     "@types/alpinejs": "^3.13.11",
     "alpinejs": "^3.17.3",
@@ -52,10 +53,5 @@
     "prettier": "^3.3.3",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.9"
-  },
-  "overrides": {
-    "@supabase/ssr": {
-      "@supabase/supabase-js": "$@supabase/supabase-js"
-    }
   }
 }

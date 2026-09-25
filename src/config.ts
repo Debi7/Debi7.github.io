@@ -1,3 +1,10 @@
+// The address of the member's page, spelled once: site.auth.dashboard below is the scripts' home
+// for it, and since the evening of 2026-09-25 the menu has an item that opens it (the owner's
+// word). A literal in both places would be the second spelling of one setting (CLAUDE.md, "One
+// site-wide setting has one home"); the object cannot read its own field while it is being built,
+// hence the constant.
+const dashboardPath = "/auth/dashboard/";
+
 export const site = {
   title: "Radiesthesia Club",
   language: "ru",
@@ -73,6 +80,37 @@ export const site = {
   // it; CONTENT.md, "Renaming a tag", has both procedures side by side.
   termLabels: {},
 
+  // Added 2026-09-25 with the browser-side sign-in (AUTH.md; the consilium verdict of that day).
+  // The Supabase project the site talks to. Both values are PUBLIC BY DESIGN and belong here, not
+  // in an .env file: the publishable key carries the anon role, every read goes through Row Level
+  // Security, and Supabase's own guide says it is safe to ship in a page as long as RLS is on
+  // every table. There is one project for the dev server, the owner's machine and the deployed
+  // site, so this is the one home of the setting; .env.local, which used to hold them, is no
+  // longer tracked and no build variable exists in GitHub Actions. What must never appear here or
+  // anywhere in the repository is a secret key, a service-role key or a database password: those
+  // open the project without RLS. Do not move these two back into import.meta.env to "hide"
+  // them - they end up in the visitor's JavaScript either way.
+  supabase: {
+    url: "https://hhpjfgjajmrlnnsbqnor.supabase.co",
+    publishableKey: "sb_publishable_gEZsOohaf2d-pype3zCcqA_NssmduL0",
+  },
+
+  // The addresses of the sign-in pages and the two names the scripts share. One home for the
+  // addresses because six files used to spell them out, and because every one of them has to end
+  // with a slash: under trailingSlash "always" the dev server answers 404 to /auth/signin without
+  // it (measured 2026-09-25). The dashboard sits under /auth/ at the owner's request, so that one
+  // sitemap rule and one redirect allow-list entry cover the four. flagKey is the localStorage key
+  // the auth pages write and the header reads (src/scripts/auth-flag.ts); demoTable is the table
+  // behind Row Level Security that the member's page reads (AUTH.md section 8 has its DDL).
+  auth: {
+    signIn: "/auth/signin/",
+    signUp: "/auth/signup/",
+    callback: "/auth/callback/",
+    dashboard: dashboardPath,
+    flagKey: "kb-auth-expires",
+    demoTable: "members_demo",
+  },
+
   pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },
 
   menu: [
@@ -81,6 +119,13 @@ export const site = {
     { name: "Video", url: "/video/" },
     { name: "Categories", url: "/categories/" },
     { name: "Tags", url: "/tags/" },
+    // Added the evening of 2026-09-25 at the owner's word: the member's page as a menu item, which
+    // is where a visitor lands after a sign-in or a confirmed registration. English and short, like
+    // the other names (the owner corrected a first Russian spelling the same evening: the menu keeps
+    // one language, the page it opens keeps its Russian title). Before About, where the owner put it;
+    // the Hugo items keep their order among themselves. Menu.astro marks every item but Home
+    // members-only (AUTH.md section 10), so a guest never sees it.
+    { name: "Account", url: dashboardPath },
     { name: "About", url: "/about/" },
   ],
 } as const;

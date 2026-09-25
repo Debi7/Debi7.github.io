@@ -1,35 +1,147 @@
 ---
-import { createClient } from "../../lib/supabase";
-import type { EmailOtpType } from "@supabase/supabase-js";
-
-const supabase = createClient({
-  request: Astro.request,
-  cookies: Astro.cookies,
-});
-
-const requestUrl = new URL(Astro.request.url);
-const token_hash = requestUrl.searchParams.get("token_hash");
-const type = requestUrl.searchParams.get("type") as EmailOtpType | null;
-
-if (token_hash && type) {
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash,
-    type,
-  });
-
-  if (!error) {
-    return Astro.redirect("/dashboard");
-  }
-}
-
-return Astro.redirect("/auth/signin");
+// /auth/callback/ - where the link in the confirmation mail lands.
+//
+// Rewritten on 2026-09-25 as a static page in the site's frame (AUTH.md sections 4 and 5; the
+// consilium verdict of that day). The colleague's version exchanged the token in the frontmatter and
+// redirected from the server; on GitHub Pages there is no server, so the exchange happens in the
+// script below, in the visitor's browser.
+//
+// Two shapes of link arrive here, and the page handles both:
+//
+// 1. The token_hash link. This is the shape the project wants (AUTH.md section 4 has the mail
+//    template): the mail carries a one-time hash, nothing is exchanged until the visitor presses the
+//    button, and only then does verifyOtp() turn the hash into a session. The button is not
+//    decoration. Mail scanners that follow every link (Safe Links and their kind) load this page too,
+//    and a page that exchanged the token on load would spend it before the visitor arrived - the
+//    Supabase guide on email templates documents exactly that failure. The hash also needs nothing
+//    stored in this browser, so a mail opened on a phone confirms an account created on a laptop;
+//    a PKCE code would not.
+// 2. The default confirmation link, if the template has not been changed yet. Supabase's own verify
+//    endpoint then redirects here with the tokens in the URL fragment, and the client, created on
+//    load with detectSessionInUrl (the default), takes them itself and reports SIGNED_IN. The page
+//    only has to listen and move on. No token from either shape reaches GitHub's servers: a query
+//    string carries only the hash, and a fragment is never sent.
+//
+// Only the sign-up confirmation is built. verifyOtp() accepts other mail types (recovery, invite,
+// email change); until a page exists for each, an unknown type prints a message rather than
+// guessing, and `next` from the mail is followed only when it is a path on this site.
+import Base from "../../layouts/Base.astro";
+import { site } from "../../config";
 ---
 
-<html>
-  <head>
-    <title>Email Confirmation</title>
-  </head>
-  <body>
-    <p>Confirming your email...</p>
-  </body>
-</html>
+{
+  /* openToGuests: the link in the mail is opened by a visitor who has no session yet, so the gate in
+  Base.astro (added the evening of 2026-09-25, AUTH.md section 10) must let them through. */
+}
+<Base title="Подтверждение адреса" openToGuests>
+  <section class="mx-auto max-w-md">
+    <h1 class="mb-6 text-2xl font-bold">Подтверждение адреса</h1>
+
+    <p id="message" class="text-sm" role="status" aria-live="polite">
+      Проверяем ссылку...
+    </p>
+
+    <button
+      id="confirm-btn"
+      type="button"
+      hidden
+      class="mt-4 rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+    >
+      Подтвердить адрес
+    </button>
+
+    <p class="mt-6 text-sm">
+      <a href={site.auth.signIn} class="text-blue-600 hover:underline"
+        >На страницу входа</a
+      >
+    </p>
+  </section>
+</Base>
+
+<script>
+  import type { EmailOtpType } from "@supabase/supabase-js";
+  import { getSupabase, nextPath } from "../../scripts/auth";
+  // The config import that stood here went on the evening of 2026-09-25 with safeNext(): the one
+  // address this script read from it is nextPath()'s business now, and astro check flagged the
+  // unused import. The frontmatter keeps its own import for the markup.
+
+  const message = document.getElementById("message");
+  const button = document.getElementById("confirm-btn");
+
+  const params = new URLSearchParams(location.search);
+  const tokenHash = params.get("token_hash");
+  const rawType = params.get("type");
+
+  function say(text: string): void {
+    if (message !== null) message.textContent = text;
+  }
+
+  // `next` comes from the mail template and is followed only as a path on this site: a full URL
+  // or a protocol-relative one (//host) would turn the page into an open redirect.
+  // (The rule moved to nextPath() in src/scripts/auth.ts on the evening of 2026-09-25, when the
+  // sign-in page began to follow the same parameter for the guest gate: one rule, one home.)
+  const next = nextPath(params.get("next"));
+
+  // The mail types this page knows how to finish. Both spellings of the sign-up confirmation are
+  // accepted and exchanged as "email", the type the JavaScript reference documents for a
+  // token_hash. A type guard instead of a cast, as the house rules ask.
+  const handled = ["email", "signup"] as const;
+  function isHandled(value: string | null): value is (typeof handled)[number] {
+    return handled.some((entry) => entry === value);
+  }
+
+  let finished = false;
+  function finish(): void {
+    if (finished) return;
+    finished = true;
+    say("Адрес подтверждён, переходим в кабинет...");
+    location.replace(next);
+  }
+
+  const supabase = getSupabase();
+
+  // Shape 2 (and a visitor who is already signed in): the client reports the session it found in
+  // the URL or in storage. INITIAL_SESSION with nothing and no hash in the query means the link
+  // carried nothing usable.
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (
+      session !== null &&
+      (event === "SIGNED_IN" || event === "INITIAL_SESSION")
+    ) {
+      finish();
+      return;
+    }
+    if (event === "INITIAL_SESSION" && session === null && tokenHash === null) {
+      say(
+        "Ссылка недействительна или устарела. Запросите новую на странице входа.",
+      );
+    }
+  });
+
+  // Shape 1: show the button and exchange the hash on the visitor's click.
+  if (tokenHash !== null) {
+    if (!isHandled(rawType)) {
+      say(
+        "Эта ссылка не для подтверждения адреса. Перейдите на страницу входа.",
+      );
+    } else if (button instanceof HTMLButtonElement) {
+      say("Нажмите кнопку, чтобы подтвердить адрес электронной почты.");
+      button.hidden = false;
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        say("Подтверждаем...");
+        const type: EmailOtpType = "email";
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type,
+        });
+        if (error) {
+          button.disabled = false;
+          say("Не удалось подтвердить адрес: " + error.message);
+          return;
+        }
+        finish();
+      });
+    }
+  }
+</script>
