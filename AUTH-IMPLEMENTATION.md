@@ -192,3 +192,62 @@ confirmed account returning to `next`, the demo row, sign-out. `AUTH.md` section
   claim, and the verdict carries a dated amendment instead.
 - A caption beside the sign-in icon: not added. The owner is content with the icon's label and tooltip as they are
   ("Войти на сайт", "Личный кабинет" for a member). Nothing is left open from the day.
+
+## 2026-09-25, after the colleague's review
+
+### Starting point
+
+The branch was committed as `8865366` with the site closed to guests (the entry above). The colleague reviewed it and
+asked for the site back as it was: a guest must see everything, comments included, and only the paid course material
+is to be closed. The owner asked for the change, with the Astro and Supabase documentation servers used for it.
+
+### Decisions, in order
+
+1. The site is open to everyone again; the redirect and `openToGuests` go.
+2. The `Account` menu item stays members-only; the sign-in icon on the home page, `next` and `nextPath()` stay.
+3. `noindex` and the home-only sitemap go with the gate.
+4. Writing comments for members only and the paid content wait for a decision (`AUTH.md` section 11.3).
+5. Password recovery is built here after all (the colleague did not want this kind of work, and on a static host with
+   Supabase there is no one else to do it): `/auth/forgot/` and `/auth/reset/`.
+
+### Changes, file by file
+
+- `src/layouts/Base.astro`: the prop and the redirect removed; the inline block only adds `kb-member`; the footer
+  lost `members-only`; the `noindex` line removed.
+- `src/pages/index.astro`: the `members-only` wrapper removed. `404.astro` and the four auth pages: `openToGuests`
+  removed from the layout tag.
+- `src/components/Menu.astro`: `members-only` on the `Account` item alone. `Header.astro`: off the search icon and
+  the hamburger.
+- `astro.config.mjs`: the sitemap filter of before the gate. `src/styles/custom.css`: a note that the rule now hides
+  the `Account` item only.
+- `scripts/check-auth-browser.mjs`: the gate checks replaced by checks of the open site, plus five recovery checks.
+- `src/pages/auth/forgot.astro`, `src/pages/auth/reset.astro` (new): password recovery (`AUTH.md` section 11.4).
+  `src/config.ts`: `site.auth.forgot` and `site.auth.reset`. `signin.astro`: "Забыли пароль?". `dashboard.astro`:
+  "Сменить пароль". `callback.astro`: a note that the recovery mail goes to its own page. `reference/astro-routes.txt`:
+  the two new routes.
+- `AUTH.md` section 11, `README.md`, `CLAUDE.md`, `MIGRATION-PLAN.md` section 9, the consilium verdict: the reopening
+  recorded. Every comment about the gate stays in its file with a line under it.
+
+### Verification
+
+`npm run check` 0 errors, Prettier clean; `npm run build` static, no `dist/server/`; `npm run check:pages` green; the
+route list unchanged; no page carries `noindex`; the sitemap has 117 addresses and none under `/auth/`; two
+`members-only` elements on the home page, the two `Account` items; `npm run check:auth` 27/27 with the five recovery
+checks; the route list gained `/auth/forgot/` and `/auth/reset/`, and the sitemap still lists nothing under `/auth/`.
+
+### Left for someone else
+
+- Only if guests can post without an account: the guest-commenting switch in the Disqus admin, on the colleague's
+  Disqus account (`AUTH.md` section 11.5).
+- TODO, open: access to the Supabase project (an Administrator invitation, a transfer of the project to the owner,
+  or a project of the owner's own). The owner is settling it; ask him about it at the next session before any
+  dashboard work.
+- The paid content, built with the first paid lecture.
+- Everything the entry above lists for the dashboard, the commit and the pull request still stands.
+
+### Decided against, or not decided
+
+- Decided against: the closed site, at the colleague's request.
+- Decided the same day: comments stay on Disqus, untouched; writing needs a Disqus account (`AUTH.md` section 11.5).
+  Comments of our own in Supabase were chosen and dropped within the hour.
+- Not decided: which lecture is the first paid one.

@@ -146,3 +146,9 @@ in `Base.astro` reads the flag the board already approved and either marks the d
 `/auth/signin/?next=...`; `custom.css` hides what a guest must not see on the open pages. The board's finding that
 every file of a static site is public is unchanged and opens AUTH.md section 10; the gate is presentation, and Row
 Level Security remains the only lock. Not decided by the owner: `noindex` and the sitemap for the closed pages.
+
+## Second amendment, after the colleague's review
+
+The closed site of the first amendment was taken back the same day at the colleague's request: a guest reads
+every page and the comments; only the paid course material is to be closed, through the entitlements mechanism
+this verdict already names. AUTH.md section 11 has the change and the open choices.

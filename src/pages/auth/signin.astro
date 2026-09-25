@@ -16,7 +16,10 @@ import { site } from "../../config";
   /* openToGuests: this is where the gate in Base.astro sends a guest (added the evening of
   2026-09-25, AUTH.md section 10), so it must stay open or the two would chase each other. */
 }
-<Base title="Вход" openToGuests>
+{
+  /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): every page is open, so the prop is gone from the layout. */
+}
+<Base title="Вход">
   <section class="mx-auto max-w-md">
     <h1 class="mb-6 text-2xl font-bold">Вход</h1>
 
@@ -53,6 +56,16 @@ import { site } from "../../config";
     </form>
 
     <p id="message" class="mt-4 text-sm" role="status" aria-live="polite"></p>
+
+    {
+      /* Added 2026-09-25 after the colleague's review (AUTH.md section 11.4): the way back in for a
+      member who forgot the password. */
+    }
+    <p class="mt-4 text-sm">
+      <a href={site.auth.forgot} class="text-blue-600 hover:underline"
+        >Забыли пароль?</a
+      >
+    </p>
 
     <p class="mt-6 text-sm">
       Нет аккаунта?

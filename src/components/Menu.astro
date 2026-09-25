@@ -103,7 +103,9 @@ const isPanel = variant === "panel";
               // header shows Home, the theme switch and the sign-in icon (the owner's list), and
               // custom.css hides the class until the gate in Base.astro marks the document
               // kb-member (AUTH.md section 10). The bar variant below does the same.
-              item.url !== "/" && "members-only",
+              // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): only the Account item, the member's
+              // page, is members-only now; a guest sees every other item, as before the gate.
+              item.url === site.auth.dashboard && "members-only",
             ]}
           >
             <a
@@ -145,7 +147,8 @@ const isPanel = variant === "panel";
             class:list={[
               "text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg",
               // Same as the panel variant above (2026-09-25 evening, the guest gate).
-              item.url !== "/" && "members-only",
+              // Reopened with it after the colleague's review: Account only.
+              item.url === site.auth.dashboard && "members-only",
             ]}
           >
             <a
