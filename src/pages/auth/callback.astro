@@ -25,6 +25,8 @@
 // Only the sign-up confirmation is built. verifyOtp() accepts other mail types (recovery, invite,
 // email change); until a page exists for each, an unknown type prints a message rather than
 // guessing, and `next` from the mail is followed only when it is a path on this site.
+// (Since 2026-09-25, after the colleague's review, the recovery mail has a page of its own,
+// /auth/reset/, and never comes here; AUTH.md section 11.4.)
 import Base from "../../layouts/Base.astro";
 import { site } from "../../config";
 ---
@@ -33,7 +35,10 @@ import { site } from "../../config";
   /* openToGuests: the link in the mail is opened by a visitor who has no session yet, so the gate in
   Base.astro (added the evening of 2026-09-25, AUTH.md section 10) must let them through. */
 }
-<Base title="Подтверждение адреса" openToGuests>
+{
+  /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): every page is open, so the prop is gone from the layout. */
+}
+<Base title="Подтверждение адреса">
   <section class="mx-auto max-w-md">
     <h1 class="mb-6 text-2xl font-bold">Подтверждение адреса</h1>
 

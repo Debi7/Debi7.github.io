@@ -495,3 +495,104 @@ Measured on the build of the evening of 2026-09-25, after `npm run check` and `n
 - No word next to the sign-in icon (the owner confirmed late on 2026-09-25 that the label and the tooltip are enough);
   the icon carries its label for assistive technology, and a caption beside it
   is a design change for the owner to call.
+
+## 11. Reopened after the colleague's review, 2026-09-25
+
+The colleague reviewed the closed site the same day and asked for it back as it was: closing everything leaves a
+visitor nothing to look at, and they leave. Only the part of the material that belongs to the paid course is to be
+closed. The owner agreed and asked for the change. Section 10 is kept as the record of what was built and removed.
+
+### 11.1 The model the colleague set out
+
+- **A guest** sees everything the site showed before the gate: the home page, the posts, the videos, the tags, the
+  categories, the search, and the comments under posts and videos, which they can read. A guest cannot write a
+  comment and cannot see a paid video.
+- **A signed-in member** can also write comments and ask questions. Paid content stays closed.
+- **A signed-in member who bought the course** sees the paid content as well.
+
+### 11.2 What changed in the tree
+
+- The redirect in the inline block at the top of `Base.astro` is gone, and so is the `openToGuests` prop with it;
+  the block now only marks the document `kb-member` while the flag is valid.
+- `members-only` stays on one element: the `Account` item of the menu, in both variants of `Menu.astro`. The home
+  page wrapper, the other menu items, the search icon, the hamburger and the footer are for everyone again.
+- `noindex` is gone, and the sitemap filter is back to what it was before the gate (every page except the
+  `/page/<n>/` aliases and `/auth/`).
+- Kept from the gate work, because they are useful on their own: the `Account` item, the sign-in icon on the home
+  page, the `next` parameter on the sign-in page and `nextPath()`.
+- Every existing comment about the gate stays in its file, with a line under it saying it was reopened.
+
+Verified: `npm run check` 0 errors; `npm run build` static; `npm run check:pages` green; the route list unchanged;
+no page carries `noindex`; the sitemap lists 117 addresses and none under `/auth/`; `npm run check:auth` 22/22,
+including a guest staying on `/about/`, `/search/?q=x` and `/posts/`, a guest's home page with every menu item but
+`Account`, the search icon and the footer, a member's menu with `Account` before About, and the hamburger and the
+footer for a guest at 400px.
+
+### 11.3 Not built yet: writing comments and the paid content
+
+Both need a decision and both need the colleague's hands, because the Supabase project and the Disqus account are
+hers.
+
+Comments. The comments are Disqus, a third-party frame: anyone who opens it can read, and who may write is decided
+by Disqus, not by this site. There are three ways to get "read for all, write after sign-in":
+
+1. Disqus settings, no code: in the Disqus admin, turn off guest commenting. Reading stays open to everyone; writing
+   then needs a Disqus (or Google, Facebook, X) login inside the frame, not the club's account. Cheapest, but the
+   "sign-in" is Disqus's, not ours.
+2. Disqus SSO: Disqus accepts the site's own users, so a signed-in member writes as themselves. It is a paid Disqus
+   feature and needs a signature computed with a secret on a server, which GitHub Pages does not have (a small
+   function on another host would be needed).
+3. Our own comments in Supabase in place of Disqus. A `comments` table with RLS: `select` for `anon` and
+   `authenticated` (everyone reads), `insert` for `authenticated` with `user_id = auth.uid()` (only members write,
+   and only as themselves). This is the shape the Supabase guide "Row Level Security" gives for a public-read table
+   (its `announcements` example grants `select` to `anon, authenticated` and nothing else), plus an insert policy.
+   It is real work: a form, the list, moderation, and the existing Disqus threads stay behind in Disqus.
+
+Paid content. The mechanism is the one section 6 and VIDEO-PAGE.md section 6.1 describe: the id of a paid video lives
+in a Supabase table, not in the page, and an RLS policy answers the row only when an `entitlements` table has a row
+for that member and that course; the owner (or a payment hook later) writes `entitlements`. The page shows the
+course's title and description to everyone and fetches the player id with the member's session. No paid video
+exists in the content yet, so there is nothing to close today; the first paid lecture is where this is built.
+
+### 11.4 Password recovery, added the same day
+
+The colleague's other remark: with Supabase, the sign-in screens, password recovery and the email confirmation are
+the site's own work, which she did not want to take on. There is no way around it on this host, because Supabase
+ships the service and not the pages. The owner asked for the missing piece to be built here. Sign-up, sign-in and the
+email confirmation already existed, so the only piece missing was password recovery:
+
+- `/auth/forgot/`: the member enters the address and `resetPasswordForEmail()` sends the mail, with `redirectTo` set
+  to this origin plus `/auth/reset/`. The page gives the same answer whether or not the address has an account, so a
+  stranger cannot use it to find out which addresses are registered. "Забыли пароль?" on the sign-in page leads here.
+- `/auth/reset/`: the mail lands here. A `token_hash` of type `recovery` is exchanged by `verifyOtp()` only on the
+  visitor's click, for the same scanner reason as the callback page. The default link, with tokens in the fragment,
+  is caught through the `PASSWORD_RECOVERY` event. A member who is already signed in gets the form at once, so
+  "Сменить пароль" on the dashboard uses the same page. The form asks twice, requires 8 characters and calls
+  `updateUser({ password })`, then goes to the dashboard.
+- Source: the Supabase guide "Password-based Auth", section "Resetting a password", and the JavaScript reference for
+  `resetPasswordForEmail`, `verifyOtp` and `updateUser`, read through the Supabase documentation server on
+  2026-09-25.
+
+In the dashboard (the colleague's):
+
+- Redirect URLs, in addition to section 4: `https://debi7.github.io/auth/reset/` and
+  `http://localhost:4321/auth/reset/`.
+- Authentication > Emails > Templates > Reset Password: the link
+  `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery`. Until then the default link works through the
+  fragment, with no protection against mail scanners.
+- The default sender's limit of two mails an hour covers reset mails too.
+
+Verified: `npm run check:auth` checks that the sign-in page links to `/auth/forgot/` and that the forgot page has its
+form. It also checks that `/auth/reset/` without a link shows the invalid-link line and no form, that a bogus
+recovery hash prints the service's refusal after the click and no form, and that a hash of another type is refused.
+The forgot form is not submitted in the harness, to spare the mail limit. A real reset needs an account and a
+mailbox: section 8.
+
+### 11.5 Comments: Disqus stays, decided the same day
+
+The owner first chose option 3 of section 11.3, comments of our own in Supabase, then decided against it the same
+day: Disqus stays exactly as it is and is not to be touched for now. Reading stays open to everyone. To write, a
+visitor signs in to Disqus inside the comment frame (or registers there), which is Disqus's own account, not the
+club's. Nothing in the tree changed for this. If guests can still post without any account, that is a switch in the
+Disqus admin (guest commenting) on the colleague's Disqus account, not code; the exact name of the setting was not
+checked, because Disqus is not in either documentation server.

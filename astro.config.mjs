@@ -51,7 +51,9 @@ export default defineConfig({
       // to guests, so the sitemap lists the home page alone - the one page a guest may see and a search
       // engine may index. The filter it replaces:
       //   filter: (page) => !/\/page\/\d+\/$/.test(page) && !/\/auth\//.test(page),
-      filter: (page) => new URL(page).pathname === "/",
+      // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the site is open again, so the filter
+      // it replaced is back.
+      filter: (page) => !/\/page\/\d+\/$/.test(page) && !/\/auth\//.test(page),
     }),
   ],
 

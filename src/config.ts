@@ -107,6 +107,11 @@ export const site = {
     signUp: "/auth/signup/",
     callback: "/auth/callback/",
     dashboard: dashboardPath,
+    // Added 2026-09-25 after the colleague's review (AUTH.md section 11.4): password recovery.
+    // forgot asks for the mail, reset is where the mail lands and the new password is set; reset
+    // is the address that goes on the redirect allow-list.
+    forgot: "/auth/forgot/",
+    reset: "/auth/reset/",
     flagKey: "kb-auth-expires",
     demoTable: "members_demo",
   },
