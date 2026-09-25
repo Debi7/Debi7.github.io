@@ -251,3 +251,53 @@ checks; the route list gained `/auth/forgot/` and `/auth/reset/`, and the sitema
 - Decided the same day: comments stay on Disqus, untouched; writing needs a Disqus account (`AUTH.md` section 11.5).
   Comments of our own in Supabase were chosen and dropped within the hour.
 - Not decided: which lecture is the first paid one.
+
+## 2026-09-25, late - branch `clerk-auth`: the decision to move to Clerk
+
+### Starting point
+
+The owner created `clerk-auth` from `main` at `09fca46` (PR #3, which carried only the first commit of the
+previous auth work, the closed site). The colleague's second remark of the day was that she did not want to write the auth screens, the
+password recovery and the email confirmation by hand. The owner asked for the same mechanism - sign-in, sign-up,
+password recovery, the comments as they are, the members-only menu item - built on Clerk instead of the previous provider, and for
+a plan a simpler model can implement.
+
+### Decisions, in order
+
+- A consilium reviewed "ClerkJS in the browser on the static build"; every first-round block was downgraded after
+  interrogation (`.specify/consilium/2026-09-25-clerk-static.md`).
+- The owner approved it: route direct-verified; `@clerk/clerk-js` 6.34.1 and `@clerk/localizations` 4.20.0 from npm,
+  exact-pinned; paid videos deferred with one `publicMetadata.member` demo line on the account page.
+- The owner allowed the merge of the previous auth branch into `clerk-auth`, and said that the previous provider
+  must not be used on this branch under any circumstances afterwards, and that its name has to disappear from the
+  code, the comments and the files about it: the Clerk work removes it completely (`CLERK.md` section 0).
+- The owner added that Clerk must work locally as well as on GitHub Pages: one development instance and one
+  `pk_test_` key serve `localhost` and `debi7.github.io` alike.
+
+### Changes, file by file
+
+- Merge of the previous auth branch (`6b374b9`, the reopened site with password recovery) into `clerk-auth`: `92b1493`,
+  no conflicts.
+- `.specify/consilium/2026-09-25-clerk-static.md`: the verdict.
+- `CLERK.md`: new, the implementation plan - the owner's Dashboard steps, the code steps, the pitfalls and the
+  verification list.
+- `CLAUDE.md`: pointer to `CLERK.md` in "Read first" item 4.
+- No code changed yet.
+
+### Verification
+
+Nothing to run: no code changed. The Clerk facts in the plan were read from Clerk's documentation and `npm view` on
+2026-09-25 (versions, `engines`, the npm setup of the UI bundle, the `load()` options, `routing`, localization).
+
+### Left for someone else
+
+- The owner: step 0 of `CLERK.md` in the Clerk Dashboard, and the publishable key.
+- The implementing session: steps 1-7 of `CLERK.md` and its verification list.
+- The access TODO of the entry above no longer matters for this branch; it still matters for `main` until the
+  Clerk work is merged.
+
+### Decided against, or not decided
+
+- Decided against: `@clerk/astro` (server output only), the Account Portal as the main flow (English only, off the
+  site), CDN script tags instead of npm packages.
+- Not decided: the paid-video model on Clerk (VIDEO-PAGE.md 6.1 to be re-decided), the production domain.
