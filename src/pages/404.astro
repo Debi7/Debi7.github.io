@@ -7,7 +7,10 @@ import Base from "../layouts/Base.astro";
   that says "there is nothing here" is not members-only, and a guest who mistypes an address should
   read that rather than be asked to sign in for a page that does not exist. */
 }
-<Base title="404" openToGuests>
+{
+  /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): every page is open, so the prop is gone from the layout. */
+}
+<Base title="404">
   <h1>404</h1>
   <p><a href="/">Home</a></p>
 </Base>

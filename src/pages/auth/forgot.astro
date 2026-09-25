@@ -1,0 +1,90 @@
+---
+// /auth/forgot/ - asks Supabase to mail a password-reset link.
+//
+// Added 2026-09-25 after the colleague's review (AUTH.md section 11.4): a member who forgot the
+// password had no way back in. The page follows the Supabase guide "Password-based Auth", section
+// "Resetting a password": resetPasswordForEmail() only sends the mail, and the page the mail leads
+// to - /auth/reset/ - lets the member set a new password with updateUser(). redirectTo is this
+// origin plus that page, so a request made on the dev server lands on the dev server and one made on
+// the live site lands there; Supabase honours it only when the address is on the project's redirect
+// allow-list (AUTH.md section 11.4 has the entries and the mail template).
+//
+// The answer on the page is the same whether or not the address has an account. Supabase does not
+// say either, and the page must not guess: telling a stranger which addresses are registered is a
+// leak. Static page inside Base.astro, Russian strings, the same classes as the other auth pages.
+import Base from "../../layouts/Base.astro";
+import { site } from "../../config";
+---
+
+<Base title="Восстановление пароля">
+  <section class="mx-auto max-w-md">
+    <h1 class="mb-6 text-2xl font-bold">Восстановление пароля</h1>
+
+    <form id="forgot-form" class="space-y-4">
+      <div>
+        <label for="email" class="mb-1 block text-sm">Электронная почта</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autocomplete="email"
+          class="w-full rounded border border-gray-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+        />
+      </div>
+      <button
+        id="forgot-btn"
+        type="submit"
+        class="rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        Отправить ссылку
+      </button>
+    </form>
+
+    <p id="message" class="mt-4 text-sm" role="status" aria-live="polite"></p>
+
+    <p class="mt-6 text-sm">
+      <a href={site.auth.signIn} class="text-blue-600 hover:underline"
+        >На страницу входа</a
+      >
+    </p>
+  </section>
+</Base>
+
+<script>
+  import { getSupabase } from "../../scripts/auth";
+  import { site } from "../../config";
+
+  const form = document.getElementById("forgot-form");
+  const button = document.getElementById("forgot-btn");
+  const message = document.getElementById("message");
+
+  function say(text: string, isError: boolean): void {
+    if (message === null) return;
+    message.textContent = text;
+    message.classList.toggle("text-red-600", isError);
+  }
+
+  if (form instanceof HTMLFormElement && button instanceof HTMLButtonElement) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      say("", false);
+      const email = String(new FormData(form).get("email") ?? "");
+      const { error } = await getSupabase().auth.resetPasswordForEmail(email, {
+        redirectTo: new URL(site.auth.reset, location.origin).href,
+      });
+      button.disabled = false;
+      if (error) {
+        // A refusal from the service itself (a malformed address, the mail rate limit), in its
+        // own words, as on the other auth pages.
+        say(error.message, true);
+        return;
+      }
+      say(
+        "Если этот адрес зарегистрирован, мы отправили на него письмо со ссылкой для смены пароля.",
+        false,
+      );
+    });
+  }
+</script>

@@ -141,6 +141,9 @@ html.dark {
    the data is protected by Row Level Security at Supabase, this rule keeps a
    guest from seeing the frame.
    ============================================================================ */
+/* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the site is open again, and the only
+   element carrying members-only is the Account item of the menu. The rule is
+   unchanged; the list of what it hides shrank to that item. */
 html:not(.kb-member) .members-only {
   display: none !important;
 }

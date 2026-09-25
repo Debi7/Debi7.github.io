@@ -2,6 +2,8 @@
 /about/
 /auth/callback/
 /auth/dashboard/
+/auth/forgot/
+/auth/reset/
 /auth/signin/
 /auth/signup/
 /categories/

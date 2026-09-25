@@ -28,7 +28,10 @@ import { site } from "../../config";
   Base.astro (added the evening of 2026-09-25, AUTH.md section 10) is presentation; this page
   branches on the real session, which is the check that matters. */
 }
-<Base title="Личный кабинет" openToGuests>
+{
+  /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): every page is open, so the prop is gone from the layout. */
+}
+<Base title="Личный кабинет">
   <section class="mx-auto max-w-md">
     <h1 class="mb-6 text-2xl font-bold">Личный кабинет</h1>
 
@@ -53,6 +56,16 @@ import { site } from "../../config";
       <h2 class="mt-6 text-lg font-bold">Материалы для участников</h2>
       <p id="member-row" class="mt-2 rounded bg-gray-100 p-4 dark:bg-slate-800">
         Загружаем...
+      </p>
+
+      {
+        /* Added 2026-09-25 with password recovery (AUTH.md section 11.4): /auth/reset/ shows its
+        form at once to a member who is signed in, so the same page changes the password. */
+      }
+      <p class="mt-6 text-sm">
+        <a href={site.auth.reset} class="text-blue-600 hover:underline"
+          >Сменить пароль</a
+        >
       </p>
 
       <button

@@ -299,68 +299,65 @@ check(
   ok8,
 );
 
-// i. the guest gate (added 2026-09-25 evening, AUTH.md section 10)
+// i. the site is open (the guest gate was removed after the colleague's review, AUTH.md section 11);
+// only the Account menu item is members-only.
+const menuShown = `[...document.querySelectorAll("nav li")].filter(li => li.offsetParent !== null).map(li => li.textContent.trim())`;
 await evalJs(`localStorage.removeItem("kb-auth-expires"); true`);
 await open("/about/", 2500);
-const gateAbout = await evalJs(`location.pathname + location.search`);
-check(
-  "gate: guest on /about/ lands on the sign-in page with next",
-  gateAbout === "/auth/signin/?next=%2Fabout%2F",
-  gateAbout,
-);
+const openAbout = await evalJs(`location.pathname + location.search`);
+check("open: guest on /about/ stays there", openAbout === "/about/", openAbout);
 await open("/search/?q=x", 2500);
-const gateSearch = await evalJs(`location.pathname + location.search`);
+const openSearch = await evalJs(`location.pathname + location.search`);
 check(
-  "gate: guest on /search/?q=x lands on the sign-in page, query kept in next",
-  gateSearch === "/auth/signin/?next=" + encodeURIComponent("/search/?q=x"),
-  gateSearch,
+  "open: guest on /search/?q=x stays there",
+  openSearch === "/search/?q=x",
+  openSearch,
+);
+await open("/posts/", 2500);
+const openPosts = await evalJs(
+  `JSON.stringify({path: location.pathname, noindex: document.querySelector('meta[name="robots"]') !== null})`,
+);
+check(
+  "open: guest on /posts/ stays, no noindex",
+  /"path":"\/posts\/","noindex":false/.test(openPosts),
+  openPosts,
 );
 await open("/", 3000);
-const gateHome = await evalJs(
-  `JSON.stringify({path: location.pathname, memberClass: document.documentElement.classList.contains("kb-member"), carousel: getComputedStyle(document.getElementById("home-carousel")).display !== "none", hiddenBlocks: [...document.querySelectorAll(".members-only")].filter(e => getComputedStyle(e).display === "none").length, totalBlocks: document.querySelectorAll(".members-only").length, visibleMenu: [...document.querySelectorAll("nav li")].filter(li => li.offsetParent !== null).map(li => li.textContent.trim()), search: getComputedStyle(document.querySelector('a[href="/search/"]')).display, footer: getComputedStyle(document.querySelector("footer")).display})`,
+const guestHome = await evalJs(
+  `JSON.stringify({memberClass: document.documentElement.classList.contains("kb-member"), tagCloud: document.querySelector("h1") !== null, menu: ${menuShown}, search: getComputedStyle(document.querySelector('a[href="/search/"]')).display, footer: getComputedStyle(document.querySelector("footer")).display})`,
 );
 check(
-  "gate: guest on / sees the carousel, no members-only block, Home alone, no search, no footer",
-  /"footer":"none"/.test(gateHome) &&
-    /"path":"\/"/.test(gateHome) &&
-    /"memberClass":false/.test(gateHome) &&
-    /"carousel":true/.test(gateHome) &&
-    /"hiddenBlocks":(\d+),"totalBlocks":\1\b/.test(gateHome) &&
-    /"visibleMenu":\["Home"\]/.test(gateHome) &&
-    /"search":"none"/.test(gateHome),
-  gateHome,
+  "open: guest on / sees the whole page and every item but Account",
+  /"memberClass":false/.test(guestHome) &&
+    /"menu":\["Home","Posts","Video","Categories","Tags","About"\]/.test(
+      guestHome,
+    ) &&
+    !/"search":"none"/.test(guestHome) &&
+    !/"footer":"none"/.test(guestHome),
+  guestHome,
 );
 await evalJs(
   `localStorage.setItem("kb-auth-expires", String(Math.floor(Date.now()/1000) + 3600)); true`,
 );
 await open("/", 3000);
-// The hamburger is sm:hidden, so at 1280px it is display none for a member too; it is left out of the count here
-// and measured at 400px in block j instead.
 const memberHome = await evalJs(
-  `JSON.stringify({memberClass: document.documentElement.classList.contains("kb-member"), hiddenBlocks: [...document.querySelectorAll(".members-only")].filter(e => e.id !== "menu-toggle" && getComputedStyle(e).display === "none").length, visibleMenu: [...document.querySelectorAll("nav li")].filter(li => li.offsetParent !== null).map(li => li.textContent.trim()), search: getComputedStyle(document.querySelector('a[href="/search/"]')).display, kabinet: (() => { const a = [...document.querySelectorAll('nav a[href="/auth/dashboard/"]')].find(a => a.offsetParent !== null); return a ? a.textContent.trim() : null; })(), footer: getComputedStyle(document.querySelector("footer")).display})`,
+  `JSON.stringify({memberClass: document.documentElement.classList.contains("kb-member"), menu: ${menuShown}})`,
 );
 check(
-  "gate: member on / sees everything, the full menu with Account before About, the footer",
-  !/"footer":"none"/.test(memberHome) &&
-    /"memberClass":true/.test(memberHome) &&
-    /"hiddenBlocks":0/.test(memberHome) &&
-    /"visibleMenu":\["Home","Posts","Video","Categories","Tags","Account","About"\]/.test(
+  "open: member on / sees Account before About",
+  /"memberClass":true/.test(memberHome) &&
+    /"menu":\["Home","Posts","Video","Categories","Tags","Account","About"\]/.test(
       memberHome,
-    ) &&
-    !/"search":"none"/.test(memberHome) &&
-    /"kabinet":"Account"/.test(memberHome),
+    ),
   memberHome,
 );
-await open("/posts/", 2500);
-const memberPosts = await evalJs(`location.pathname`);
-check("gate: member on /posts/ stays", memberPosts === "/posts/", memberPosts);
 await evalJs(`localStorage.removeItem("kb-auth-expires"); true`);
 await open("/nothing-here/", 2500);
 const notFound = await evalJs(
   `JSON.stringify({path: location.pathname, h1: document.querySelector("h1") && document.querySelector("h1").textContent})`,
 );
 check(
-  "gate: guest on an unknown address sees the 404 page, not the sign-in",
+  "open: unknown address gives the 404 page",
   /"h1":"404"/.test(notFound),
   notFound,
 );
@@ -369,45 +366,80 @@ const signinNext = await evalJs(
   `JSON.stringify({path: location.pathname, form: document.getElementById("signin-form") !== null})`,
 );
 check(
-  "gate: sign-in page with next stays open for a guest",
+  "open: sign-in page with next shows the form",
   /"path":"\/auth\/signin\/","form":true/.test(signinNext),
   signinNext,
 );
 
-// j. narrow viewport: the hamburger and the footer are hidden for a guest and back for a member (evening)
+// k. password recovery (added 2026-09-25, AUTH.md section 11.4). The forgot form is not submitted:
+// it would ask Supabase for a mail, and the default sender allows two an hour for the whole project.
+await open("/auth/signin/", 2500);
+const forgotLink = await evalJs(
+  `JSON.stringify(!!document.querySelector('a[href="/auth/forgot/"]'))`,
+);
+check(
+  "recovery: sign-in page links to /auth/forgot/",
+  forgotLink === "true",
+  forgotLink,
+);
+await open("/auth/forgot/", 2500);
+const forgotForm = await evalJs(
+  `JSON.stringify({form: document.getElementById("forgot-form") !== null, email: document.getElementById("email") !== null})`,
+);
+check(
+  "recovery: forgot page has the email form",
+  /"form":true,"email":true/.test(forgotForm),
+  forgotForm,
+);
+await open("/auth/reset/", 3500);
+const resetEmpty = await evalJs(
+  `JSON.stringify({msg: document.getElementById("message").textContent, formHidden: document.getElementById("reset-form").hidden})`,
+);
+check(
+  "recovery: reset without a link -> invalid-link message, no form",
+  /недействительна/.test(resetEmpty) && /"formHidden":true/.test(resetEmpty),
+  resetEmpty,
+);
+await open("/auth/reset/?token_hash=bogus-hash&type=recovery", 3000);
+await evalJs(`document.getElementById("continue-btn").click(); true`);
+await sleep(5000);
+const resetBogus = await evalJs(
+  `JSON.stringify({msg: document.getElementById("message").textContent, formHidden: document.getElementById("reset-form").hidden})`,
+);
+check(
+  "recovery: bogus recovery hash -> error, no form",
+  /Не удалось проверить ссылку/.test(resetBogus) &&
+    /"formHidden":true/.test(resetBogus),
+  resetBogus,
+);
+await open("/auth/reset/?token_hash=x&type=email", 3000);
+const resetWrongType = await evalJs(
+  `document.getElementById("message").textContent`,
+);
+check(
+  "recovery: a hash of another type is refused",
+  /не для смены пароля/.test(resetWrongType),
+  resetWrongType,
+);
+
+// j. narrow viewport: the hamburger and the footer are there for a guest
 await send("Emulation.setDeviceMetricsOverride", {
   width: 400,
   height: 800,
   deviceScaleFactor: 1,
   mobile: true,
 });
-await evalJs(`localStorage.removeItem("kb-auth-expires"); true`);
 await open("/", 3000);
 const narrowGuest = await evalJs(
-  `JSON.stringify({width: innerWidth, hamburger: getComputedStyle(document.getElementById("menu-toggle")).display, footer: getComputedStyle(document.querySelector("footer")).display, auth: getComputedStyle(document.getElementById("auth-link")).display})`,
+  `JSON.stringify({width: innerWidth, hamburger: getComputedStyle(document.getElementById("menu-toggle")).display, footer: getComputedStyle(document.querySelector("footer")).display})`,
 );
 check(
-  "gate: guest at 400px - hamburger and footer hidden, sign-in icon shown",
+  "open: guest at 400px has the hamburger and the footer",
   /"width":400/.test(narrowGuest) &&
-    /"hamburger":"none"/.test(narrowGuest) &&
-    /"footer":"none"/.test(narrowGuest) &&
-    !/"auth":"none"/.test(narrowGuest),
+    !/"hamburger":"none"/.test(narrowGuest) &&
+    !/"footer":"none"/.test(narrowGuest),
   narrowGuest,
 );
-await evalJs(
-  `localStorage.setItem("kb-auth-expires", String(Math.floor(Date.now()/1000) + 3600)); true`,
-);
-await open("/", 3000);
-const narrowMember = await evalJs(
-  `JSON.stringify({hamburger: getComputedStyle(document.getElementById("menu-toggle")).display, footer: getComputedStyle(document.querySelector("footer")).display})`,
-);
-check(
-  "gate: member at 400px - hamburger and footer back",
-  !/"hamburger":"none"/.test(narrowMember) &&
-    !/"footer":"none"/.test(narrowMember),
-  narrowMember,
-);
-await evalJs(`localStorage.removeItem("kb-auth-expires"); true`);
 await send("Emulation.clearDeviceMetricsOverride");
 
 ws.close();

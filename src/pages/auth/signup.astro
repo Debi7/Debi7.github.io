@@ -30,7 +30,10 @@ import { site } from "../../config";
   /* openToGuests: a guest has to reach the registration, or the gate in Base.astro (added the
   evening of 2026-09-25, AUTH.md section 10) would send them to the sign-in page from here. */
 }
-<Base title="Регистрация" openToGuests>
+{
+  /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): every page is open, so the prop is gone from the layout. */
+}
+<Base title="Регистрация">
   <section class="mx-auto max-w-md">
     <h1 class="mb-6 text-2xl font-bold">Регистрация</h1>
 

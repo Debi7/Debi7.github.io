@@ -192,3 +192,112 @@ confirmed account returning to `next`, the demo row, sign-out. `AUTH.md` section
   claim, and the verdict carries a dated amendment instead.
 - A caption beside the sign-in icon: not added. The owner is content with the icon's label and tooltip as they are
   ("Войти на сайт", "Личный кабинет" for a member). Nothing is left open from the day.
+
+## 2026-09-25, after the colleague's review
+
+### Starting point
+
+The branch was committed as `8865366` with the site closed to guests (the entry above). The colleague reviewed it and
+asked for the site back as it was: a guest must see everything, comments included, and only the paid course material
+is to be closed. The owner asked for the change, with the Astro and Supabase documentation servers used for it.
+
+### Decisions, in order
+
+1. The site is open to everyone again; the redirect and `openToGuests` go.
+2. The `Account` menu item stays members-only; the sign-in icon on the home page, `next` and `nextPath()` stay.
+3. `noindex` and the home-only sitemap go with the gate.
+4. Writing comments for members only and the paid content wait for a decision (`AUTH.md` section 11.3).
+5. Password recovery is built here after all (the colleague did not want this kind of work, and on a static host with
+   Supabase there is no one else to do it): `/auth/forgot/` and `/auth/reset/`.
+
+### Changes, file by file
+
+- `src/layouts/Base.astro`: the prop and the redirect removed; the inline block only adds `kb-member`; the footer
+  lost `members-only`; the `noindex` line removed.
+- `src/pages/index.astro`: the `members-only` wrapper removed. `404.astro` and the four auth pages: `openToGuests`
+  removed from the layout tag.
+- `src/components/Menu.astro`: `members-only` on the `Account` item alone. `Header.astro`: off the search icon and
+  the hamburger.
+- `astro.config.mjs`: the sitemap filter of before the gate. `src/styles/custom.css`: a note that the rule now hides
+  the `Account` item only.
+- `scripts/check-auth-browser.mjs`: the gate checks replaced by checks of the open site, plus five recovery checks.
+- `src/pages/auth/forgot.astro`, `src/pages/auth/reset.astro` (new): password recovery (`AUTH.md` section 11.4).
+  `src/config.ts`: `site.auth.forgot` and `site.auth.reset`. `signin.astro`: "Забыли пароль?". `dashboard.astro`:
+  "Сменить пароль". `callback.astro`: a note that the recovery mail goes to its own page. `reference/astro-routes.txt`:
+  the two new routes.
+- `AUTH.md` section 11, `README.md`, `CLAUDE.md`, `MIGRATION-PLAN.md` section 9, the consilium verdict: the reopening
+  recorded. Every comment about the gate stays in its file with a line under it.
+
+### Verification
+
+`npm run check` 0 errors, Prettier clean; `npm run build` static, no `dist/server/`; `npm run check:pages` green; the
+route list unchanged; no page carries `noindex`; the sitemap has 117 addresses and none under `/auth/`; two
+`members-only` elements on the home page, the two `Account` items; `npm run check:auth` 27/27 with the five recovery
+checks; the route list gained `/auth/forgot/` and `/auth/reset/`, and the sitemap still lists nothing under `/auth/`.
+
+### Left for someone else
+
+- Only if guests can post without an account: the guest-commenting switch in the Disqus admin, on the colleague's
+  Disqus account (`AUTH.md` section 11.5).
+- TODO, open: access to the Supabase project (an Administrator invitation, a transfer of the project to the owner,
+  or a project of the owner's own). The owner is settling it; ask him about it at the next session before any
+  dashboard work.
+- The paid content, built with the first paid lecture.
+- Everything the entry above lists for the dashboard, the commit and the pull request still stands.
+
+### Decided against, or not decided
+
+- Decided against: the closed site, at the colleague's request.
+- Decided the same day: comments stay on Disqus, untouched; writing needs a Disqus account (`AUTH.md` section 11.5).
+  Comments of our own in Supabase were chosen and dropped within the hour.
+- Not decided: which lecture is the first paid one.
+
+## 2026-09-25, late - branch `clerk-auth`: the decision to move to Clerk
+
+### Starting point
+
+The owner created `clerk-auth` from `main` at `09fca46` (PR #3, which carried only the first commit of the
+previous auth work, the closed site). The colleague's second remark of the day was that she did not want to write the auth screens, the
+password recovery and the email confirmation by hand. The owner asked for the same mechanism - sign-in, sign-up,
+password recovery, the comments as they are, the members-only menu item - built on Clerk instead of the previous provider, and for
+a plan a simpler model can implement.
+
+### Decisions, in order
+
+- A consilium reviewed "ClerkJS in the browser on the static build"; every first-round block was downgraded after
+  interrogation (`.specify/consilium/2026-09-25-clerk-static.md`).
+- The owner approved it: route direct-verified; `@clerk/clerk-js` 6.34.1 and `@clerk/localizations` 4.20.0 from npm,
+  exact-pinned; paid videos deferred with one `publicMetadata.member` demo line on the account page.
+- The owner allowed the merge of the previous auth branch into `clerk-auth`, and said that the previous provider
+  must not be used on this branch under any circumstances afterwards, and that its name has to disappear from the
+  code, the comments and the files about it: the Clerk work removes it completely (`CLERK.md` section 0).
+- The owner added that Clerk must work locally as well as on GitHub Pages: one development instance and one
+  `pk_test_` key serve `localhost` and `debi7.github.io` alike.
+
+### Changes, file by file
+
+- Merge of the previous auth branch (`6b374b9`, the reopened site with password recovery) into `clerk-auth`: `92b1493`,
+  no conflicts.
+- `.specify/consilium/2026-09-25-clerk-static.md`: the verdict.
+- `CLERK.md`: new, the implementation plan - the owner's Dashboard steps, the code steps, the pitfalls and the
+  verification list.
+- `CLAUDE.md`: pointer to `CLERK.md` in "Read first" item 4.
+- No code changed yet.
+
+### Verification
+
+Nothing to run: no code changed. The Clerk facts in the plan were read from Clerk's documentation and `npm view` on
+2026-09-25 (versions, `engines`, the npm setup of the UI bundle, the `load()` options, `routing`, localization).
+
+### Left for someone else
+
+- The owner: step 0 of `CLERK.md` in the Clerk Dashboard, and the publishable key.
+- The implementing session: steps 1-7 of `CLERK.md` and its verification list.
+- The access TODO of the entry above no longer matters for this branch; it still matters for `main` until the
+  Clerk work is merged.
+
+### Decided against, or not decided
+
+- Decided against: `@clerk/astro` (server output only), the Account Portal as the main flow (English only, off the
+  site), CDN script tags instead of npm packages.
+- Not decided: the paid-video model on Clerk (VIDEO-PAGE.md 6.1 to be re-decided), the production domain.

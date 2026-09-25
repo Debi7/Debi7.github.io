@@ -28,7 +28,8 @@ interface Props {
   // false is the default and the safe side (CLAUDE.md, the props rule). Presentation only: the gate
   // reads the same flag as the header icon, and what a visitor may read is decided by Row Level
   // Security at Supabase, never here (AUTH.md section 10).
-  openToGuests?: boolean;
+  // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the site is open to everyone, nothing is sent to the sign-in page any more, and
+  // the prop is gone with the redirect it controlled.
 }
 
 const {
@@ -41,7 +42,6 @@ const {
   updatedDate,
   tags,
   params,
-  openToGuests = false,
 } = Astro.props;
 
 // Named seoSite, not site: under that name it shadowed the import from src/config.ts above,
@@ -105,30 +105,22 @@ const page: PageLike = {
       matters is fetched with the visitor's own session and answered by Row Level Security; this
       block only keeps a guest from seeing the frame. */
     }
-    <script
-      is:inline
-      define:vars={{
-        openToGuests,
-        signIn: site.auth.signIn,
-        flagKey: site.auth.flagKey,
-      }}
-    >
+    {
+      /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11). The redirect is gone: a guest reads every page, the posts, the videos and
+      their comments, as before the gate. What the block still does is mark the document kb-member
+      while the flag is valid, which is all custom.css needs to show the one members-only element
+      left, the Account item of the menu. Still inline and first in the head, so the item never
+      flashes for a guest; still presentation only. */
+    }
+    <script is:inline define:vars={{ flagKey: site.auth.flagKey }}>
       (function () {
-        var member = false;
         try {
           var raw = localStorage.getItem(flagKey);
           var expiresAt = raw === null ? NaN : Number(raw);
-          member = isFinite(expiresAt) && expiresAt * 1000 > Date.now();
+          if (isFinite(expiresAt) && expiresAt * 1000 > Date.now()) {
+            document.documentElement.classList.add("kb-member");
+          }
         } catch (_) {}
-        if (member) {
-          document.documentElement.classList.add("kb-member");
-        } else if (!openToGuests) {
-          location.replace(
-            signIn +
-              "?next=" +
-              encodeURIComponent(location.pathname + location.search),
-          );
-        }
       })();
     </script>
     {
@@ -137,7 +129,10 @@ const page: PageLike = {
       hides, and a searcher would land on the sign-in page. Open pages (the home page, the auth
       pages, 404) are left as they were; the sitemap in astro.config.mjs lists the home page alone. */
     }
-    {!openToGuests && <meta name="robots" content="noindex" />}
+    {
+      /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): no page is closed, so the noindex line is gone and the sitemap is back to
+      what it was before the gate. */
+    }
     <SEO site={seoSite} page={page} />
     <Head title={title} description={description} />
   </head>
@@ -174,8 +169,11 @@ const page: PageLike = {
       guest sees the carousel, the theme switch and the sign-in, and nothing else, the footer included.
       Hidden by custom.css until the gate above marks the document kb-member (AUTH.md section 10). */
     }
+    {
+      /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the footer is for everyone again. */
+    }
     <footer
-      class="members-only mx-auto w-full max-w-4xl overflow-x-auto px-6 sm:overflow-visible"
+      class="mx-auto w-full max-w-4xl overflow-x-auto px-6 sm:overflow-visible"
     >
       <Footer />
     </footer>

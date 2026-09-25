@@ -1,0 +1,188 @@
+---
+// /auth/reset/ - where the password-reset mail lands, and where the new password is set.
+//
+// Added 2026-09-25 after the colleague's review (AUTH.md section 11.4), following the Supabase guide
+// "Password-based Auth", section "Resetting a password": the mail carries a token_hash of type
+// "recovery", verifyOtp() turns it into a session, and updateUser({ password }) sets the new
+// password for that session.
+//
+// Like /auth/callback/, the hash is exchanged only on the visitor's click, never on load: a mail
+// scanner that follows the link would otherwise spend the one-time token before the member arrived
+// (callback.astro has the long version). Three ways to arrive, all handled:
+//
+// 1. The token_hash link of the recommended mail template: a button, then the form.
+// 2. The default reset link, if the template is unchanged: Supabase redirects here with the tokens
+//    in the URL fragment, the client picks them up and reports PASSWORD_RECOVERY (the JavaScript
+//    reference, resetPasswordForEmail), and the form is shown.
+// 3. A member who is already signed in: the form is shown at once, so the same page changes the
+//    password from the dashboard.
+//
+// Anything else is an invalid link, with the way to ask for a new one. The minimum length mirrors
+// the project's rule, 8, like signup.astro; the two change together.
+import Base from "../../layouts/Base.astro";
+import { site } from "../../config";
+---
+
+<Base title="Новый пароль">
+  <section class="mx-auto max-w-md">
+    <h1 class="mb-6 text-2xl font-bold">Новый пароль</h1>
+
+    <p id="message" class="text-sm" role="status" aria-live="polite">
+      Проверяем ссылку...
+    </p>
+
+    <button
+      id="continue-btn"
+      type="button"
+      hidden
+      class="mt-4 rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+    >
+      Продолжить
+    </button>
+
+    <form id="reset-form" class="mt-4 space-y-4" hidden>
+      <div>
+        <label for="password" class="mb-1 block text-sm">Новый пароль</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          minlength="8"
+          autocomplete="new-password"
+          placeholder="Не менее 8 символов"
+          class="w-full rounded border border-gray-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+        />
+      </div>
+      <div>
+        <label for="password-repeat" class="mb-1 block text-sm"
+          >Повторите пароль</label
+        >
+        <input
+          id="password-repeat"
+          name="password-repeat"
+          type="password"
+          required
+          minlength="8"
+          autocomplete="new-password"
+          class="w-full rounded border border-gray-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+        />
+      </div>
+      <button
+        id="reset-btn"
+        type="submit"
+        class="rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        Сохранить пароль
+      </button>
+    </form>
+
+    <p class="mt-6 text-sm">
+      <a href={site.auth.forgot} class="text-blue-600 hover:underline"
+        >Запросить новую ссылку</a
+      >
+      ·
+      <a href={site.auth.signIn} class="text-blue-600 hover:underline"
+        >На страницу входа</a
+      >
+    </p>
+  </section>
+</Base>
+
+<script>
+  import type { EmailOtpType } from "@supabase/supabase-js";
+  import { getSupabase } from "../../scripts/auth";
+  import { site } from "../../config";
+
+  const message = document.getElementById("message");
+  const continueButton = document.getElementById("continue-btn");
+  const form = document.getElementById("reset-form");
+  const saveButton = document.getElementById("reset-btn");
+
+  const params = new URLSearchParams(location.search);
+  const tokenHash = params.get("token_hash");
+  const type = params.get("type");
+
+  function say(text: string, isError = false): void {
+    if (message === null) return;
+    message.textContent = text;
+    message.classList.toggle("text-red-600", isError);
+  }
+
+  let formShown = false;
+  function showForm(): void {
+    if (formShown || !(form instanceof HTMLFormElement)) return;
+    formShown = true;
+    if (continueButton !== null) continueButton.hidden = true;
+    form.hidden = false;
+    say("Придумайте новый пароль.");
+  }
+
+  const supabase = getSupabase();
+
+  // Ways 2 and 3: the client reports the recovery session it found in the URL fragment, or the
+  // session already stored. INITIAL_SESSION with nothing and no hash in the query is an invalid link.
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+      showForm();
+      return;
+    }
+    if (event === "INITIAL_SESSION") {
+      if (session !== null && tokenHash === null) showForm();
+      else if (session === null && tokenHash === null) {
+        say("Ссылка недействительна или устарела. Запросите новую.", true);
+      }
+    }
+  });
+
+  // Way 1: the hash is exchanged on the visitor's click only.
+  if (tokenHash !== null) {
+    if (type !== "recovery") {
+      say("Эта ссылка не для смены пароля. Запросите новую.", true);
+    } else if (continueButton instanceof HTMLButtonElement) {
+      say("Нажмите кнопку, чтобы задать новый пароль.");
+      continueButton.hidden = false;
+      continueButton.addEventListener("click", async () => {
+        continueButton.disabled = true;
+        say("Проверяем...");
+        const otpType: EmailOtpType = "recovery";
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: otpType,
+        });
+        if (error) {
+          continueButton.disabled = false;
+          say("Не удалось проверить ссылку: " + error.message, true);
+          return;
+        }
+        showForm();
+      });
+    }
+  }
+
+  if (
+    form instanceof HTMLFormElement &&
+    saveButton instanceof HTMLButtonElement
+  ) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const password = String(data.get("password") ?? "");
+      if (password !== String(data.get("password-repeat") ?? "")) {
+        say("Пароли не совпадают.", true);
+        return;
+      }
+      saveButton.disabled = true;
+      say("Сохраняем...");
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        saveButton.disabled = false;
+        // Supabase's own wording: too short, leaked (if that protection is on), same as the old one.
+        say(error.message, true);
+        return;
+      }
+      say("Пароль изменён. Переходим в кабинет...");
+      location.replace(site.auth.dashboard);
+    });
+  }
+</script>
