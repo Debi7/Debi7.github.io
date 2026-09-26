@@ -28,6 +28,9 @@
 // Colours: red-600 for the error line, as on the pages this one replaced; it is not pinned to a
 // Tailwind 4 value because Hugo never printed an error.
 import Base from "../../layouts/Base.astro";
+// Added 2026-09-26: Clerk's components in the site's colours and font (src/styles/clerk.css says
+// how). Imported here, as carousel.css and search.css are by the pages that need them.
+import "../../styles/clerk.css";
 ---
 
 <Base title="Регистрация">

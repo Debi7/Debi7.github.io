@@ -280,7 +280,9 @@ const narrowGuest = await evalJs(
 );
 check(
   "guest at 400px has the hamburger and the footer",
-  /"width":400/.test(narrowGuest) &&
+  // Changed 2026-09-26: headless Edge reported 413 on one run; what matters is that the
+  // viewport is below the sm breakpoint (640px), where the hamburger replaces the menu bar.
+  Number(JSON.parse(narrowGuest).width) < 640 &&
     !/"hamburger":"none"/.test(narrowGuest) &&
     !/"footer":"none"/.test(narrowGuest),
   narrowGuest,
@@ -323,15 +325,19 @@ if (KEY === "") {
 
   // Fills the identifier, then the password, on one step or two - Clerk shows the password on the
   // first step or after "Continue" depending on the instance's settings.
+  // Changed 2026-09-26 after the first run against the real instance: the first step carries a
+  // hidden password input in its markup, so "is there a password field" was always true and the
+  // password went into the hidden one. The flow is two steps with email and password: continue
+  // after the address, then wait for the #/factor-one step, where the password field is shown.
   async function signIn(password) {
     await until(`!!document.querySelector("input[name=identifier]")`);
     await typeInto("input[name=identifier]", DEMO_EMAIL);
-    if (!(await evalJs(`!!document.querySelector("input[name=password]")`))) {
-      await evalJs(
-        `document.querySelector(".cl-formButtonPrimary").click(); true`,
-      );
-      await until(`!!document.querySelector("input[name=password]")`);
-    }
+    await evalJs(
+      `document.querySelector(".cl-formButtonPrimary").click(); true`,
+    );
+    await until(
+      `location.hash.includes("factor-one") && !!document.querySelector("input[name=password]")`,
+    );
     await typeInto("input[name=password]", password);
     await evalJs(
       `document.querySelector(".cl-formButtonPrimary").click(); true`,
@@ -351,19 +357,31 @@ if (KEY === "") {
   // "Client trust": Clerk may ask a new device for an email code; the test address takes 424242.
   if (
     await until(
-      `location.pathname === "/auth/account/" || !!document.querySelector("input[name^=code], input[autocomplete=one-time-code]")`,
+      `location.pathname === "/auth/account/" || !!document.querySelector("input[name^=code], input[autocomplete=one-time-code], input[inputmode=numeric]")`,
     )
   ) {
     if (await evalJs(`location.pathname !== "/auth/account/"`)) {
+      // Added 2026-09-26: the code field appears before Clerk has sent the code, and a code typed
+      // at once is refused ("You need to send a verification code before attempting to verify").
+      // The resend countdown ("Отправить снова") shows once the code is out.
+      // The countdown, "(25)", starts only once the code is out; a two-second margin on top,
+      // because the first run that matched the words alone still typed too early.
+      await until(
+        String.raw`/Отправить снова\.? *\(\d+\)/.test(document.body.innerText)`,
+      );
+      await sleep(2000);
       await typeInto(
-        "input[name^=code], input[autocomplete=one-time-code]",
+        "input[name^=code], input[autocomplete=one-time-code], input[inputmode=numeric]",
         TEST_CODE,
       );
     }
   }
   await until(`location.pathname === "/auth/account/"`);
+  // Added 2026-09-26: the account page writes the flag once Clerk has loaded there, a moment
+  // after the address changes; wait for it rather than read it on arrival.
+  await until(`${flag} !== null`, 15000);
   const landed = await evalJs(
-    `JSON.stringify({path: location.pathname, flag: ${flag}})`,
+    `JSON.stringify({path: location.pathname + location.hash, flag: ${flag}, card: (document.querySelector("#clerk-signin") || document.body).innerText.replace(/s+/g, " ").slice(0, 160)})`,
   );
   const stored = Number(JSON.parse(landed).flag);
   check(

@@ -20,6 +20,9 @@
 // A guest is sent to the sign-in page with this page as `next`, so they come back after signing
 // in. The redirect is the script's, not the frontmatter's: at build time there is no visitor.
 import Base from "../../layouts/Base.astro";
+// Added 2026-09-26: Clerk's components in the site's colours and font (src/styles/clerk.css says
+// how). Imported here, as carousel.css and search.css are by the pages that need them.
+import "../../styles/clerk.css";
 ---
 
 <Base title="Личный кабинет">
@@ -55,6 +58,7 @@ import Base from "../../layouts/Base.astro";
 <script>
   // Top level of the template, never inside an expression (CLAUDE.md, measured 2026-09-22).
   import { getClerk, showLoadFailure } from "../../scripts/auth";
+  import { clearAuthFlag } from "../../scripts/auth-flag";
   import { site } from "../../config";
 
   const status = document.getElementById("auth-status");
@@ -82,6 +86,12 @@ import Base from "../../layouts/Base.astro";
           signOutButton.textContent = "Выходим...";
           // Clerk clears the session; the listener in auth.ts clears the header's flag, and
           // afterSignOutUrl (set in auth.ts) sends the visitor to the home page.
+          // Added 2026-09-26: the flag is cleared here, before Clerk is asked, because the first
+          // real run showed Clerk navigating home before it reported the ended session, so the
+          // listener never cleared it and the home page still showed a member's header. Clearing
+          // first is the safe side: a failed sign-out shows a guest's header until the next
+          // auth page corrects it, never the other way round (auth-flag.ts, fail-closed).
+          clearAuthFlag();
           await clerk.signOut();
         });
       }

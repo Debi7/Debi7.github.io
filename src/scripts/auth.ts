@@ -24,7 +24,9 @@
 // same day: one install, versions pinned in package.json, no script tag built by hand. @clerk/ui
 // brings React and React DOM as peer dependencies; they are used by Clerk's components only.
 import { Clerk } from "@clerk/clerk-js";
-import { ruRU } from "@clerk/localizations";
+// Changed 2026-09-26: the Russian strings come through ./clerk-ru, which fills the gaps ruRU
+// leaves on the three auth pages (its header says which and why).
+import { localization } from "./clerk-ru";
 import { ui } from "@clerk/ui";
 import { site } from "../config";
 import { clearAuthFlag, writeAuthFlag } from "./auth-flag";
@@ -38,8 +40,35 @@ export function getClerk(): Promise<Clerk> {
   return pending;
 }
 
+// The key widened to string. Added 2026-09-26 when the real key went in: `as const` in
+// src/config.ts types the value as its own literal, so astro check rejected the comparisons with ""
+// below as impossible (ts 2367). Both checks stay, for the day the key is emptied again.
+const configuredKey: string = site.clerk.publishableKey;
+
+// Every page address on this site ends with a slash (trailingSlash "always" in astro.config.mjs);
+// used by the navigation hooks in load() below, which say why.
+function withTrailingSlash(to: string): string {
+  const url = new URL(to, location.href);
+  if (
+    url.origin === location.origin &&
+    !url.pathname.endsWith("/") &&
+    !/\.[a-z0-9]+$/i.test(url.pathname)
+  ) {
+    url.pathname += "/";
+  }
+  return url.href;
+}
+
+// The flag follows Clerk's session: written while there is one, cleared when Clerk says there is
+// none (null), left alone while Clerk does not know yet (undefined). Shared by the listener and
+// the navigation hooks in load(), which say why both are needed.
+function syncAuthFlag(session: Clerk["session"]): void {
+  if (session) writeAuthFlag(session.expireAt);
+  else if (session === null) clearAuthFlag();
+}
+
 async function load(): Promise<Clerk> {
-  const key = site.clerk.publishableKey;
+  const key = configuredKey;
   // Until the Clerk application exists the key is empty (src/config.ts says why); the pages then
   // show their "not set up" line, and this message tells whoever looks at the console the cause.
   if (key === "") {
@@ -51,20 +80,61 @@ async function load(): Promise<Clerk> {
   const clerk = new Clerk(key);
   await clerk.load({
     ui,
-    localization: ruRU,
+    localization,
     signInUrl: site.auth.signIn,
     signUpUrl: site.auth.signUp,
     afterSignOutUrl: "/",
+    // Added 2026-09-26 after the owner's first sign-up ended on a 404. Clerk's navigation drops
+    // the trailing slash from the address it is given: forceRedirectUrl "/auth/account/" arrived
+    // as "/auth/account" (reproduced in headless Edge on astro preview, after the email code). The
+    // dev and preview servers answer 404 to that under trailingSlash "always" (CLAUDE.md, the
+    // trailingSlash entry); GitHub Pages happens to redirect it, which is why only local testing
+    // showed the fault. routerPush and routerReplace are Clerk's documented way to take over its
+    // navigation (both or neither, per its types); they put the slash back on any page address
+    // of this site before leaving. A path with a file extension or another origin is left as is.
+    //
+    // The same two hooks also bring the header's flag up to date before the page is left. Added
+    // 2026-09-26 when the first real runs showed the listener below arriving too late on both
+    // ends: after a sign-in Clerk navigated before the flag was written, so the next page showed
+    // a guest's header; after a sign-out it navigated before the null session was reported, so
+    // the flag outlived the session. Clerk calls these hooks for exactly those navigations.
+    routerPush: (to: string) => {
+      syncAuthFlag(clerk.session);
+      location.assign(withTrailingSlash(to));
+    },
+    routerReplace: (to: string) => {
+      syncAuthFlag(clerk.session);
+      location.replace(withTrailingSlash(to));
+    },
+    // Added 2026-09-26, the owner's request to match the site: the card fills the page's column
+    // (max-w-md on the forms, max-w-3xl on the account page) instead of Clerk's fixed width, and
+    // takes the shape of the site's cards - rounded-lg and Tailwind 4's shadow-sm, which is what
+    // the ported theme renders. Style objects rather than a class in a stylesheet: Clerk merges
+    // them into its own generated styles, which a class of equal specificity would lose to. The
+    // colours, font and sizes are CSS variables in src/styles/clerk.css.
+    appearance: {
+      elements: {
+        rootBox: { width: "100%" },
+        cardBox: {
+          width: "100%",
+          maxWidth: "100%",
+          borderRadius: "0.5rem",
+          boxShadow:
+            "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        },
+      },
+    },
   });
 
   // Mirror the session's expiry into the header's flag on every change Clerk reports, and clear it
   // when there is no session. The listener is called immediately with the current state
   // (ListenerOptions.skipInitialEmit is off by default), so any auth page refreshes the flag on
   // load. The flag is presentation: Clerk decides who is signed in.
-  clerk.addListener(({ session }) => {
-    if (session) writeAuthFlag(session.expireAt);
-    else clearAuthFlag();
-  });
+  // Changed 2026-09-26 after the first real sign-in left no flag: Clerk types the session as
+  // SignedInSessionResource | null | undefined, where null means signed out and undefined means
+  // not known yet. Clearing on anything falsy wiped the flag right after a sign-in wrote it, so
+  // the header and the menu never saw the member. Only null clears it now.
+  clerk.addListener(({ session }) => syncAuthFlag(session));
   return clerk;
 }
 
@@ -80,7 +150,7 @@ export function showLoadFailure(
   console.error(error);
   if (status === null) return;
   status.textContent =
-    site.clerk.publishableKey === ""
+    configuredKey === ""
       ? "Вход на сайт ещё не подключён."
       : "Не удалось загрузить форму. Обновите страницу.";
   status.classList.add("text-red-600");

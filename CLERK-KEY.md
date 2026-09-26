@@ -35,8 +35,10 @@ wording in the Dashboard can differ slightly.
 1. **User & authentication -> Email**: sign-up with email on; **Verify at sign-up** on; verification method
    **Email verification code** (not link). A code works on any device; a link does not.
 2. **User & authentication -> Password**: password on; minimum length **8**.
-3. **Attack protection**: turn **Bot sign-up protection** off on this Development instance. The automated browser
-   check cannot solve a CAPTCHA. It will be turned back on for Production later.
+3. **Attack protection** (the **Protect** page): leave **Bot sign-up protection**, **Device Trust**, **Lockout policy**
+   and **User enumeration protection** on. (Corrected 2026-09-26: this step used to say to turn bot protection off for
+   the automated check, but that check only signs in and never signs up, and bot protection applies to sign-ups.
+   Device Trust asks a new device for an email code, which is `424242` for the demo address; the check handles it.)
 4. **Users -> Create user**, the demo account used for showing the site and by the automated check:
    - email `demo+clerk_test@example.com`
    - password `Demo-2026-klub`

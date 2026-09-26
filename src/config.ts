@@ -99,8 +99,12 @@ export const site = {
   // Dashboard and pastes the key here (CLERK.md section 1; CLERK-DASHBOARD.md section 7.1). While it
   // is empty the site builds and every page but the three auth pages works as before; those three
   // say that the form could not be loaded, and src/scripts/auth.ts logs why.
+  // Filled 2026-09-26: the development instance the colleague created in the Clerk Dashboard
+  // (Frontend API host infinite-sole-9367.clerk.accounts.dev), copied from its API keys page by
+  // the owner. Clerk's docs say a publishable key needs no rotation even when it is public.
   clerk: {
-    publishableKey: "",
+    publishableKey:
+      "pk_test_aW5maW5pdGUtc29sZS05MzY3LmNsZXJrLmFjY291bnRzLmRldiQ",
   },
 
   // Changed 2026-09-26 with the move to Clerk (CLERK.md step 2): the pages are three - sign-in,

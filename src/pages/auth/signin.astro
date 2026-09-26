@@ -13,6 +13,9 @@
 // open redirect; without it the destination is the account page. A visitor who is already signed
 // in is sent there straight away, by the script: at build time there is no visitor to look at.
 import Base from "../../layouts/Base.astro";
+// Added 2026-09-26: Clerk's components in the site's colours and font (src/styles/clerk.css says
+// how). Imported here, as carousel.css and search.css are by the pages that need them.
+import "../../styles/clerk.css";
 ---
 
 <Base title="Вход">

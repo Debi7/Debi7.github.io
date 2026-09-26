@@ -96,4 +96,24 @@ export default defineConfig({
     // toolbar, the overlay that would otherwise sit at the bottom of every page of `npm run dev`.)
     enabled: false, // это отключает панель devToolbar-Astro
   },
+
+  // Added 2026-09-26 at the owner's request, after the sign-up form rendered nothing on a dev server
+  // that had been running since before @clerk/ui was installed: the browser asked for Clerk's SignUp
+  // chunk from node_modules/.vite/deps, Vite answered "504 (Outdated Optimize Dep)" because it had
+  // just discovered the package and re-bundled its dependencies mid-session, and the dynamic import
+  // failed. Listing the Clerk packages and React here makes Vite pre-bundle them when the dev server
+  // starts instead of on the first visit to an auth page. It affects `astro dev` only; `astro build`
+  // does not use the dependency optimizer. If the error still appears after a package change,
+  // `npm run dev:clean` empties the cache (package.json says how).
+  vite: {
+    optimizeDeps: {
+      include: [
+        "@clerk/clerk-js",
+        "@clerk/ui",
+        "@clerk/localizations",
+        "react",
+        "react-dom",
+      ],
+    },
+  },
 });
