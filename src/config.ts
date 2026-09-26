@@ -102,9 +102,12 @@ export const site = {
   // Filled 2026-09-26: the development instance the colleague created in the Clerk Dashboard
   // (Frontend API host infinite-sole-9367.clerk.accounts.dev), copied from its API keys page by
   // the owner. Clerk's docs say a publishable key needs no rotation even when it is public.
+  // Changed later on 2026-09-26 by the owner: the key now points at another development instance,
+  // supreme-ladybug-7080.clerk.accounts.dev, chosen on purpose. The demo sign-in of check:auth
+  // passes against it as it did against the first one.
   clerk: {
     publishableKey:
-      "pk_test_aW5maW5pdGUtc29sZS05MzY3LmNsZXJrLmFjY291bnRzLmRldiQ",
+      "pk_test_c3VwcmVtZS1sYWR5YnVnLTcwODAuY2xlcmsuYWNjb3VudHMuZGV2JA",
   },
 
   // Changed 2026-09-26 with the move to Clerk (CLERK.md step 2): the pages are three - sign-in,
