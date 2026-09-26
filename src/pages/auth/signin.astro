@@ -1,155 +1,59 @@
 ---
-// /auth/signin/ - sign-in with an email address and a password.
+// /auth/signin/ - sign-in, through Clerk's sign-in component.
 //
-// Rewritten on 2026-09-25 as a static page in the site's frame; signup.astro next to this file
-// carries the full reasoning (why the server-rendered frontmatter and the endpoint are gone, why the
-// page sits inside Base.astro, why the strings are Russian, which colours are pinned). In short:
-// GitHub Pages runs no server, so the browser talks to Supabase directly from the script below.
+// Rewritten on 2026-09-26 for the move to Clerk (CLERK.md step 5). signup.astro next to this file
+// carries the reasoning the three auth pages share (static page, routing "hash", Russian strings,
+// settings in the Clerk Dashboard); the part that is this page's own follows.
 //
-// A visitor who is already signed in is sent to the dashboard by the script, not by the frontmatter
-// as before: at build time there is no visitor and no session to look at.
+// Password recovery is part of Clerk's component ("Forgot password?" inside the form, by a code
+// sent to the mail), so the two recovery pages of 2026-09-25 are gone and nothing links to them.
+//
+// `next`: the address to return to after the sign-in, a path on this site only. nextPath() in
+// src/scripts/auth.ts is the one home of that rule, so the parameter cannot turn this page into an
+// open redirect; without it the destination is the account page. A visitor who is already signed
+// in is sent there straight away, by the script: at build time there is no visitor to look at.
 import Base from "../../layouts/Base.astro";
-import { site } from "../../config";
+// Added 2026-09-26: Clerk's components in the site's colours and font (src/styles/clerk.css says
+// how). Imported here, as carousel.css and search.css are by the pages that need them.
+import "../../styles/clerk.css";
 ---
 
-{
-  /* openToGuests: this is where the gate in Base.astro sends a guest (added the evening of
-  2026-09-25, AUTH.md section 10), so it must stay open or the two would chase each other. */
-}
-{
-  /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): every page is open, so the prop is gone from the layout. */
-}
 <Base title="Вход">
   <section class="mx-auto max-w-md">
     <h1 class="mb-6 text-2xl font-bold">Вход</h1>
-
-    <form id="signin-form" class="space-y-4">
-      <div>
-        <label for="email" class="mb-1 block text-sm">Электронная почта</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autocomplete="email"
-          class="w-full rounded border border-gray-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
-        />
-      </div>
-      <div>
-        <label for="password" class="mb-1 block text-sm">Пароль</label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          autocomplete="current-password"
-          class="w-full rounded border border-gray-300 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
-        />
-      </div>
-      <button
-        id="signin-btn"
-        type="submit"
-        class="rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-      >
-        Войти
-      </button>
-    </form>
-
-    <p id="message" class="mt-4 text-sm" role="status" aria-live="polite"></p>
-
-    {
-      /* Added 2026-09-25 after the colleague's review (AUTH.md section 11.4): the way back in for a
-      member who forgot the password. */
-    }
-    <p class="mt-4 text-sm">
-      <a href={site.auth.forgot} class="text-blue-600 hover:underline"
-        >Забыли пароль?</a
-      >
+    <div id="clerk-signin"></div>
+    <p id="auth-status" class="mt-4 text-sm" role="status" aria-live="polite">
+      Загрузка...
     </p>
-
-    <p class="mt-6 text-sm">
-      Нет аккаунта?
-      <a href={site.auth.signUp} class="text-blue-600 hover:underline"
-        >Зарегистрироваться</a
-      >
-    </p>
+    <noscript>
+      <p class="text-sm">Для входа нужен включённый JavaScript.</p>
+    </noscript>
   </section>
 </Base>
 
 <script>
-  import { getSupabase, nextPath } from "../../scripts/auth";
-  import { writeAuthFlag } from "../../scripts/auth-flag";
-  // The config import that stood here went on the evening of 2026-09-25: the two addresses this
-  // script used to read from it now come through nextPath(), and astro check flagged the unused
-  // import. The frontmatter keeps its own import for the markup.
+  // Top level of the template, never inside an expression (CLAUDE.md, measured 2026-09-22).
+  import { getClerk, nextPath, showLoadFailure } from "../../scripts/auth";
+  import { site } from "../../config";
 
-  const form = document.getElementById("signin-form");
-  const button = document.getElementById("signin-btn");
-  const message = document.getElementById("message");
-
-  function say(text: string): void {
-    if (message !== null) message.textContent = text;
-  }
-
-  const supabase = getSupabase();
-
-  // Where to go once signed in. Added the evening of 2026-09-25 with the guest gate in Base.astro
-  // (AUTH.md section 10): a guest who opened a closed page arrives here with that address in
-  // `next`, and after the sign-in they are returned to it; without `next` the destination is the
-  // dashboard, as before. nextPath() follows a path on this site only, never an origin, so the
-  // parameter cannot turn this page into an open redirect.
+  const root = document.getElementById("clerk-signin");
+  const status = document.getElementById("auth-status");
   const next = nextPath(new URLSearchParams(location.search).get("next"));
 
-  // The gate on the next page reads the flag before that page's client could write it, so this
-  // page writes the flag itself before it navigates. The client's own event usually gets there
-  // first (getSession() waits for the client to initialise, and a sign-in emits SIGNED_IN before it
-  // returns), but "usually" is not a contract, and a flag that arrives late would bounce the
-  // visitor straight back here.
-  function leaveWith(session: { expires_at?: number }, replace: boolean): void {
-    if (session.expires_at !== undefined) writeAuthFlag(session.expires_at);
-    if (replace) location.replace(next);
-    else location.href = next;
-  }
-
-  // Already signed in: straight to the dashboard. getSession() reads the stored session without a
-  // network call, which is enough for a redirect; the dashboard itself makes the calls that matter.
-  // (Since the evening of 2026-09-25: to `next`, which is the dashboard when nothing asked for
-  // another page. This is also how a member whose flag expired while the session did not gets
-  // back: the gate sends them here, the client refreshes the session, and this line returns them,
-  // so the visitor sees the form for a moment at most.)
-  const { data: current } = await supabase.auth.getSession();
-  if (current.session !== null) {
-    leaveWith(current.session, true);
-  }
-
-  if (form instanceof HTMLFormElement && button instanceof HTMLButtonElement) {
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      button.disabled = true;
-      button.textContent = "Входим...";
-      say("");
-
-      const data = new FormData(form);
-      // `result` is read since the evening of 2026-09-25: the session it carries is what the flag is
-      // written from before this page navigates (see leaveWith above).
-      const { data: result, error } = await supabase.auth.signInWithPassword({
-        email: String(data.get("email") ?? ""),
-        password: String(data.get("password") ?? ""),
+  try {
+    const clerk = await getClerk();
+    if (clerk.isSignedIn) {
+      // replace, not assignment, so the sign-in page does not stay in the history behind `next`.
+      location.replace(next);
+    } else if (root instanceof HTMLDivElement) {
+      clerk.mountSignIn(root, {
+        routing: "hash",
+        signUpUrl: site.auth.signUp,
+        forceRedirectUrl: next,
       });
-
-      if (error) {
-        button.disabled = false;
-        button.textContent = "Войти";
-        // Supabase's own wording ("Invalid login credentials", "Email not confirmed"): it names
-        // the cause precisely, and translating a changing set of messages is not this page's job.
-        say(error.message);
-        message?.classList.add("text-red-600");
-        return;
-      }
-
-      // Changed the evening of 2026-09-25: to `next` (the dashboard by default) instead of the
-      // dashboard always, with the flag written first.
-      leaveWith(result.session ?? {}, false);
-    });
+      status?.remove();
+    }
+  } catch (error) {
+    showLoadFailure(status, error);
   }
 </script>

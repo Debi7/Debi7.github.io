@@ -26,8 +26,10 @@ interface Props {
   // sign-in page before anything is painted. The home page, the four /auth/ pages and the 404 page
   // set it; on an open page a guest still sees only what is not marked members-only. Named so that
   // false is the default and the safe side (CLAUDE.md, the props rule). Presentation only: the gate
-  // reads the same flag as the header icon, and what a visitor may read is decided by Row Level
-  // Security at Supabase, never here (AUTH.md section 10).
+  // reads the same flag as the header icon, and what a visitor may read is decided by the service
+  // that holds the data, never here (AUTH.md section 10).
+  // (Reworded 2026-09-26 for the move to Clerk: the sentence named the previous auth provider, which
+  // CLERK.md section 0 orders out of this branch.)
   // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the site is open to everyone, nothing is sent to the sign-in page any more, and
   // the prop is gone with the redirect it controlled.
 }

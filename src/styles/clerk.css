@@ -1,0 +1,56 @@
+/* Clerk's components in the site's look. Added 2026-09-26 at the owner's request: the sign-in,
+   sign-up and profile forms should match the rest of the site in colours, font, sizes and
+   placement.
+
+   How. Clerk (Core 3) reads its appearance from native CSS variables prefixed --clerk-, one per
+   entry of the appearance.variables object ("Variables prop" in Clerk's docs lists them). Setting
+   them here, rather than as values in src/scripts/auth.ts, lets them follow the site's theme
+   switch the way everything else does: the light values sit on html, the dark ones on html.dark,
+   the class the theme button toggles. The card's own size and shape are set in auth.ts
+   (appearance.elements), because Clerk's generated styles would win over a class rule here.
+
+   Where the values come from, so a later palette change can be followed here:
+   - backgrounds: --panel-bg from custom.css, the colour of every card on the site;
+   - text and borders: the pinned Tailwind 4 greys and slates in tailwind.config.cjs, the same
+     shades the ported theme uses for text-gray-* and its dark:slate-* counterparts;
+   - primary: blue-600 (#155dfc), the site's links and buttons; blue-500 in the dark theme,
+     where blue-600 on the dark panel is too faint for link text;
+   - danger: red-600 as on the auth pages before Clerk, red-400 in the dark theme;
+   - font: inherit, so Clerk uses the page's font-bilingual serif stack; the size is Tailwind's
+     text-sm, which the site's own form labels used;
+   - radius: Tailwind's rounded (0.25rem), the site's buttons and inputs.
+
+   Plain CSS, imported by the three pages under src/pages/auth/ only, like carousel.css and
+   search.css are imported by the pages that need them. */
+
+html {
+  --clerk-color-primary: #155dfc;
+  --clerk-color-primary-foreground: #ffffff;
+  --clerk-color-ring: #155dfc;
+  --clerk-color-background: var(--panel-bg);
+  --clerk-color-foreground: #1e2939;
+  --clerk-color-muted-foreground: #6a7282;
+  --clerk-color-neutral: #101828;
+  --clerk-color-input: #ffffff;
+  --clerk-color-input-foreground: #1e2939;
+  --clerk-color-border: #d1d5dc;
+  --clerk-color-danger: #dc2626;
+  --clerk-font-family: inherit;
+  --clerk-font-family-buttons: inherit;
+  --clerk-font-size: 0.875rem;
+  --clerk-border-radius: 0.25rem;
+}
+
+html.dark {
+  --clerk-color-primary: #2b7fff;
+  --clerk-color-primary-foreground: #ffffff;
+  --clerk-color-ring: #2b7fff;
+  --clerk-color-background: var(--panel-bg);
+  --clerk-color-foreground: #e5e7eb;
+  --clerk-color-muted-foreground: #94a3b8;
+  --clerk-color-neutral: #e5e7eb;
+  --clerk-color-input: #1d293d;
+  --clerk-color-input-foreground: #e5e7eb;
+  --clerk-color-border: #314158;
+  --clerk-color-danger: #f87171;
+}

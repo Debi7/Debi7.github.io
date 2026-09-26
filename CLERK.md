@@ -34,6 +34,9 @@ YYYY-MM-DD)` here and append an entry to `AUTH-IMPLEMENTATION.md`.
 
 ## 1. Step 0 - the owner, in the Clerk Dashboard (before any code)
 
+What each Dashboard page is for, and where it stops being enough for paid content, is explained for the colleague in
+`CLERK-DASHBOARD.md` (2026-09-26). The steps below are the values to set.
+
 1. Sign in at https://dashboard.clerk.com with the owner's own account and create an application, for example "Klub
    Biolocation". The owner must be the creator, so that the dashboard is never out of his reach. Invite the colleague
    under Settings - Members (the free plan has three seats).

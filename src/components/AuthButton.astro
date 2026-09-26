@@ -1,16 +1,16 @@
 ---
 // The sign-in icon in the header, added by the colleague on 2026-09-25 (commit 35e8f80).
 //
-// Rewritten the same day with the browser-side sign-in (AUTH.md section 5; the consilium verdict
-// of 2026-09-25). What changed and why:
+// Rewritten the same day with the browser-side sign-in. What changed and why:
+// (Reworded 2026-09-26 for the move to Clerk, CLERK.md step 6: the first two items named the
+// previous auth provider, which CLERK.md section 0 orders out of this branch. The design stands.)
 //
 // - The link goes to the sign-in page, and to the member's page once a session exists. It read
 //   "/login" before, a route that never existed, so the icon led to a 404.
 // - The script reads only the small flag the auth pages keep in localStorage
-//   (src/scripts/auth-flag.ts) and never imports the Supabase client: this component is on every
-//   page through Header.astro, and the client weighs 55 KB gzip against 70 KB of JavaScript on the
-//   whole site, with a refresh timer that would tick on every page. The flag is a hint for the icon;
-//   what a visitor may read is decided at the service by Row Level Security.
+//   (src/scripts/auth-flag.ts) and never imports the auth library: this component is on every
+//   page through Header.astro, and Clerk weighs about 720 KB gzip with React (measured 2026-09-26, see package.json) against about 70 KB of JavaScript
+//   on the whole rest of the site. The flag is a hint for the icon; Clerk decides who is signed in.
 // - The markup is a link and nothing else. The earlier version wrapped the <a> in a <button>, which
 //   HTML does not allow, declared Props (href, className) that nothing read, and gave the SVG a
 //   namespace that is not the SVG namespace; all three are gone.
@@ -33,7 +33,7 @@ import { site } from "../config";
   <a
     id="auth-link"
     href={site.auth.signIn}
-    data-dashboard-href={site.auth.dashboard}
+    data-account-href={site.auth.account}
     class="ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
     aria-label="Войти на сайт"
     title="Войти на сайт"
@@ -63,10 +63,12 @@ import { site } from "../config";
   // update.
   import { readAuthFlag } from "../scripts/auth-flag";
 
+  // Changed 2026-09-26 (CLERK.md step 2): the member's page is site.auth.account now, and the data
+  // attribute is data-account-href to match; it was data-dashboard-href.
   const link = document.getElementById("auth-link");
   if (link instanceof HTMLAnchorElement && readAuthFlag()) {
-    const dashboard = link.dataset.dashboardHref;
-    if (dashboard !== undefined) link.href = dashboard;
+    const account = link.dataset.accountHref;
+    if (account !== undefined) link.href = account;
     link.setAttribute("aria-label", "Личный кабинет");
     link.title = "Личный кабинет";
   }

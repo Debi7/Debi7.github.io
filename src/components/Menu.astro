@@ -105,7 +105,9 @@ const isPanel = variant === "panel";
               // kb-member (AUTH.md section 10). The bar variant below does the same.
               // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): only the Account item, the member's
               // page, is members-only now; a guest sees every other item, as before the gate.
-              item.url === site.auth.dashboard && "members-only",
+              // Changed 2026-09-26 (CLERK.md step 2): site.auth.account, the page that replaced
+              // the dashboard; same item, same rule.
+              item.url === site.auth.account && "members-only",
             ]}
           >
             <a
@@ -148,7 +150,8 @@ const isPanel = variant === "panel";
               "text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg",
               // Same as the panel variant above (2026-09-25 evening, the guest gate).
               // Reopened with it after the colleague's review: Account only.
-              item.url === site.auth.dashboard && "members-only",
+              // Changed 2026-09-26 (CLERK.md step 2): site.auth.account, as above.
+              item.url === site.auth.account && "members-only",
             ]}
           >
             <a

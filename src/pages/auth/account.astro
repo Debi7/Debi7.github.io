@@ -1,0 +1,104 @@
+---
+// /auth/account/ - the member's page: Clerk's profile component, a sign-out button, one demo line.
+//
+// Added 2026-09-26 for the move to Clerk (CLERK.md step 5), in place of /auth/dashboard/. The
+// `Account` menu item opens it, and a sign-in or a registration lands here. signup.astro carries
+// the reasoning the three auth pages share; the part that is this page's own follows.
+//
+// Clerk's profile component covers what the dashboard's own links did and more: the email address,
+// the password change, the list of active sessions. It is mounted with routing "hash" for the same
+// reason as the forms.
+//
+// The demo line. It is hidden in the markup and shown only when the signed-in user's
+// publicMetadata.member is true. publicMetadata can be written only from the Clerk Dashboard or
+// Clerk's Backend API, never from the visitor's browser, which is why it may decide anything at
+// all; unsafeMetadata, which the browser can write, must never be used for this. It is the record
+// the paid content will read later (CLERK-DASHBOARD.md section 7.3); on this page it is still
+// presentation, because the HTML of a static site is public and a lock needs a server-side check
+// (CLERK-DASHBOARD.md section 5).
+//
+// A guest is sent to the sign-in page with this page as `next`, so they come back after signing
+// in. The redirect is the script's, not the frontmatter's: at build time there is no visitor.
+import Base from "../../layouts/Base.astro";
+// Added 2026-09-26: Clerk's components in the site's colours and font (src/styles/clerk.css says
+// how). Imported here, as carousel.css and search.css are by the pages that need them.
+import "../../styles/clerk.css";
+---
+
+<Base title="Личный кабинет">
+  <section class="mx-auto max-w-3xl">
+    <h1 class="mb-6 text-2xl font-bold">Личный кабинет</h1>
+    <p id="auth-status" class="text-sm" role="status" aria-live="polite">
+      Загрузка...
+    </p>
+    <noscript>
+      <p class="text-sm">Для личного кабинета нужен включённый JavaScript.</p>
+    </noscript>
+
+    <div id="account-member" hidden>
+      <p
+        id="member-demo"
+        class="mb-6 rounded bg-gray-100 p-4 dark:bg-slate-800"
+        hidden
+      >
+        Демо: доступ участника клуба подтверждён.
+      </p>
+      <div id="clerk-profile"></div>
+      <button
+        id="signout-btn"
+        type="button"
+        class="mt-6 rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+      >
+        Выйти
+      </button>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Top level of the template, never inside an expression (CLAUDE.md, measured 2026-09-22).
+  import { getClerk, showLoadFailure } from "../../scripts/auth";
+  import { clearAuthFlag } from "../../scripts/auth-flag";
+  import { site } from "../../config";
+
+  const status = document.getElementById("auth-status");
+  const member = document.getElementById("account-member");
+  const demo = document.getElementById("member-demo");
+  const profile = document.getElementById("clerk-profile");
+  const signOutButton = document.getElementById("signout-btn");
+
+  try {
+    const clerk = await getClerk();
+    if (!clerk.isSignedIn) {
+      location.replace(
+        site.auth.signIn + "?next=" + encodeURIComponent(site.auth.account),
+      );
+    } else {
+      if (demo !== null) {
+        demo.hidden = clerk.user?.publicMetadata.member !== true;
+      }
+      if (profile instanceof HTMLDivElement) {
+        clerk.mountUserProfile(profile, { routing: "hash" });
+      }
+      if (signOutButton instanceof HTMLButtonElement) {
+        signOutButton.addEventListener("click", async () => {
+          signOutButton.disabled = true;
+          signOutButton.textContent = "Выходим...";
+          // Clerk clears the session; the listener in auth.ts clears the header's flag, and
+          // afterSignOutUrl (set in auth.ts) sends the visitor to the home page.
+          // Added 2026-09-26: the flag is cleared here, before Clerk is asked, because the first
+          // real run showed Clerk navigating home before it reported the ended session, so the
+          // listener never cleared it and the home page still showed a member's header. Clearing
+          // first is the safe side: a failed sign-out shows a guest's header until the next
+          // auth page corrects it, never the other way round (auth-flag.ts, fail-closed).
+          clearAuthFlag();
+          await clerk.signOut();
+        });
+      }
+      status?.remove();
+      if (member !== null) member.hidden = false;
+    }
+  } catch (error) {
+    showLoadFailure(status, error);
+  }
+</script>

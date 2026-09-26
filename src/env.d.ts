@@ -9,11 +9,17 @@ interface Window {
   disqus_config?: (this: DisqusPageConfig) => void;
 }
 
-// Removed 2026-09-25: the declarations of PUBLIC_SUPABASE_URL and PUBLIC_SUPABASE_PUBLISHABLE_KEY
-// that the colleague added on 2026-09-24. The two values moved into src/config.ts, where the
-// comment above them says why they are public, and nothing reads import.meta.env for them any
-// more; a declaration for an environment variable that no build supplies would only tell the next
+// Checked 2026-09-26 with the move to Clerk (CLERK.md step 3): Clerk needs no global declared here.
+// Its UI comes from the installed @clerk/ui package and is imported in src/scripts/auth.ts, so no
+// runtime script defines a global for the compiler to be told about (the owner's decision of that
+// day; the step in CLERK.md was written for the hosted UI bundle).
+
+// Removed 2026-09-25: the declarations of two environment variables that the colleague added on
+// 2026-09-24 for the previous auth provider. Nothing reads import.meta.env for sign-in settings,
+// and a declaration for an environment variable that no build supplies would only tell the next
 // reader to go looking for an .env file that is not there.
+// (Reworded 2026-09-26: the note named the previous provider and its variables, which CLERK.md
+// section 0 orders out of this branch; its lesson is unchanged.)
 
 // Added 2026-09-22, when src/scripts/site.js became site.ts and came under astro check. KaTeX's
 // auto-render extension publishes renderMathInElement as a global; it is loaded from a CDN tag in
