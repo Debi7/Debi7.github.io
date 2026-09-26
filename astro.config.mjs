@@ -9,9 +9,8 @@ import sitemap from "@astrojs/sitemap";
 // import node from "@astrojs/node";
 
 export default defineConfig({
-  // Disabled 2026-09-25 (AUTH.md section 5; the consilium verdict of that day in
-  // .specify/consilium/2026-09-25-supabase-auth-static.md). The colleague switched the project to
-  // on-demand rendering on 2026-09-24 for the Supabase sign-in, but the site is hosted on GitHub
+  // Disabled 2026-09-25. The colleague switched the project to
+  // on-demand rendering on 2026-09-24 for the previous provider's sign-in, but the site is hosted on GitHub
   // Pages, which serves files and runs no Node process: the build then wrote dist/client/ and
   // dist/server/ instead of dist/index.html, the Pages artifact had no page at its root, and the
   // live site answered 404 from the merge of 2026-09-25 while the workflow reported success. With
@@ -20,6 +19,10 @@ export default defineConfig({
   // browser now (src/scripts/auth.ts), so nothing needs a server. Her lines are kept as written,
   // with her note, so the history reads in place; @astrojs/node itself left package.json the same
   // day.
+  // (Reworded 2026-09-26 for the move to Clerk: the note named the previous auth provider and its
+  // verdict file, which CLERK.md section 0 orders out of this branch. The lesson stands, and Clerk
+  // keeps it: the sign-in runs in the browser, @clerk/astro is not used because it needs server
+  // output, and the Clerk verdict in .specify/consilium/2026-09-25-clerk-static.md says so.)
   // output: "server", // Переводит проект в режим SSR
   // adapter: node({
   //   mode: "standalone",
@@ -53,6 +56,8 @@ export default defineConfig({
       //   filter: (page) => !/\/page\/\d+\/$/.test(page) && !/\/auth\//.test(page),
       // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the site is open again, so the filter
       // it replaced is back.
+      // Checked 2026-09-26 with the move to Clerk (CLERK.md step 6): the pages under /auth/ are
+      // three now - sign-in, sign-up and the account page - and the rule keeps all three out.
       filter: (page) => !/\/page\/\d+\/$/.test(page) && !/\/auth\//.test(page),
     }),
   ],

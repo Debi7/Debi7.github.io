@@ -138,8 +138,10 @@ html.dark {
    display:none and not visibility, so the hidden blocks take no space.
    !important for the same reason as the rest of this file: Tailwind's flex,
    sm:flex and friends on those elements would otherwise win. Presentation only:
-   the data is protected by Row Level Security at Supabase, this rule keeps a
+   the data is protected by the service that holds it, this rule keeps a
    guest from seeing the frame.
+   (Reworded 2026-09-26 for the move to Clerk: the sentence above named the
+   previous auth provider, which CLERK.md section 0 orders out of this branch.)
    ============================================================================ */
 /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the site is open again, and the only
    element carrying members-only is the Account item of the menu. The rule is

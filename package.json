@@ -28,8 +28,8 @@
     "Added 2026-09-22: @astrojs/rss powers /rss.xml and /video/rss.xml. It has no such constraint and is left on a caret.",
     "Added 2026-09-22: katex is listed although nothing imports the library in code. src/layouts/ArticleLayout.astro imports katex/dist/katex.min.css, the stylesheet the markup rehype-katex emits needs, and until now that path resolved only because rehype-katex depends on katex and npm hoists it to the root of node_modules. That is a dependency on somebody else's dependency: the day rehype-katex stops requiring it, or npm nests it, the article build fails with Cannot find module - the same failure that a missing rehype-katex produced on 2026-09-22. Declaring it downloads nothing new; 0.16.47 was already in the tree and in the lock.",
     "katex 0.16 declares no engines field, so it places no demand on the Node version this project is pinned to (see engines above, node >=20.0.0 <21). The caret on a 0.x version allows patch and nothing wider, which keeps it that way.",
-    "Changed 2026-09-25 (AUTH.md; the consilium verdict of that day): @astrojs/node and @supabase/ssr are gone, and with them the overrides block that forced @supabase/ssr to accept the installed @supabase/supabase-js (its peer range asked for 2.114 or newer). GitHub Pages runs no server, so the on-demand mode they served produced a build the host could not publish and the live site answered 404.",
-    "@supabase/supabase-js stays and is used in the browser only, from src/scripts/auth.ts: sign-up, sign-in, the confirmation of an email address and one read under Row Level Security. It must never be constructed in frontmatter: on this project's Node 20 the 2.109 client throws at construction (no native WebSocket), which is also why nothing here needs the ws package. The URL and the publishable key it uses are public by design and live in src/config.ts."
+    "Added 2026-09-26 (CLERK.md, the Clerk verdict of 2026-09-25): @clerk/clerk-js and @clerk/localizations are exact-pinned and used in the browser only, from src/scripts/auth.ts, which only the three pages under src/pages/auth/ import. They must never be imported from frontmatter or from a file the header loads. The UI bundle @clerk/ui@1 is fetched at runtime from the instance's Frontend API host and is not a dependency. Size, measured 2026-09-26 on a build with a publishable key (with the key empty, as it is until the Clerk application exists, the minifier drops everything after the empty-key check and the numbers are smaller): the entry chunk of the three auth pages is 1,795 KB raw and 656 KB gzip - @clerk/clerk-js's npm entry is its single-file ESM build (dist/clerk.mjs), with the wallet, Stripe and password-strength code inlined - plus React in a shared chunk of 65 KB gzip, plus about 200 small chunks of Clerk's components, each fetched only when that component is shown. The 82 KB of 2026-09-25 was Clerk's hosted browser build, which the owner turned down on 2026-09-26 in favour of the installed packages, accepting the size. Only /auth/signin/, /auth/signup/ and /auth/account/ reference any of these chunks (checked in dist/ the same day). Changed later on 2026-09-26, the owner's decision (everything through installed packages): the UI is no longer fetched from Clerk's host but comes from @clerk/ui 1.36.0, released together with @clerk/clerk-js 6.34.1, and src/scripts/auth.ts passes its `ui` export to load(), as Clerk's Component versioning page documents. @clerk/ui needs react and react-dom as peer dependencies; they are exact-pinned to 19.3.0, inside its peer range, and used by Clerk's components only. The build prints a warning that the \"use client\" directive in @clerk/ui was ignored; that directive is for React server frameworks and means nothing in a browser bundle.",
+    "Added 2026-09-26: the overrides block pins commander to 14.0.3 for @solana/errors only. @clerk/clerk-js pulls Solana wallet packages for Web3 sign-in, which this site does not use; through @solana/kit 7 they reach @solana/errors 7.1.1, whose command-line tool (bin/cli.mjs) depends on commander 15.0.0, and commander 15 declares node >=22.12.0. This project stays on Node 20 (owner, 2026-09-26: no Node upgrade under any circumstances) and .npmrc sets engine-strict, so npm refused the install. commander 14 declares node >=20; the CLI is never bundled into the site. Remove the override only together with the Solana chain or a Node change."
   ],
   "dependencies": {
     "@astrojs/alpinejs": "0.4.9",
@@ -38,11 +38,15 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "3.6.0",
     "@astrojs/tailwind": "^5.1.3",
-    "@supabase/supabase-js": "^2.109.0",
+    "@clerk/clerk-js": "6.34.1",
+    "@clerk/localizations": "4.20.0",
+    "@clerk/ui": "1.36.0",
     "@types/alpinejs": "^3.13.11",
     "alpinejs": "^3.17.3",
     "astro": "^4.16.18",
     "katex": "^0.16.47",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
     "tailwindcss": "^3.4.17",
@@ -53,5 +57,10 @@
     "prettier": "^3.3.3",
     "prettier-plugin-astro": "^0.14.1",
     "prettier-plugin-tailwindcss": "^0.6.9"
+  },
+  "overrides": {
+    "@solana/errors": {
+      "commander": "14.0.3"
+    }
   }
 }

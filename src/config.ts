@@ -3,7 +3,10 @@
 // word). A literal in both places would be the second spelling of one setting (CLAUDE.md, "One
 // site-wide setting has one home"); the object cannot read its own field while it is being built,
 // hence the constant.
-const dashboardPath = "/auth/dashboard/";
+// Renamed 2026-09-26 with the move to Clerk (CLERK.md step 2): the member's page is /auth/account/
+// now, where Clerk's profile component is mounted, and the constant is accountPath to match. The
+// note above still applies; read "site.auth.account" for "site.auth.dashboard".
+const accountPath = "/auth/account/";
 
 export const site = {
   title: "Radiesthesia Club",
@@ -80,21 +83,31 @@ export const site = {
   // it; CONTENT.md, "Renaming a tag", has both procedures side by side.
   termLabels: {},
 
-  // Added 2026-09-25 with the browser-side sign-in (AUTH.md; the consilium verdict of that day).
-  // The Supabase project the site talks to. Both values are PUBLIC BY DESIGN and belong here, not
-  // in an .env file: the publishable key carries the anon role, every read goes through Row Level
-  // Security, and Supabase's own guide says it is safe to ship in a page as long as RLS is on
-  // every table. There is one project for the dev server, the owner's machine and the deployed
-  // site, so this is the one home of the setting; .env.local, which used to hold them, is no
-  // longer tracked and no build variable exists in GitHub Actions. What must never appear here or
-  // anywhere in the repository is a secret key, a service-role key or a database password: those
-  // open the project without RLS. Do not move these two back into import.meta.env to "hide"
-  // them - they end up in the visitor's JavaScript either way.
-  supabase: {
-    url: "https://hhpjfgjajmrlnnsbqnor.supabase.co",
-    publishableKey: "sb_publishable_gEZsOohaf2d-pype3zCcqA_NssmduL0",
+  // Added 2026-09-26 with the move to Clerk (CLERK.md step 2; the verdict in
+  // .specify/consilium/2026-09-25-clerk-static.md). It replaces the previous provider's block,
+  // which the owner ordered out of this branch together with its name (CLERK.md section 0).
+  //
+  // The publishable key of the Clerk application. It is PUBLIC BY DESIGN and belongs here, not in
+  // an .env file: it only names the Clerk instance, and it ends up in the visitor's JavaScript
+  // whichever way it is supplied. One key serves every place the site runs - the dev server on any
+  // port, astro preview and GitHub Pages - because it is the development instance's pk_test_ key,
+  // which accepts localhost and a host-provided domain such as debi7.github.io. Nothing in the code
+  // branches on the host. The secret key (sk_...) is never needed by a static site and must never
+  // appear here or anywhere in the repository.
+  //
+  // Empty until the Clerk application exists: the owner or the colleague creates it in the Clerk
+  // Dashboard and pastes the key here (CLERK.md section 1; CLERK-DASHBOARD.md section 7.1). While it
+  // is empty the site builds and every page but the three auth pages works as before; those three
+  // say that the form could not be loaded, and src/scripts/auth.ts logs why.
+  clerk: {
+    publishableKey: "",
   },
 
+  // Changed 2026-09-26 with the move to Clerk (CLERK.md step 2): the pages are three - sign-in,
+  // sign-up and the account page. callback, forgot and reset went, because Clerk confirms an email
+  // address and resets a password by a code typed into its own form, so no mail lands on the site;
+  // dashboard became account; demoTable went with the service it named. The reasons below about
+  // one home and the trailing slash still hold.
   // The addresses of the sign-in pages and the two names the scripts share. One home for the
   // addresses because six files used to spell them out, and because every one of them has to end
   // with a slash: under trailingSlash "always" the dev server answers 404 to /auth/signin without
@@ -105,15 +118,8 @@ export const site = {
   auth: {
     signIn: "/auth/signin/",
     signUp: "/auth/signup/",
-    callback: "/auth/callback/",
-    dashboard: dashboardPath,
-    // Added 2026-09-25 after the colleague's review (AUTH.md section 11.4): password recovery.
-    // forgot asks for the mail, reset is where the mail lands and the new password is set; reset
-    // is the address that goes on the redirect allow-list.
-    forgot: "/auth/forgot/",
-    reset: "/auth/reset/",
+    account: accountPath,
     flagKey: "kb-auth-expires",
-    demoTable: "members_demo",
   },
 
   pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },
@@ -130,7 +136,9 @@ export const site = {
     // one language, the page it opens keeps its Russian title). Before About, where the owner put it;
     // the Hugo items keep their order among themselves. Menu.astro marks every item but Home
     // members-only (AUTH.md section 10), so a guest never sees it.
-    { name: "Account", url: dashboardPath },
+    // Changed 2026-09-26 (CLERK.md step 2): the item keeps its name and place and opens
+    // /auth/account/, the page that replaced the dashboard.
+    { name: "Account", url: accountPath },
     { name: "About", url: "/about/" },
   ],
 } as const;
