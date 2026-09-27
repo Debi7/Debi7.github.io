@@ -7,6 +7,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import SEO from "../components/SEO.astro";
 import ScrollToTop from "../components/ScrollToTop.astro";
+import ContactModal from "../components/ContactModal.astro";
 
 import type { SiteConfig, PageLike } from "../lib/seo";
 import { site } from "../config";
@@ -178,6 +179,7 @@ const page: PageLike = {
       class="mx-auto w-full max-w-4xl overflow-x-auto px-6 sm:overflow-visible"
     >
       <Footer />
+      <ContactModal />
     </footer>
 
     {

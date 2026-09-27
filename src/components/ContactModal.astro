@@ -1,0 +1,139 @@
+---
+
+---
+
+<div
+  id="contact-modal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+>
+  <!-- Контейнер -->
+  <div
+    class="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+  >
+    <!-- Кнопка закрытия -->
+    <button
+      id="close-modal-btn"
+      class="absolute right-4 top-4 text-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+    >
+      ✕
+    </button>
+
+    <h3
+      class="mb-4 font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-100"
+    >
+      Обратная связь
+    </h3>
+
+    <form
+      action="https://api.web3forms.com/submit"
+      method="POST"
+      class="space-y-4"
+    >
+      <input
+        type="hidden"
+        name="access_key"
+        value="51da2319-2d97-4cfd-99e3-4fd9c76df946"
+      />
+
+      <div>
+        <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400"
+          >Ваше имя</label
+        >
+        <input
+          type="text"
+          name="name"
+          required
+          class="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400"
+          >Email для связи</label
+        >
+        <input
+          type="email"
+          name="email"
+          required
+          class="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400"
+          >Сообщение</label
+        >
+        <textarea
+          name="message"
+          rows="4"
+          required
+          class="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-emerald-700"
+      >
+        Отправить письмо
+      </button>
+    </form>
+  </div>
+</div>
+
+<script is:inline>
+  const form = document.querySelector(
+    'formform[action*="https://api.web3forms.com/submit"]',
+  );
+  const modal = document.getElementById("contact-modal");
+  const openBtn = document.getElementById("open-modal-btn");
+  const closeBtn = document.getElementById("close-modal-btn");
+
+  // открыть
+  openBtn?.addEventListener("click", () => {
+    modal?.classList.remove("hidden");
+    modal?.classList.add("flex");
+  });
+
+  // закрыть
+  closeBtn?.addEventListener("click", () => {
+    modal?.classList.remove("flex");
+    modal?.classList.add("hidden");
+  });
+
+  // закрыть так же при клике на полупрозрачный фон вокруг формы
+  modal?.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.remove("flex");
+      modal.classList.add("hidden");
+    }
+  });
+
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          form.reset();
+
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          alert("Сообщение успешно отправлено!");
+        } else {
+          alert("Произошла ошибка при отправке. Попробуйте еще раз.");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Произошла ошибка при отправке. Попробуйте еще раз.");
+      }
+    });
+  }
+</script>
