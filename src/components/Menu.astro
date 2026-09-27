@@ -99,14 +99,6 @@ const isPanel = variant === "panel";
           <li
             class:list={[
               "text-base text-gray-600 dark:text-gray-200",
-              // members-only on every item but Home, added the evening of 2026-09-25: a guest's
-              // header shows Home, the theme switch and the sign-in icon (the owner's list), and
-              // custom.css hides the class until the gate in Base.astro marks the document
-              // kb-member (AUTH.md section 10). The bar variant below does the same.
-              // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): only the Account item, the member's
-              // page, is members-only now; a guest sees every other item, as before the gate.
-              // Changed 2026-09-26 (CLERK.md step 2): site.auth.account, the page that replaced
-              // the dashboard; same item, same rule.
               item.url === site.auth.account && "members-only",
             ]}
           >
@@ -125,52 +117,69 @@ const isPanel = variant === "panel";
       </ul>
     </nav>
   ) : (
+    // <nav class="hidden w-full justify-end whitespace-nowrap sm:flex">
+    //   <ul class="flex list-none flex-row items-center space-x-1 py-2 lg:space-x-3">
+    //     {site.menu.map((item) => (
+    //       <li
+    //         class:list={[
+    //           "text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg",
+    //           item.url === site.auth.account && "members-only",
+    //         ]}
+    //       >
+    //         <a
+    //           class:list={[
+    //             "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 lg:py-2",
+    //             ...currentClasses(ariaCurrent(item.url)),
+    //           ]}
+    //           aria-current={ariaCurrent(item.url)}
+    //           href={item.url}
+    //         >
+    //           {item.name}
+    //         </a>
+    //       </li>
+    //     ))}
+    //   </ul>
+    // </nav>
+    // )
+    // }
+
     <nav class="hidden w-full justify-end whitespace-nowrap sm:flex">
-      {/* Changed 2026-09-22, the reviewer's remark that the items stand too far apart and the
-        owner's instruction to halve it: from 1024px the gap was Hugo's space-x-6 (24px) and is
-        space-x-3 (12px) now, and the links below lost lg:px-3 (12px a side) for the px-1.5 (6px)
-        they already carry under that width. Five gaps and six links, so the row is about 132px
-        narrower at desktop widths. That is a visible departure from Hugo, which is why it is in
-        MIGRATION-PLAN.md section 9.
-
-        The band from 640px to 1024px is deliberately left as it was, space-x-1 and px-1.5: those
-        values are not a choice but the result of fitting six items, the title, the logo and the
-        theme switch into one row, and halving 4px gives words that touch.
-
-        Worth recording, because the history looks odd otherwise: the reviewer made the same
-        change on main the same evening (commit 1bf0269, "Menu spacing"), lg:space-x-6 to
-        lg:space-x-3, the identical value arrived at independently. Merging main into this branch
-        conflicted on this block alone - the class itself merged cleanly because both sides had
-        written the same thing - and the resolution kept this version, which is hers plus the
-        padding on the links and this note. Nothing of hers was dropped. */}
-      <ul class="flex list-none flex-row items-center space-x-1 py-2 lg:space-x-3">
-        {site.menu.map((item) => (
-          <li
-            class:list={[
-              "text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg",
-              // Same as the panel variant above (2026-09-25 evening, the guest gate).
-              // Reopened with it after the colleague's review: Account only.
-              // Changed 2026-09-26 (CLERK.md step 2): site.auth.account, as above.
-              item.url === site.auth.account && "members-only",
-            ]}
-          >
-            <a
+      <div class="min-[640px]:max-[708px]:scrollbar-none relative flex items-center justify-between min-[640px]:max-[708px]:flex min-[640px]:max-[708px]:overflow-x-auto">
+        <ul class="flex list-none flex-row items-center space-x-1 py-2 min-[640px]:max-[708px]:w-max min-[640px]:max-[708px]:flex-nowrap min-[640px]:max-[708px]:px-2 lg:space-x-3">
+          {site.menu.map((item) => (
+            <li
               class:list={[
-                // lg:px-3 dropped 2026-09-22 with the gap above: half of it is the px-1.5 this
-                // line already sets, so the padding is now one value at every width. lg:py-2
-                // stays - the reviewer measured the horizontal distance, and the height of the
-                // bar is what decides where the carousel meets the header.
-                "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 lg:py-2",
-                ...currentClasses(ariaCurrent(item.url)),
+                "text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg",
+                item.url === site.auth.account && "members-only",
               ]}
-              aria-current={ariaCurrent(item.url)}
-              href={item.url}
             >
-              {item.name}
-            </a>
-          </li>
-        ))}
-      </ul>
+              <a
+                class:list={[
+                  "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 lg:py-2",
+                  ...currentClasses(ariaCurrent(item.url)),
+                ]}
+                aria-current={ariaCurrent(item.url)}
+                href={item.url}
+              >
+                {item.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <span class="pointer-events-none absolute bottom-0 left-0 right-0 hidden h-[2px] bg-gray-400/20 backdrop-blur-[3px] min-[640px]:max-[708px]:block" />
+      </div>
     </nav>
   )
 }
+
+<style>
+  /* Скрытие дефолтного скроллбара */
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>
