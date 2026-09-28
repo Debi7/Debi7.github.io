@@ -53,9 +53,15 @@ const { shortname } = site.disqus;
   class:list={["my-6 flex flex-col items-center", locked && "hidden"]}
   data-locked={locked ? "true" : undefined}
 >
+  {
+    /* Changed 2026-09-28 at the owner's request: the button is outlined like the previous/next
+    cards under an article (PostNav.astro) - a thin border-gray-200 line, which dark mode paints
+    #334155 (main.css), and rounded-lg corners instead of rounded. It was a bare text
+    button until then. Posts and videos share this component, so both get the frame. */
+  }
   <button
     id="toggle-disqus-btn"
-    class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
+    class="rounded-lg border border-gray-200 px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
   >
     Показать комментарии
   </button>
