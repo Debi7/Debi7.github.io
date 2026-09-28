@@ -189,3 +189,32 @@ It works without a mail program, and the message lands in a mailbox somebody rea
 - Which mailbox the web3forms key sends to, and who answers it: the owner and the colleague to confirm.
 - The real support address for `supportEmail`.
 - The form over the sign-in card has not been tried yet; check that it sits above Clerk's card in both themes.
+
+The first point was answered the same evening: while the site is being tested, the messages go to the colleague's
+own address. How that is set is 12.5.
+
+### 12.5 Where the messages go, and how to change the address
+
+Two different things send mail here, and only one of them involves Clerk.
+
+**The feedback form** (`ContactModal.astro`, and the help card once it opens that form). Clerk plays no part: the
+address is the one the web3forms access key was created with. Web3forms' documentation: "Once you submit the form,
+you will get the Access key in your Email", and "An access key is used to send emails to a particular email". The
+key is public by design ("You do not need to hide the access key. Access key is public"), so it sits in the markup.
+
+1. Find out which address the current key was made with. It came with the colleague's commit `786ee8e`; if it was
+   made with the colleague's address, the messages already go there and nothing needs changing.
+2. Check it: open any page, press the envelope in the footer, fill the form in and send it. The letter arrives at
+   that address (look in the spam folder too).
+3. To send the messages somewhere else: on web3forms.com, create a new access key with the new address; the key
+   arrives by email. Put it into `value` of the `access_key` input in `src/components/ContactModal.astro` and commit.
+   The documentation says nothing about changing the address of an existing key, so a new key is the sure way.
+4. Web3forms also documents a `ccemail` field for a copy to a second address.
+
+**Clerk's own "Написать в поддержку" button**, as long as it is not wired to the feedback form (12.3). It opens the
+visitor's mail program with Clerk's support address, so an address has to be given to Clerk: `supportEmail` in the
+options of `clerk.load()` in `src/scripts/auth.ts` ("The support email address for display in authentication
+screens", Clerk's types). Two cautions. The address then stands in the site's public code, where anyone can read it,
+which for a personal address means spam; the feedback form keeps the address out of the page. And Clerk reads a
+support address from the instance's settings too, but where the Dashboard sets it was not found. Once the button
+opens the feedback form, the letter goes through web3forms to the key's address and Clerk needs no address at all.
