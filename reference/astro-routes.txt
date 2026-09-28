@@ -126,6 +126,7 @@
 /video/2026/
 /video/2026/page/2/
 /video/my-first-video/
+/video/paid-demo-2/
 /video/video-1/
 /video/video-10/
 /video/video-11/

@@ -50,9 +50,11 @@ the id again, but does not take back an id already seen. Section 8 says what to 
 
 ## 3. Where to see it now, on this machine
 
-The live site has no paid video yet: the service is not deployed (section 5). Locally everything works, with one
-paid example, `src/content/video/paid-demo.md`. It is a draft, so it exists in `npm run dev` only and never reaches
-the published site.
+No paid video plays on the live site yet: the service is not deployed (section 5). Locally everything works, with
+two paid examples. `src/content/video/paid-demo.md` is a draft, so it exists in `npm run dev` only and never reaches
+the published site. `paid-demo-2.md` (open `/video/paid-demo-2/` the same way) is published, at the owner's request
+of 2026-09-28, and is listed under Video like every lecture; on the live site, until the service is deployed and
+`VIDEOS` carries its slug, a guest sees the sign-in box there and a signed-in visitor "Видео сейчас недоступно".
 
 1. Open a terminal in the project folder and run `npm run dev:all`. It starts the service at
    `http://127.0.0.1:8787` and the site at `http://localhost:4321` together, in the same terminal. The service prints
@@ -76,7 +78,8 @@ the published site.
 
 The local service reads the ids from `workers/video-access/videos.local.json`, which git ignores, so no real id ever
 enters the repository. Today it maps `paid-demo` to a public YouTube demo video (`M7lc1UVf-VE`, the sample video of
-YouTube's own player documentation). Put the id of a real unlisted lecture there to see that instead. The file is
+YouTube's own player documentation), and `paid-demo-2` to a public Blender Foundation film (`aqz-KE-bpKQ`, "Big Buck
+Bunny"), both stand-ins. Put the id of a real unlisted lecture there to see that instead. The file is
 read on every request; no restart is needed.
 
 ## 4. Adding a paid video, step by step

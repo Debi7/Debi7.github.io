@@ -166,6 +166,15 @@ name in the forms should not be in quotes.
   - `PAID-VIDEO.md` section 4 said to edit `VIDEOS` by adding a line; a Cloudflare secret is never shown again after
     saving, so the field opens empty. Corrected: a master copy of the list in the club's password manager, pasted
     whole each time.
+  - A second paid example at the owner's request, `src/content/video/paid-demo-2.md`, published (not a draft: the
+    owner asked for it in the Video list like every lecture; the first example stays a draft). Its id
+    is only in the ignored `videos.local.json`, where a public Blender Foundation film (`aqz-KE-bpKQ`, embedding
+    checked through YouTube's oEmbed) stands in until the owner uploads the real lecture as Unlisted. Browser check on
+    the dev server: the list shows it; a guest gets the sign-in box, no id anywhere in the page and no comments; the
+    demo account gets the player with that id on youtube-nocookie.com and then the comments button; signed out at
+    the end. The build has 147 pages, one more: the lecture is in the list, its page, the video feed, the search index
+    and the sitemap, with the stub and no id - `aqz-KE-bpKQ` appears nowhere in `dist/`. `reference/astro-routes.txt`
+    gained `/video/paid-demo-2/`; `check:pages` passed.
 
 ### Verification
 
