@@ -116,3 +116,7 @@ exact name of the setting was not checked.
 Changed 2026-09-28, the owner's choice: on a paid video the comments block stays hidden until the access service has
 let the visitor watch (`Disqus.astro`, the `locked` prop; `PAID-VIDEO.md` section 1). Posts and public videos keep
 their comments for everyone. Disqus itself is not changed.
+
+Changed later the same night, the owner's decision: on a paid video the comments are closed to a guest only. They
+show once the page has confirmed that the visitor is signed in, access or not, so that someone who has not paid yet
+can be instructed there (`site.videoAccess.signedInEvent`; `PAID-VIDEO.md` section 1).

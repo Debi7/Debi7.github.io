@@ -15,6 +15,14 @@
 //    seconds); 403 means signed in but not a member; 404 means the service does not know the
 //    slug yet. Anything else, or no answer, is "unavailable", with the reason in the console.
 // 5. The player address is used only when it is https on one of site.videoAccess.playerHosts.
+//
+// Changed later on 2026-09-28, the owner's decision on who sees what on a paid lecture: a guest
+// gets block 1 and the sign-in link; a signed-in visitor without access also gets the comments,
+// so that they can be instructed there before paying; a member gets the player, block 2 and the
+// comments. So once step 3 has confirmed a session, this script sends
+// site.videoAccess.signedInEvent, which shows the comments (Disqus.astro), and only after that
+// does it look at the service. The check for an empty service address, which came first, moved
+// behind step 3 for the same reason: it used to show "unavailable" even to a guest.
 import { site } from "../config";
 import { readAuthFlag } from "./auth-flag";
 // A type-only import is erased from the bundle, so it does not pull Clerk into this script; the
@@ -51,13 +59,6 @@ async function run(box: HTMLElement): Promise<void> {
     }
   };
 
-  if (endpoint === "") {
-    console.error(
-      "Paid video: site.videoAccess.endpoint is empty (PAID-VIDEO.md, one-time setup).",
-    );
-    show("failed");
-    return;
-  }
   if (!readAuthFlag()) {
     show("guest");
     return;
@@ -66,6 +67,22 @@ async function run(box: HTMLElement): Promise<void> {
 
   const clerk = await loadClerk();
   if (clerk === undefined) {
+    show("failed");
+    return;
+  }
+  // Added later on 2026-09-28 (the header says why): no session means a stale flag, so the
+  // sign-in link, as the token check below would give; a session tells the comments to show.
+  if (!clerk.session) {
+    show("guest");
+    return;
+  }
+  document.dispatchEvent(new CustomEvent(site.videoAccess.signedInEvent));
+
+  // Moved here from the top of this function later on 2026-09-28 (see the header).
+  if (endpoint === "") {
+    console.error(
+      "Paid video: site.videoAccess.endpoint is empty (PAID-VIDEO.md, one-time setup).",
+    );
     show("failed");
     return;
   }

@@ -13,10 +13,41 @@ import {
   type TermSource,
   type SearchSource,
 } from "./lists";
-import { summary } from "./summary";
+// plainifyMarkdown added 2026-09-28 for membersOnlyHeadings() below: the same inline-Markdown
+// stripping the search index uses, so a heading's text is compared in the form Astro reports it.
+import { summary, plainifyMarkdown } from "./summary";
 import { t } from "../i18n/strings";
 
 export type Video = CollectionEntry<"video">;
+
+// Added 2026-09-28, the colleague's "block 2": text and pictures under a paid lecture for the
+// members who may watch it (PAID-VIDEO.md, section 4, "Materials for members"). The author wraps
+// that part of the body in a div carrying data-members-only, with blank lines inside so the
+// Markdown in it still renders, and VideoLayout.astro keeps it hidden until the access service
+// has let the visitor watch - the same moment the comments appear. Hidden, not secret: the text
+// is in the page source and in the repository, and the pictures are public files; the owner chose
+// that on 2026-09-28 (option A), and a real lock would be the access service handing the block
+// out like the video id (option B). What must not show the block is everything built from the
+// body for everyone - the card, the feed, the search index, the table of contents - so those take
+// publicBody() and membersOnlyHeadings() instead of the raw body.
+const membersOnlyBlock = /<div data-members-only>[\s\S]*?<\/div>/g;
+const membersOnlyMarker = "data-members-only";
+
+/** A video's body without its members-only blocks: what a card, the feed and the search show. */
+export function publicBody(video: Video): string {
+  return video.body.replace(membersOnlyBlock, "");
+}
+
+/** The texts of the headings inside the members-only blocks, kept out of the table of contents. */
+export function membersOnlyHeadings(video: Video): Set<string> {
+  const texts = new Set<string>();
+  for (const block of video.body.match(membersOnlyBlock) ?? []) {
+    for (const line of block.split("\n")) {
+      if (/^#{1,6}\s/.test(line)) texts.add(plainifyMarkdown(line));
+    }
+  }
+  return texts;
+}
 
 // A YouTube address in any of its forms: the watch and embed pages, the short youtu.be links and
 // the thumbnail host. Added 2026-09-28 for the guard below.
@@ -37,6 +68,22 @@ export async function getVideos(): Promise<Video[]> {
         `src/content/video/${video.id}: a paid video must not link to YouTube in its text; its id lives only at the access service`,
       );
     }
+    // Added 2026-09-28 with the members-only blocks (see membersOnlyBlock above). Only a paid
+    // video's page ever reveals one, so on a public video the block would stay hidden from
+    // everybody; and a block whose opening line is spelled differently or whose closing tag is
+    // missing is not cut out of the card, the feed and the search index. Both fail the build.
+    if (video.body.includes(membersOnlyMarker)) {
+      if (video.data.access !== "paid") {
+        throw new Error(
+          `src/content/video/${video.id}: a data-members-only block belongs in a paid video (access: paid); on a public one nobody would ever see it`,
+        );
+      }
+      if (publicBody(video).includes(membersOnlyMarker)) {
+        throw new Error(
+          `src/content/video/${video.id}: a members-only block must open with exactly <div data-members-only> and close with </div>, with no other div inside`,
+        );
+      }
+    }
   }
   return videos;
 }
@@ -52,7 +99,8 @@ export function videoCard(video: Video): Card {
     url: videoUrl(video),
     title: video.data.title,
     date: video.data.date,
-    summary: summary(video.body),
+    // Changed 2026-09-28: publicBody(), so a members-only block never reaches a list card.
+    summary: summary(publicBody(video)),
     tags: video.data.tags,
     action: t.list_watch_video,
   };
@@ -81,6 +129,7 @@ export function videoSearch(video: Video): SearchSource {
   return {
     card: videoCard(video),
     categories: video.data.categories,
-    text: video.body,
+    // Changed 2026-09-28: publicBody(), so the search cannot find the text of a members-only block.
+    text: publicBody(video),
   };
 }

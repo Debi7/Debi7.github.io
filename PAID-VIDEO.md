@@ -30,6 +30,28 @@ see no comments there. On public videos and posts the comments are as before. Th
 more: a Disqus thread can also be opened on disqus.com itself, and writing there needs a Disqus account, not a club
 membership. Comments that only members can read would have to be the site's own (a consilium subject of its own).
 
+Changed later on 2026-09-28, the owner's decision; the paragraph above describes the first choice. On a paid video
+the comments are closed to a guest only: they show as soon as the page has confirmed that the visitor is signed in,
+access or not, so that someone who has not paid yet can ask and be instructed there. In short:
+
+- A guest: block 1 (below) and the sign-in box.
+- Signed in, no access yet: block 1, the "after payment" box and the comments.
+- A member: block 1, the player, block 2 and the comments.
+
+The page settles whether the visitor is signed in before it asks the service, so on the live site, while the service
+is not deployed, a guest still gets the sign-in box (it got "Видео сейчас недоступно" until that night) and a
+signed-in visitor gets "Видео сейчас недоступно" with the comments.
+
+Under the player a paid lecture can have two parts of text (added the same night, the colleague's proposal):
+
+- **Block 1**, the description, time codes and anything else everybody may read. It is the ordinary text of the
+  entry, as on any video.
+- **Block 2**, explanations, diagrams and pictures for the members who may watch. It shows only once the player has
+  appeared; a guest and a signed-in visitor without access do not see it, and its headings are left out of the
+  table of contents. It is hidden, not locked: its text is in the page source and in the public repository, and its
+  pictures are public files that anyone with the address can open. Section 4, "Materials for members", says how to
+  write it. A real lock (the service handing block 2 out like the video id) would be a consilium subject.
+
 ## 2. How it works, in five lines
 
 1. The page holds no id of a paid video: the build refuses an entry that carries one (`videoId`, `videoUrl`,
@@ -137,6 +159,36 @@ The order of steps 4 and 8 does not matter much: if the page goes live before th
 **Turning a public video into a paid one** is steps 1 to 8 with a new upload. The old id has been public on the site
 and stays in the git history, so marking the old entry `access: paid` alone would not close it. Set the old YouTube
 video to Private after the new one is in place.
+
+### Materials for members (block 2)
+
+Added 2026-09-28. In the entry's text, after what everybody may read, wrap the members' part in a div with the
+attribute `data-members-only`. The blank lines after the opening line and before the closing one are needed: without
+them the Markdown inside is not turned into headings, paragraphs and pictures.
+
+```markdown
+Описание лекции и тайм-коды, которые видят все.
+
+<div data-members-only>
+
+## Материалы к лекции
+
+Пояснения к лекции.
+
+![Схема](/images/video/lecture-dowsing-2/diagram.png)
+
+</div>
+```
+
+- Pictures go in `public/images/video/<slug>/` and are written with that address, starting with `/images/`.
+- The opening line is exactly `<div data-members-only>` and the block ends with `</div>`, with no other div inside.
+  Anything else fails the build with a message naming the file, because a block that is not recognised would reach
+  the list card, the feed and the search index.
+- Only a paid entry (`access: paid`) may have such a block; on a public one nobody would ever see it, and the build
+  says so.
+- The block never reaches the list card, `/video/rss.xml`, the site search or the table of contents; the page is
+  the only place it is written, hidden until the player appears. `paid-demo-2` has one, with a sample diagram.
+- No YouTube link inside it either: the rule of step 5 covers the whole text.
 
 ### More than one paid video
 

@@ -189,6 +189,21 @@ name in the forms should not be in quotes.
     `min-[640px]:max-[708px]:scrollbar-none` produced no CSS. Now `min-w-0` on the three and a plain `scrollbar-none`;
     the title gives way first (`sm:shrink-[100]`), so the header at 390px to 1280px is unchanged (screenshots at
     680px identical) and the overfull menu scrolls (527px of 620px) with every icon on screen.
+  - Block 2 under a paid lecture (the colleague's proposal; option A, hidden, not locked): `<div data-members-only>`
+    in the entry, hidden by a global rule in `VideoLayout.astro` and shown on `site.videoAccess.grantedEvent`;
+    `publicBody()` and `membersOnlyHeadings()` keep it out of the card, the feed, the search index and the table of
+    contents; `getVideos()` refuses a block in a public entry or a malformed one (both proved on temporary entries,
+    then removed). `paid-demo-2` has one with a sample diagram. Browser check, 10 of 10: a guest sees the sign-in
+    box, no block 2 (its picture is still downloaded - hidden, not locked), no block 2 heading in the contents, and
+    the comments; the demo account sees the player, block 2 with the diagram, and the comments.
+  - Who sees what on a paid lecture, the owner's decision the same night: a guest gets block 1 and the sign-in box;
+    a signed-in visitor without access also the comments, so that they can be instructed before paying; a member also
+    the player and block 2. `paid-video.ts` confirms the session first and sends `site.videoAccess.signedInEvent`,
+    which `Disqus.astro` now waits for instead of `grantedEvent`; `grantedEvent` shows block 2. The check for an
+    empty service address moved behind the session check: it used to show "unavailable" to guests as well. Browser
+    check, 9 of 9, on the dev server with the service (guest; the demo account; the same with a 403 from the service)
+    and on the production build with no service address (guest: the sign-in box, no longer "unavailable"; signed
+    in: "unavailable" with the comments); block 1 everywhere, block 2 only for the member.
 
 ### Verification
 

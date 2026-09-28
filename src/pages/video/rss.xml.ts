@@ -6,7 +6,8 @@
 // who subscribes here gets the lectures and not the articles.
 import rss from "@astrojs/rss";
 import type { APIContext } from "astro";
-import { getVideos, videoUrl } from "../../lib/video";
+// publicBody added 2026-09-28 (members-only blocks, lib/video.ts).
+import { getVideos, videoUrl, publicBody } from "../../lib/video";
 import { summary } from "../../lib/summary";
 import { site } from "../../config";
 import { t } from "../../i18n/strings";
@@ -30,7 +31,8 @@ export async function GET(context: APIContext) {
     items: videos.slice(0, feedLength).map((video) => ({
       title: video.data.title,
       pubDate: video.data.date,
-      description: video.data.description || summary(video.body),
+      // Changed 2026-09-28: publicBody(), so a members-only block never reaches the feed.
+      description: video.data.description || summary(publicBody(video)),
       link: videoUrl(video),
       categories: video.data.tags,
     })),

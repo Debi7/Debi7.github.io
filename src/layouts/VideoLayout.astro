@@ -25,7 +25,13 @@
 // entry even if the schema's rule were loosened.
 import ArticleLayout from "./ArticleLayout.astro";
 import type { MarkdownHeading } from "astro";
-import { videoLink, videoUrl, type Video } from "../lib/video";
+// membersOnlyHeadings added 2026-09-28 (members-only blocks, lib/video.ts).
+import {
+  videoLink,
+  videoUrl,
+  membersOnlyHeadings,
+  type Video,
+} from "../lib/video";
 import PaidVideo from "../components/PaidVideo.astro";
 
 interface Props {
@@ -49,6 +55,13 @@ const player =
   !paid && data.videoId
     ? `https://www.youtube-nocookie.com/embed/${data.videoId}?rel=0`
     : undefined;
+// Added 2026-09-28 with the members-only blocks (lib/video.ts): their headings stay out of the
+// table of contents, which is printed for everyone and would otherwise name, and link to, a part
+// of the page a guest cannot see. A member sees those headings in the text, not in the contents.
+const hiddenHeadings = membersOnlyHeadings(video);
+const tocHeadings = headings.filter(
+  (heading) => !hiddenHeadings.has(heading.text),
+);
 ---
 
 <ArticleLayout
@@ -61,7 +74,7 @@ const player =
   timeLabel={data.duration}
   shareTitle={data.title}
   shareTexts={[data.description]}
-  headings={headings}
+  headings={tocHeadings}
   prev={prev && videoLink(prev)}
   next={next && videoLink(next)}
   isVideo={true}
@@ -95,3 +108,31 @@ const player =
   </div>
   <slot />
 </ArticleLayout>
+
+{
+  /* Added 2026-09-28 with the members-only blocks (lib/video.ts). A block comes from the entry's
+  Markdown, which Astro does not stamp with this file's scope, so the rule has to be global; it
+  reaches video pages only, the only pages that load this layout. The block is hidden from the
+  first paint, JavaScript on or off, and shown by the class the handler below adds. */
+}
+<style is:global>
+  [data-members-only]:not(.members-open) {
+    display: none;
+  }
+</style>
+
+<script>
+  // Added 2026-09-28: shows the members-only blocks once the access check has put the player in
+  // place - the event src/scripts/paid-video.ts sends, the same one that shows the comments in
+  // Disqus.astro. A page without such a block does nothing.
+  import { site } from "../config";
+
+  const blocks = document.querySelectorAll("[data-members-only]");
+  if (blocks.length > 0) {
+    document.addEventListener(
+      site.videoAccess.grantedEvent,
+      () => blocks.forEach((block) => block.classList.add("members-open")),
+      { once: true },
+    );
+  }
+</script>

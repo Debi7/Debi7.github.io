@@ -127,11 +127,17 @@ export const site = {
   // until the access service has answered 200): src/scripts/paid-video.ts dispatches this event on
   // the document once the player is in place, and Disqus.astro shows its button when it hears it.
   // The name is spelled here once, so the two scripts cannot drift apart.
+  // Changed later on 2026-09-28, the owner's decision: grantedEvent now shows the members-only
+  // block (block 2, lib/video.ts; the listener is in VideoLayout.astro), and the comments show on
+  // signedInEvent instead, which paid-video.ts sends as soon as it has confirmed a session - so a
+  // signed-in visitor without access sees them too and can be instructed there, and a guest does
+  // not.
   videoAccess: {
     endpoint: "",
     devEndpoint: "http://127.0.0.1:8787",
     playerHosts: ["www.youtube.com", "www.youtube-nocookie.com"],
     grantedEvent: "paid-video:granted",
+    signedInEvent: "paid-video:signed-in",
   },
 
   // Changed 2026-09-26 with the move to Clerk (CLERK.md step 2): the pages are three - sign-in,

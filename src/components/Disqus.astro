@@ -29,6 +29,11 @@ export interface Props {
    * access check has let the visitor watch (src/scripts/paid-video.ts sends
    * site.videoAccess.grantedEvent), so a guest or a signed-in visitor without access sees no
    * comments there. Presentation only: a Disqus thread can also be read on disqus.com itself.
+   *
+   * Changed later on 2026-09-28, the owner's decision: the button waits for
+   * site.videoAccess.signedInEvent instead, which paid-video.ts sends once it has confirmed a
+   * session, so every signed-in visitor sees the comments on a paid video (someone without access
+   * yet can be instructed there) and a guest does not.
    */
   locked?: boolean;
 }
@@ -102,10 +107,12 @@ const { shortname } = site.disqus;
 
     // Added 2026-09-28: a locked block (a paid video) shows its button once the page's access
     // check has put the player in place. The event is the only link between the two scripts.
+    // Changed later on 2026-09-28: signedInEvent, not grantedEvent - the comments show to every
+    // signed-in visitor, access or not (the prop's note says why).
     const loader = document.getElementById("disqus_loader_container");
     if (loader?.dataset.locked === "true") {
       document.addEventListener(
-        site.videoAccess.grantedEvent,
+        site.videoAccess.signedInEvent,
         () => loader.classList.remove("hidden"),
         { once: true },
       );

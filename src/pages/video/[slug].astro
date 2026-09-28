@@ -47,6 +47,13 @@ const commentsUrl = new URL(videoUrl(video), Astro.site).toString();
     /* Changed 2026-09-28, the owner's choice: on a paid video the comments stay hidden until the
     access service has answered 200 (Disqus.astro, the locked prop). */
   }
+  {
+    /* Changed later on 2026-09-28, the owner's decision: on a paid video the comments are closed
+    to a guest only. They show as soon as the page has confirmed that the visitor is signed in,
+    access or not, so that someone who has not paid yet can be instructed there; the player and
+    the members-only block (block 2, lib/video.ts) still wait for access. `locked` means "until
+    signed in" now (Disqus.astro). */
+  }
   <Disqus
     url={commentsUrl}
     identifier={video.slug}
