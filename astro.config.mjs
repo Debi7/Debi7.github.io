@@ -60,6 +60,29 @@ export default defineConfig({
       // three now - sign-in, sign-up and the account page - and the rule keeps all three out.
       filter: (page) => !/\/page\/\d+\/$/.test(page) && !/\/auth\//.test(page),
     }),
+    // Added 2026-09-28: the Clerk pre-bundling list, for `astro dev` only. It stood under `vite` at
+    // the end of this file; the note there says why it moved.
+    {
+      name: "clerk-prebundle-dev-only",
+      hooks: {
+        "astro:config:setup": ({ command, updateConfig }) => {
+          if (command !== "dev") return;
+          updateConfig({
+            vite: {
+              optimizeDeps: {
+                include: [
+                  "@clerk/clerk-js",
+                  "@clerk/ui",
+                  "@clerk/localizations",
+                  "react",
+                  "react-dom",
+                ],
+              },
+            },
+          });
+        },
+      },
+    },
   ],
 
   markdown: {
@@ -105,15 +128,19 @@ export default defineConfig({
   // starts instead of on the first visit to an auth page. It affects `astro dev` only; `astro build`
   // does not use the dependency optimizer. If the error still appears after a package change,
   // `npm run dev:clean` empties the cache (package.json says how).
-  vite: {
-    optimizeDeps: {
-      include: [
-        "@clerk/clerk-js",
-        "@clerk/ui",
-        "@clerk/localizations",
-        "react",
-        "react-dom",
-      ],
-    },
-  },
+  //
+  // Corrected 2026-09-28, at the owner's request after "X [ERROR] The build was canceled" showed at
+  // the top of every `npm run build`: the sentence above about `astro build` is wrong. The build
+  // starts with the content sync, which runs a temporary Vite dev server
+  // (syncContentCollections in node_modules/astro/dist/core/sync/index.js), and that server began
+  // pre-bundling this list; the sync closed it about two seconds later, esbuild's bundling was cut
+  // off, and esbuild printed that error. The built site was never affected. The list therefore left
+  // `vite` for the integration "clerk-prebundle-dev-only" in `integrations` above, which adds it
+  // through `updateConfig` only when the hook's `command` is "dev" (astro:config:setup, Astro 4
+  // Integration API; 4.16 passes "dev", "build", "preview" or "sync").
+  // Checked the same night: the build prints no such line, still builds every page, and its
+  // `[types]` step fell from about 2 s to under 1 s; `astro dev` still pre-bundles the five
+  // packages. One side effect, accepted: the sync's server now finishes, and writes Astro's own
+  // three small dependencies into node_modules/.vite/deps, so the first `astro dev` after a build
+  // bundles the list again, a few seconds once. Before, the cut-off run left that folder alone.
 });

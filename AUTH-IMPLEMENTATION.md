@@ -175,6 +175,13 @@ name in the forms should not be in quotes.
     the end. The build has 147 pages, one more: the lecture is in the list, its page, the video feed, the search index
     and the sitemap, with the stub and no id - `aqz-KE-bpKQ` appears nowhere in `dist/`. `reference/astro-routes.txt`
     gained `/video/paid-demo-2/`; `check:pages` passed.
+  - `X [ERROR] The build was canceled` at the top of every `npm run build`, asked about by the owner: `astro build`
+    starts with the content sync, whose temporary Vite server began pre-bundling the Clerk list of `optimizeDeps`
+    and was closed about two seconds later, cutting esbuild off. The list moved from `vite` into a small inline
+    integration in `astro.config.mjs` that adds it for `astro dev` only (the `command` of `astro:config:setup`).
+    Checked: no such line in two builds, 147 pages, `[types]` about 0.9 s instead of 2 s; `astro dev` still
+    pre-bundles `@clerk/clerk-js`, `@clerk/ui`, `@clerk/localizations` and React. Side effect: the first `astro dev`
+    after a build bundles them again, a few seconds once.
 
 ### Verification
 
