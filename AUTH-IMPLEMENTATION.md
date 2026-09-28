@@ -228,6 +228,13 @@ name in the forms should not be in quotes.
     `mailto:support@supreme-ladybug-7080.accounts.dev`, an address Clerk makes up when no `supportEmail` is set.
     Documented in `AUTH.md` section 12 with the colleague's proposal to open `ContactModal.astro` instead and how to
     wire it; no code changed.
+  - Also not about sign-in: the home page's tag cloud, after the colleague's review. The globe can be dragged in any
+    direction with a finger or a held mouse button, keeps spinning after a release, and stops under a finger held
+    still; a tap opens a word, a drag does not. On the narrowest phones it shrinks as a whole instead of running
+    past the screen edge, and it is measured again once the web fonts arrive. Checked in headless Edge: nothing
+    past the edge from 280px to 600px with the globe turned several times (the sampler catches a 57px overshoot
+    when the words are enlarged on purpose), drags follow the finger in four directions, the page does not scroll,
+    a tap and a click open the word. Details in `src/scripts/tag-cloud.ts` and the README section on the cloud.
 
 ### Verification
 

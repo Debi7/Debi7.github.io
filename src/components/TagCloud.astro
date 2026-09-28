@@ -280,6 +280,25 @@ const motionOf = (name: string, step: number): Motion => {
     display: block;
   }
 
+  /* Added 2026-09-28 with dragging (src/scripts/tag-cloud.ts, "Dragging"). touch-action: none
+     hands every movement of a finger on the globe to the script, in all four directions; without
+     it the browser takes the finger for a page scroll and cancels the drag. The price, accepted
+     for the colleague's four directions: a scroll that starts on the globe does not scroll the
+     page, so a visitor scrolls from the carousel or the footer instead. pan-y would give the
+     page's vertical scroll back and leave the globe only left and right. user-select and
+     -webkit-user-drag stop a mouse drag from selecting the words or picking a link up. The
+     grab cursor tells a mouse that the globe can be taken hold of; a word keeps the link cursor. */
+  .tag-cloud--sphere {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: grab;
+  }
+
+  .tag-cloud--sphere .tag-cloud__link {
+    -webkit-user-drag: none;
+  }
+
   /* Every word starts at the middle and the script moves it from there, which is why the inline
      transform it writes begins by pulling the word back by half its own size. The breathing is
      off because the script folds it into that same transform: an animation beats an inline

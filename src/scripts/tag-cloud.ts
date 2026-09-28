@@ -44,6 +44,21 @@
 // while the media query says so, rather than turning a sphere nobody can see. Which side that is
 // changed on the evening of 2026-09-22: the cloud was the wide half and is the narrow one now,
 // below 640px, at the owner's word. The query a few lines down is the only place that decides it.
+//
+// DRAGGING AND THE NARROWEST SCREENS (2026-09-28)
+//
+// The colleague's review, taken up by the owner. On a phone - the only place the cloud is shown -
+// there is no pointer to steer with: a finger on the cloud used to scroll the page and the sphere
+// took no notice. Now a finger (or a mouse button held down) grabs the sphere and turns it in any
+// direction, the word under the finger following it; letting go leaves it spinning the way it was
+// thrown, and it eases back into the idle drift. A finger held still stops it, so a word can be
+// waited for and tapped. A tap still opens the tag, a drag never does. The mouse steering above
+// stays for a mouse that is only hovering.
+//
+// On the narrowest screens (a 280px phone) the widest word left no room for even the smallest
+// sphere, and the words hung past the edge of the screen. The whole globe now shrinks there, words
+// and radius together, until it fits (`fit` below). And the words are measured again once the web
+// fonts have arrived, since they are drawn in a fallback font until then and measured too narrow.
 const cloud = document.querySelector<HTMLElement>(".tag-cloud");
 const sky = cloud?.querySelector<HTMLElement>(".tag-cloud__sky");
 const words = sky
@@ -103,6 +118,9 @@ if (cloud && sky && words.length > 0) {
   // How far the sphere reaches, in pixels, and where its middle is. Measured on entry and on
   // resize only: reading it in the loop would force a layout every frame.
   let radius = 0;
+  // Added 2026-09-28: how much every word is shrunk so that the sphere fits a screen too narrow
+  // for its smallest size; 1 everywhere else (see the end of measure()).
+  let fit = 1;
 
   const measure = () => {
     const box = cloud.getBoundingClientRect();
@@ -126,7 +144,23 @@ if (cloud && sky && words.length > 0) {
 
     // The floor keeps a sphere on a very narrow screen rather than collapsing it into a knot of
     // overlapping words; below it the words simply crowd, which is what a tag cloud does anyway.
-    radius = Math.max(60, Math.min(wanted, room));
+    // radius = Math.max(60, Math.min(wanted, room));
+    //
+    // Changed 2026-09-28 after the colleague saw words past the edge of the smallest phones: the
+    // line above held the floor even where the floor itself did not fit, so on a 280px screen the
+    // widest word overshot the edge by dozens of pixels. Where the room is at least the floor
+    // nothing changes. Below it the globe is scaled down as a whole - the radius and every word by
+    // the same factor, `fit` - to the largest size at which a floor-sized sphere with the widest
+    // word at its side still fits the block.
+    const floor = 60;
+    const natural = Math.min(wanted, room);
+    if (natural >= floor) {
+      radius = natural;
+      fit = 1;
+    } else {
+      fit = Math.min(1, box.width / 2 / (1.15 * floor + widest / 2));
+      radius = floor * fit;
+    }
   };
 
   // The two angles of the sphere and the speed each is turning at. The idle speed is what the
@@ -142,6 +176,26 @@ if (cloud && sky && words.length > 0) {
   let frame = 0;
   let last = 0;
 
+  // Added 2026-09-28 (the header, "Dragging"): the finger or the mouse button currently holding
+  // the sphere, where it was last seen, and how far it has travelled. Below `grab` pixels it is
+  // still a tap and turns nothing, so a tap on a word opens the word.
+  const grab = 6;
+  let drag: {
+    id: number;
+    x: number;
+    y: number;
+    t: number;
+    moved: number;
+  } | null = null;
+  // The turn per frame the drag was making when it last moved, handed to the speeds on release.
+  let flingX = 0;
+  let flingY = 0;
+  // A click that ends a drag is not a click on a word: it is swallowed until this moment.
+  let swallowUntil = 0;
+  const flingMost = fastest * 2;
+  const clampFling = (value: number): number =>
+    Math.max(-flingMost, Math.min(flingMost, value));
+
   const draw = (now: number) => {
     frame = requestAnimationFrame(draw);
 
@@ -152,7 +206,13 @@ if (cloud && sky && words.length > 0) {
     const step = Math.min(now - last, 50) / 16.7;
     last = now;
 
-    if (pointer) {
+    // Added 2026-09-28: while a finger or a button holds the sphere it turns only as far as the
+    // finger moves it (the pointermove listener), so the speeds are zero - which is also what
+    // stops it under a finger held still.
+    if (drag) {
+      speedX = 0;
+      speedY = 0;
+    } else if (pointer) {
       // The reference takes its speed from the pointer's distance to the middle, and so does
       // this: at the edge of the block the sphere turns fastest, in the middle it nearly stops.
       speedY += (pointer.x * fastest - speedY) * 0.08;
@@ -196,7 +256,9 @@ if (cloud && sky && words.length > 0) {
         // the far side of the sphere was a target of a few pixels. 0.78 keeps the depth readable
         // and gives back about a quarter of the area. The same request raised the smallest font
         // step in the component.
-        ` scale(${(0.78 + 0.34 * front).toFixed(3)})`;
+        // Changed 2026-09-28: times `fit`, which is 1 unless the screen is too narrow for the
+        // smallest sphere (measure()).
+        ` scale(${((0.78 + 0.34 * front) * fit).toFixed(3)})`;
       word.node.style.opacity = (0.45 + 0.55 * front).toFixed(3);
       // So that a word in front is also in front for the pointer, not only to the eye.
       word.node.style.zIndex = String(Math.round(front * 100));
@@ -214,6 +276,8 @@ if (cloud && sky && words.length > 0) {
   const stop = () => {
     if (frame !== 0) cancelAnimationFrame(frame);
     frame = 0;
+    // Added 2026-09-28: a drag cut short by the switch to the row must not outlive it.
+    drag = null;
     cloud.classList.remove("tag-cloud--sphere");
     // The row the words are rendered as has no use for what the loop wrote on them, and leaving
     // a transform behind would hold them wherever the last frame put them.
@@ -229,7 +293,87 @@ if (cloud && sky && words.length > 0) {
     else stop();
   };
 
+  // Added 2026-09-28 (the header, "Dragging"). A press on the sphere - a finger, or the main mouse
+  // button - takes hold of it. Nothing turns yet: see `grab`.
+  cloud.addEventListener("pointerdown", (event: PointerEvent) => {
+    if (frame === 0) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    drag = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      t: event.timeStamp,
+      moved: 0,
+    };
+    flingX = 0;
+    flingY = 0;
+    pointer = null;
+  });
+
+  // The drag itself. The pointer is captured only once it has moved past `grab`: capturing on the
+  // press would send the click of a plain tap to the block instead of the word, and the link would
+  // not open. The turn is the distance over twice the radius, because a word at the front of the
+  // sphere is drawn twice as far out (the projection in draw()), so that word follows the finger.
   cloud.addEventListener("pointermove", (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    const dt = Math.max(event.timeStamp - drag.t, 1);
+    drag.x = event.clientX;
+    drag.y = event.clientY;
+    drag.t = event.timeStamp;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    if (drag.moved < grab || radius === 0) return;
+    if (!cloud.hasPointerCapture(event.pointerId)) {
+      cloud.setPointerCapture(event.pointerId);
+    }
+    // Right moves the front to the right and down moves it down: see the rotation in draw(),
+    // where a larger angle carries the front point left and up.
+    const turnY = -dx / (radius * 2);
+    const turnX = -dy / (radius * 2);
+    angleY += turnY;
+    angleX += turnX;
+    // Per frame at 60Hz, like the speeds, and smoothed over the last few moves.
+    flingY += ((turnY / dt) * 16.7 - flingY) * 0.5;
+    flingX += ((turnX / dt) * 16.7 - flingX) * 0.5;
+  });
+
+  // Letting go. A drag hands its last speed to the sphere, which then eases back into the idle
+  // drift by itself (draw()); a finger that stopped before it lifted throws nothing. The click
+  // that follows the release of a drag would open whatever word ended up under the finger, so it
+  // is swallowed.
+  const letGo = (event: PointerEvent) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (drag.moved >= grab) {
+      const still = event.timeStamp - drag.t > 80;
+      speedY = still ? 0 : clampFling(flingY);
+      speedX = still ? 0 : clampFling(flingX);
+      swallowUntil = event.timeStamp + 400;
+    }
+    drag = null;
+  };
+  cloud.addEventListener("pointerup", letGo);
+  cloud.addEventListener("pointercancel", letGo);
+  cloud.addEventListener(
+    "click",
+    (event: MouseEvent) => {
+      if (event.timeStamp < swallowUntil) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+    true,
+  );
+  // A mouse drag that starts on a word would otherwise pick the link up and carry it off as a
+  // drag-and-drop, which ends the pointer's events at once.
+  cloud.addEventListener("dragstart", (event: DragEvent) => {
+    if (frame !== 0) event.preventDefault();
+  });
+
+  cloud.addEventListener("pointermove", (event: PointerEvent) => {
+    // Added 2026-09-28: the steering is for a mouse that hovers. While the sphere is held it
+    // turns with the drag, and a finger only ever drags.
+    if (drag || event.pointerType !== "mouse") return;
     const box = cloud.getBoundingClientRect();
     if (box.width === 0 || box.height === 0) return;
     // -1 at one edge of the block, +1 at the other.
@@ -252,4 +396,11 @@ if (cloud && sky && words.length > 0) {
   cloudShown.addEventListener("change", decide);
   stillPlease.addEventListener("change", decide);
   decide();
+
+  // Added 2026-09-28: the site's fonts come from Google with display=swap, so the words are first
+  // drawn - and measured - in a fallback face, and grow when the real one arrives. Measuring again
+  // then keeps the widest word inside the block on a slow connection.
+  void document.fonts.ready.then(() => {
+    if (frame !== 0) measure();
+  });
 }
