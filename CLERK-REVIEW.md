@@ -84,10 +84,14 @@ details.
 - **Plan step 7, the documents.** `AUTH.md`, `AUTH-IMPLEMENTATION.md`, `CLAUDE.md`, `README.md` and the earlier verdict
   in `.specify/consilium/` still describe the previous provider. They are to be rewritten or removed in a separate
   commit, preferably before the branch is merged into `main`.
+  Done on 2026-09-28 at the owner's order: the earlier verdict is deleted, `AUTH.md` keeps only sections 10 and 11
+  (the guest gate and its reopening, which code comments cite), the session log keeps only this branch's entries, and
+  `CLAUDE.md`, `README.md`, `MIGRATION-PLAN.md` and `VIDEO-PAGE.md` no longer name the previous provider.
 - **Paid content.** Videos visible only to paying members, comments and likes for signed-in visitors only, and access
   granted by an administrator after a payment. This needs the first piece of the site that runs outside GitHub Pages
   and a decision about Disqus, so it goes to its own consilium first. `CLERK-DASHBOARD.md` sections 4 to 7 describe the
   options and the manual way of granting access.
+  Paid videos done on 2026-09-28: `PAID-VIDEO.md`. Comments and likes for signed-in visitors are still open.
 - **Production.** A production Clerk instance needs a domain the club owns; until then the development instance serves
   both local work and the live site.
 
