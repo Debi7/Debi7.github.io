@@ -35,6 +35,16 @@ html {
   --clerk-color-input-foreground: #1e2939;
   --clerk-color-border: #d1d5dc;
   --clerk-color-danger: #dc2626;
+  /* Added 2026-09-28 after the colleague saw the grey strip at the foot of the sign-in card
+     (the "no account?" line and the Clerk badge) painted dark navy in the light theme. Unset,
+     Clerk works this colour out in the browser from the background and the neutral colour, with
+     relative colour syntax and color-mix(); a fresh Edge follows the theme switch with it, but a
+     browser that does not may keep the value it worked out for the other theme. A plain colour
+     cannot go stale. The value is what Clerk worked out in Edge 155 - the panel with 3% of the
+     neutral colour over it - so nothing changes where it already worked. The same variable
+     colours the side menu of the account page and Clerk's drop-down lists. Recompute it when
+     --panel-bg or the neutral colour changes. */
+  --clerk-color-muted: #f3f3f3;
   --clerk-font-family: inherit;
   --clerk-font-family-buttons: inherit;
   --clerk-font-size: 0.875rem;
@@ -53,4 +63,6 @@ html.dark {
   --clerk-color-input-foreground: #e5e7eb;
   --clerk-color-border: #314158;
   --clerk-color-danger: #f87171;
+  /* Added 2026-09-28: the dark twin of the muted colour above, worked out the same way. */
+  --clerk-color-muted: #172740;
 }

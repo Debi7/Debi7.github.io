@@ -204,6 +204,15 @@ name in the forms should not be in quotes.
     check, 9 of 9, on the dev server with the service (guest; the demo account; the same with a 403 from the service)
     and on the production build with no service address (guest: the sign-in box, no longer "unavailable"; signed
     in: "unavailable" with the comments); block 1 everywhere, block 2 only for the member.
+  - The colleague's screenshot of the sign-in card in the light theme with its foot (the "no account?" line and the
+    Clerk badge) dark navy. Clerk paints that strip with `--clerk-color-muted` and, when it is unset, works the
+    colour out in the browser from the background and the neutral colour (relative colour syntax and `color-mix()`,
+    `CardFooter` and `common.mutedBackground` in `@clerk/ui`). Not reproduced: in Edge 155 the strip is `#f3f3f3`
+    in light and `#172740` in dark and follows the theme switch both ways; the navy on the screenshot is the dark
+    value, so a browser that keeps a stale result is the likely cause (the colleague's is Opera; not confirmed).
+    `clerk.css` now sets the variable to those two plain colours. Checked: the strip reads them and follows the
+    switch; screenshots before and after differ by at most 2/255 per channel (rounding). The same variable colours
+    the account page's side menu and Clerk's drop-down lists.
 
 ### Verification
 
