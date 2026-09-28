@@ -317,8 +317,13 @@ const shareDescription = shareTexts.map(cleanShareText).find(Boolean);
             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
           ></path>
         </svg>
-        {t.last_updated}
-        {updatedHuman}
+        {
+          /* Changed 2026-09-28 at the owner's request: the line read "Last updated on2026-09-28".
+          The div is a flex container, so the label and the date, written as two expressions,
+          became two anonymous flex items and the whitespace between them was dropped. One
+          expression is one text node, with the space inside it. */
+        }
+        {`${t.last_updated} ${updatedHuman}`}
       </div>
 
       <footer class="border-t border-gray-100 bg-gray-50 py-6">

@@ -140,9 +140,19 @@ const { shortname } = site.disqus;
   }
 </script>
 
+{
+  /* Changed 2026-09-28 at the owner's request: the text below showed on every post and video
+  page, JavaScript on or off. The Astro 4 compiler emitted the noscript block empty and put its
+  bare text after it (the built HTML read "noscript, end of noscript, Please enable..."); compiled
+  alone, the same lines came out right, so it is the component around them that trips it. With
+  the text inside a paragraph the compiler keeps it inside the noscript block, checked with
+  @astrojs/compiler on this file and in dist/. */
+}
 <noscript>
-  Please enable JavaScript to view the
-  <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  <p>
+    Please enable JavaScript to view the
+    <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+  </p>
 </noscript>
 
 {
