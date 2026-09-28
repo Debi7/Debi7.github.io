@@ -30,11 +30,19 @@ import { site } from "../config";
 ---
 
 <div class="flex flex-1 justify-end">
+  {
+    /* Changed 2026-09-28 at the colleague's request, relayed by the owner: -mr-2. The header row
+    has the same 24px padding on both sides, but this link's p-2 kept the icon 8px inside it, and
+    the icon's own blank edge adds about 2px, so the right-hand gap read 34px against the logo's
+    24px (measured in headless Edge at 360px to 1280px). The negative margin cancels the padding
+    on the right only, so the icon moves to the edge while the tap area stays 40px wide. The owner
+    kept it after a look. */
+  }
   <a
     id="auth-link"
     href={site.auth.signIn}
     data-account-href={site.auth.account}
-    class="ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
+    class="-mr-2 ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
     aria-label="Войти на сайт"
     title="Войти на сайт"
   >

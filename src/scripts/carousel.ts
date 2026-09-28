@@ -52,6 +52,9 @@
   let timer: ReturnType<typeof setInterval> | null = null;
   let paused = false;
   let hovered = false;
+  // Added 2026-09-28: true while a finger is on the carousel. The owner's rule for touch screens:
+  // holding the photo pauses it, letting go sets it moving again (the touch handlers below).
+  let held = false;
 
   function show(k: number) {
     k = (k + n) % n;
@@ -97,7 +100,8 @@
 
   function start() {
     stop();
-    if (paused || hovered || document.hidden) return;
+    // Changed 2026-09-28: `held` joins the conditions (see its declaration).
+    if (paused || hovered || held || document.hidden) return;
     timer = setInterval(next, interval);
   }
 
@@ -128,11 +132,18 @@
     setHidden(iconPlay, !paused);
     start();
   });
-  root.addEventListener("mouseenter", function () {
+  // Changed 2026-09-28: pointerenter and pointerleave for a mouse only, where these were
+  // mouseenter and mouseleave. After a tap a phone also sends the compatibility mouse events, so
+  // a tap on the photo set `hovered` and nothing cleared it until the next tap elsewhere - the
+  // carousel froze, which breaks the owner's rule that letting go of the photo sets it moving
+  // again. A finger is handled by the touch listeners at the end of this file.
+  root.addEventListener("pointerenter", function (e) {
+    if (e.pointerType !== "mouse") return;
     hovered = true;
     stop();
   });
-  root.addEventListener("mouseleave", function () {
+  root.addEventListener("pointerleave", function (e) {
+    if (e.pointerType !== "mouse") return;
     hovered = false;
     start();
   });
@@ -147,11 +158,20 @@
   });
   document.addEventListener("visibilitychange", start);
 
+  // Changed 2026-09-28, the owner's rule for touch screens, where the arrows are hidden
+  // (carousel.css): a swipe turns the photo, as before, and a finger held on the carousel pauses it
+  // until it is lifted. touchstart now stops the timer and sets `held`; touchend clears it and
+  // always restarts the timer, where it used to restart it only after a swipe; touchcancel, sent
+  // when the browser takes the touch over (a page scroll, a system gesture), does the same so the
+  // carousel cannot stay paused with no finger on it. A tap on the pause button or a dot still
+  // works: its click arrives after touchend and decides from there.
   let touchX: number | null = null;
   root.addEventListener(
     "touchstart",
     function (e) {
       touchX = e.touches[0].clientX;
+      held = true;
+      stop();
     },
     {
       passive: true,
@@ -160,22 +180,41 @@
   root.addEventListener(
     "touchend",
     function (e) {
-      if (touchX === null) return;
-      const dx = e.changedTouches[0].clientX - touchX;
-      touchX = null;
-      if (Math.abs(dx) > 40) {
-        if (dx < 0) {
-          next();
-        } else {
-          prev();
+      held = false;
+      if (touchX !== null) {
+        const dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 40) {
+          if (dx < 0) {
+            next();
+          } else {
+            prev();
+          }
         }
-        start();
       }
+      touchX = null;
+      start();
     },
     {
       passive: true,
     },
   );
+  root.addEventListener(
+    "touchcancel",
+    function () {
+      touchX = null;
+      held = false;
+      start();
+    },
+    {
+      passive: true,
+    },
+  );
+  // Added 2026-09-28: on Android a long press opens the image menu through contextmenu, which
+  // would end the hold the owner asked for; the owner agreed to give that menu up here. Only while a
+  // finger is down, so a right-click with a mouse still gets the browser's menu.
+  root.addEventListener("contextmenu", function (e) {
+    if (held) e.preventDefault();
+  });
 
   start();
 })();

@@ -213,6 +213,16 @@ name in the forms should not be in quotes.
     `clerk.css` now sets the variable to those two plain colours. Checked: the strip reads them and follows the
     switch; screenshots before and after differ by at most 2/255 per channel (rounding). The same variable colours
     the account page's side menu and Clerk's drop-down lists.
+  - Not about sign-in, but made on this branch the same night: the colleague's proposal for the header and the
+    home carousel, settled by the owner. The sign-in icon got `-mr-2` (right gap 26px against the logo's 24px, was
+    34px; kept by the owner after a look). On a touch screen the carousel's arrows are hidden, a finger held on
+    the photo pauses it, the long-press image menu is off, and the pause button is 24px below 640px; the hover
+    pause listens to a mouse only. A device with a mouse keeps the arrows on hover at every width (for a few
+    minutes they were hidden below 1024px too; the owner asked to keep the mouse as it was). Details and the
+    checks: `MIGRATION-PLAN.md` section 9 and the README section on the carousel. Browser check 20 of 21 in
+    headless Edge; the one miss was the harness - `Input.synthesizeTapGesture` sends no click in headless mode -
+    and a real touch sequence on the pause button does pause it; arrows at 600px to 1280px with a mouse and at
+    390px to 1180px with touch, 8 of 8.
 
 ### Verification
 

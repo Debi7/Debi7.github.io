@@ -130,6 +130,29 @@ main.overflow-x-auto {
   }
 }
 
+/* Added 2026-09-28, the colleague's proposal as the owner settled it: on a touch screen the
+   arrows go, on phones and tablets alike, because a swipe already turns the photos there
+   (carousel.ts) and on a phone the arrows covered a quarter of a 171px-high frame. The rule
+   above, which kept them half-visible without hover, now applies only to a device that has no
+   hover and a fine pointer. A narrow desktop window keeps its arrows: it has a mouse and no swipe.
+   A finger held on a photo pauses the carousel (carousel.ts), so a long press must not open the
+   browser's "save image" menu instead - touch-callout for iOS, the contextmenu handler in the
+   script for Android; the owner agreed to lose that menu here. user-select keeps the long press
+   from selecting the picture. A deliberate departure from the Hugo carousel, MIGRATION-PLAN.md
+   section 9. The owner confirmed that a device with a mouse keeps the arrows on hover at every
+   width, as before. */
+@media (hover: none) and (pointer: coarse) {
+  .void-carousel__btn {
+    display: none;
+  }
+
+  .void-carousel__slide img {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
 .void-carousel__toggle {
   right: 1rem;
   bottom: 0.85rem;
@@ -231,5 +254,19 @@ main.overflow-x-auto {
 
   .void-carousel__btn {
     top: 50%;
+  }
+
+  /* Added 2026-09-28 with the rule for touch screens above: the pause button is kept, at the
+     owner's word after a recommendation - holding a finger on the photo pauses it too, but that
+     is not something a visitor would guess, and whoever wants to look at one photo needs a pause
+     that lasts. It shrinks from 32px to 24px on a phone, where it sat over a 171px-high frame. */
+  .void-carousel__toggle {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .void-carousel__toggle svg {
+    width: 0.75rem;
+    height: 0.75rem;
   }
 }
