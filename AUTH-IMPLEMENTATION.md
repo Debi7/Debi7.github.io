@@ -223,6 +223,11 @@ name in the forms should not be in quotes.
     headless Edge; the one miss was the harness - `Input.synthesizeTapGesture` sends no click in headless mode -
     and a real touch sequence on the pause button does pause it; arrows at 600px to 1280px with a mouse and at
     390px to 1180px with touch, 8 of 8.
+  - The colleague's report that "Написать в поддержку" on Clerk's help card does nothing. Walked to the card in
+    headless Edge with the demo account and recorded the path; the button's click requests
+    `mailto:support@supreme-ladybug-7080.accounts.dev`, an address Clerk makes up when no `supportEmail` is set.
+    Documented in `AUTH.md` section 12 with the colleague's proposal to open `ContactModal.astro` instead and how to
+    wire it; no code changed.
 
 ### Verification
 

@@ -120,3 +120,72 @@ their comments for everyone. Disqus itself is not changed.
 Changed later the same night, the owner's decision: on a paid video the comments are closed to a guest only. They
 show once the page has confirmed that the visitor is signed in, access or not, so that someone who has not paid yet
 can be instructed there (`site.videoAccess.signedInEvent`; `PAID-VIDEO.md` section 1).
+
+## 12. The help card of the sign-in form, 2026-09-28
+
+The colleague found that "Написать в поддержку" on Clerk's help card does nothing and proposed that it open the site's
+own feedback form. This section says how to reach the card, why the button fails, and how the proposal would work.
+Nothing in the code has changed yet; the colleague offered to wire it.
+
+### 12.1 How to reach it
+
+Walked in headless Edge with the demo account (`CLERK.md`); every label below is what the form shows:
+
+1. Open `/auth/signin/`.
+2. Type the email address and press "Продолжить".
+3. On "Введите пароль", press the link at the foot of the card, "Использовать другой метод".
+4. On "Использовать другой метод", press the link at the foot, "Помощь".
+5. The card "Помощь" shows the text "Если вы испытываете сложности со входом...", the button "Написать в поддержку" and
+   the link "Назад". The address stays `/auth/signin/#/factor-one`.
+
+The links appear once Clerk has fetched the account's ways in; for the demo account those are the password, a code
+by email and a password reset by email code. In Clerk's source (`@clerk/ui`) the same card closes the other lists of
+alternative methods too - the second factor, the passkey step - with the same button.
+
+### 12.2 Why the button does nothing
+
+The card is Clerk's `ErrorCard`, and its button does one thing: `window.location.href = "mailto:" + supportEmail`.
+Clerk takes that address from the `supportEmail` option of `clerk.load()`, otherwise from the Dashboard's settings,
+otherwise it makes one up from the Frontend API host. The site sets neither, so the click asks the browser to open
+`mailto:support@supreme-ladybug-7080.accounts.dev` (measured: the navigation request is exactly that). No such mailbox
+exists. On a machine with no mail program the click has no visible effect, which is what the colleague saw; with one,
+the visitor writes to an address nobody reads.
+
+### 12.3 The proposal: the site's own feedback form
+
+`src/components/ContactModal.astro` is the "Обратная связь" form, on every page through `Base.astro` and opened today
+by the envelope button in the footer. It posts to web3forms, which mails the message on to the address its access key
+was registered with (the key came with the colleague's commit `786ee8e`).
+
+What the visitor would do:
+
+1. Reach the help card (12.1) and press "Написать в поддержку".
+2. The feedback form opens over the sign-in card: name, email for the reply, message.
+3. Press "Отправить письмо". The form closes and a notice says "Сообщение отправлено!"; on a failure it says so and the
+   text stays in the form.
+4. The reply comes by email from whoever reads the web3forms mailbox, who can look the member up in the Clerk Dashboard
+   (`CLERK-DASHBOARD.md` section 7).
+
+It works without a mail program, and the message lands in a mailbox somebody reads. How to wire it, for whoever does:
+
+- `ContactModal.astro` opens only from the footer button now. Give it a second way in, a document event such as
+  `contact:open`, and spell the event's name once in `src/config.ts`, as `site.videoAccess.grantedEvent` is; the
+  scripts on both ends read it from there.
+- On the sign-in page, listen for clicks on the document in the capture phase and match the button with
+  `.cl-signIn-havingTrouble .cl-button` (the classes on the card and the button, measured). Call `preventDefault()` and
+  `stopPropagation()` there: Clerk's handler runs in React, which listens below the document, so it never sees the
+  click and the `mailto:` is not followed. Then send the event.
+- Optional: fill the email field from the address the card already shows (`.cl-identityPreviewText`) and add a subject
+  such as "Проблема со входом" through web3forms' `subject` field, so the letter says where it came from.
+- Also set `supportEmail` in the `clerk.load()` options in `src/scripts/auth.ts` to a real mailbox. If a Clerk update
+  renames those classes the interception stops matching, and the button then at least opens a letter to an address
+  that exists. `site.social.email` in `src/config.ts` is still a placeholder, so the address has to come from the
+  owner.
+- The `cl-` classes are the ones Clerk's documentation tells a site to target from its own CSS ("Bring your own
+  CSS", Core 3); recheck the selector after a Clerk update all the same.
+
+### 12.4 Open
+
+- Which mailbox the web3forms key sends to, and who answers it: the owner and the colleague to confirm.
+- The real support address for `supportEmail`.
+- The form over the sign-in card has not been tried yet; check that it sits above Clerk's card in both themes.
