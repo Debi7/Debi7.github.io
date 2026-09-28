@@ -200,14 +200,16 @@ Where the ids live and who answers step 4:
    similar) that holds the mapping, validates the service's session and returns the address. Either way the
    repository holds no id of a paid video and no secret: the function's keys stay on its host.
 
-   Amended 2026-09-25 (AUTH.md; the consilium verdict of that day). The service is Supabase, and the server code
-   this step asked for exists there already: a table of entitlements that only the owner writes, and a Row Level
-   Security policy on the table of video ids that answers a row only when the visitor's account has an
-   entitlement for that slug. The browser asks for the row with the visitor's own session, as the members-only
-   demo on /auth/dashboard/ does today, and gets it or an empty answer. No serverless function is needed for a
-   stored YouTube id. A function comes back into the picture only when the address has to be computed with a
-   secret - a signed, expiring URL from a host such as Vimeo, the last point of section 6 - because RLS returns
-   stored data and cannot sign anything, and a secret never goes to the browser.
+   Amended 2026-09-28, on the branch `clerk-auth` (an amendment of 2026-09-25 about the previous sign-in provider's
+   database stood here and left with that provider). The sign-in service is Clerk now, which keeps no table of the
+   site's data, so the function this step described is built: a Cloudflare Worker, `workers/video-access/worker.mjs`, holds the slug-to-id map as a secret, checks the visitor's
+   Clerk session token and the access record of CLERK-DASHBOARD.md 7.3, and answers the player address. Steps 1 to
+   8 are built as written, with three differences: the guard of step 1 is in the schema (`src/content/config.ts`,
+   which also refuses `videoUrl` and `thumbnail` on a paid entry) plus a check of the text in `src/lib/video.ts`;
+   the script of step 3 is on every video page, because Astro 4.16 hoists a component's script for every page that
+   imports it, and it returns at once on a public one; step 4 sends the session token in a header rather than a
+   cookie. PAID-VIDEO.md is the how-to; the consilium verdict of the day is
+   `.specify/consilium/2026-09-28-paid-video-access.md`.
 
 What this does and does not protect:
 

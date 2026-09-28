@@ -217,6 +217,9 @@ Clerk; nothing of the previous page's comments survives unless its lesson is pro
 
 - Delete `AUTH.md` and the other verdict of 2026-09-25 (`.specify/consilium/`, the file ending in
   `-auth-static.md`). This file and the Clerk verdict replace them.
+  Done on 2026-09-28, with one change: the verdict is deleted, but `AUTH.md` keeps its sections 10 and 11 under their
+  old numbers, cut free of the previous provider, because about twenty comments in the code cite them and the rule on
+  existing comments forbids rewriting those. Everything else of the file is gone.
 - `AUTH-IMPLEMENTATION.md`: keep only the entries about this branch; the earlier entries go (they are in git history).
   Rewrite its header as the log of the Clerk work, and append the entry for the implementation with the file-by-file
   list and the verification results.

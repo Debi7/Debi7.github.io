@@ -120,8 +120,9 @@ export const site = {
   // with a slash: under trailingSlash "always" the dev server answers 404 to /auth/signin without
   // it (measured 2026-09-25). The dashboard sits under /auth/ at the owner's request, so that one
   // sitemap rule and one redirect allow-list entry cover the four. flagKey is the localStorage key
-  // the auth pages write and the header reads (src/scripts/auth-flag.ts); demoTable is the table
-  // behind Row Level Security that the member's page reads (AUTH.md section 8 has its DDL).
+  // the auth pages write and the header reads (src/scripts/auth-flag.ts).
+  // (Changed 2026-09-28: a clause about demoTable, the previous provider's demo table, stood here and
+  // left with that provider, at the owner's order.)
   auth: {
     signIn: "/auth/signin/",
     signUp: "/auth/signup/",

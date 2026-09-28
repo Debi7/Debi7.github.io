@@ -104,9 +104,10 @@ const page: PageLike = {
       the only shape the sign-in page follows.
 
       What this is not: a lock. Every file of a static site is public, so the HTML of a closed page
-      is a curl away, and a flag written by hand shows what curl would show anyway. The data that
-      matters is fetched with the visitor's own session and answered by Row Level Security; this
-      block only keeps a guest from seeing the frame. */
+      is a curl away, and a flag written by hand shows what curl would show anyway. What must stay
+      closed is answered by a server-side check (for paid videos, PAID-VIDEO.md); this block only
+      keeps a guest from seeing the frame. (Reworded 2026-09-28: the sentence named the previous
+      provider's access rules, which left the branch with it.) */
     }
     {
       /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11). The redirect is gone: a guest reads every page, the posts, the videos and
