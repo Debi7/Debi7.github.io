@@ -98,6 +98,13 @@ async function load(): Promise<Clerk> {
     // ends: after a sign-in Clerk navigated before the flag was written, so the next page showed
     // a guest's header; after a sign-out it navigated before the null session was reported, so
     // the flag outlived the session. Clerk calls these hooks for exactly those navigations.
+    // Corrected 2026-09-28: after a sign-in the sync here writes nothing. Clerk's setActive()
+    // (clerk-js 6.34.1) calls the hook before it sets the new session, so clerk.session is still
+    // the previous, empty one; the landing page looked right only because it was the account
+    // page, which loads Clerk and writes the flag itself. A paid video's page does not, and
+    // showed a signed-in visitor as a guest. signin.astro now sends every sign-in back through
+    // itself, where the flag is written; see the note there. The sync stays for the sign-out
+    // side and costs nothing.
     routerPush: (to: string) => {
       syncAuthFlag(clerk.session);
       location.assign(withTrailingSlash(to));
@@ -163,8 +170,17 @@ export function showLoadFailure(
 // either page into an open redirect, and anything else falls back to the dashboard.
 // (Changed 2026-09-26, CLERK.md step 4: the fallback is the account page, which replaced the
 // dashboard; the callback page is gone, and the sign-in page is the one caller left.)
+// Changed 2026-09-28, found by the paid-video consilium (the sign-in link of every paid video
+// carries `next`): the string test above let two addresses through that a browser reads as
+// another host. `/\evil.example/` passes "starts with / and not //", and the URL parser treats
+// the backslash as a slash; `/<TAB>/evil.example/` passes too, and the parser drops the tab.
+// Both were followed by headless Edge to the other host (measured by the security reviewer on a
+// copy of this rule). The address is now resolved the way the browser will resolve it, and only
+// a result on this origin is kept - its path, query and fragment, never the raw string.
 export function nextPath(raw: string | null): string {
-  return raw !== null && raw.startsWith("/") && !raw.startsWith("//")
-    ? raw
+  if (raw === null || !raw.startsWith("/")) return site.auth.account;
+  const url = new URL(raw, location.origin);
+  return url.origin === location.origin
+    ? url.pathname + url.search + url.hash
     : site.auth.account;
 }

@@ -46,10 +46,21 @@ import "../../styles/clerk.css";
       // replace, not assignment, so the sign-in page does not stay in the history behind `next`.
       location.replace(next);
     } else if (root instanceof HTMLDivElement) {
+      // Changed 2026-09-28, reported by the owner: signed in from a paid video's button, they
+      // came back to the video still shown as a guest. Clerk's setActive() (clerk-js 6.34.1)
+      // navigates to the redirect first and sets the new session only after that navigation, a
+      // step that never runs because the page unloads; so the router hooks in auth.ts still see
+      // the old, empty session and write no header flag. The account page never showed it,
+      // because it loads Clerk and writes the flag itself; the video page loads Clerk only when
+      // the flag is there. The redirect now comes back to this page with the same `next`: this
+      // page loads Clerk, finds the session, the listener writes the flag, and the branch above
+      // replaces the address with `next`. One extra load of a cached page, and no reliance on
+      // Clerk's internal order.
       clerk.mountSignIn(root, {
         routing: "hash",
         signUpUrl: site.auth.signUp,
-        forceRedirectUrl: next,
+        forceRedirectUrl:
+          site.auth.signIn + "?next=" + encodeURIComponent(next),
       });
       status?.remove();
     }
