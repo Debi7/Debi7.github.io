@@ -24,9 +24,16 @@ export interface Props {
   url: string;
   /** The stable id of the thread - the entry's slug, so the thread survives a title change. */
   identifier: string;
+  /**
+   * Added 2026-09-28: true on a paid video's page. The button stays hidden until the page's
+   * access check has let the visitor watch (src/scripts/paid-video.ts sends
+   * site.videoAccess.grantedEvent), so a guest or a signed-in visitor without access sees no
+   * comments there. Presentation only: a Disqus thread can also be read on disqus.com itself.
+   */
+  locked?: boolean;
 }
 
-const { url, identifier } = Astro.props;
+const { url, identifier, locked = false } = Astro.props;
 const { shortname } = site.disqus;
 ---
 
@@ -36,7 +43,16 @@ const { shortname } = site.disqus;
   the script below and Disqus itself expect: embed.js looks for #disqus_thread by name, and
   #toggle-disqus-btn is what the listener binds to. */
 }
-<div id="disqus_loader_container" class="my-6 flex flex-col items-center">
+{
+  /* Changed 2026-09-28: a locked block (see the prop) starts with the class hidden and says so in
+  data-locked; for every other page the rendered markup is what it was. A class and not the hidden
+  attribute, because `flex` would beat the attribute. */
+}
+<div
+  id="disqus_loader_container"
+  class:list={["my-6 flex flex-col items-center", locked && "hidden"]}
+  data-locked={locked ? "true" : undefined}
+>
   <button
     id="toggle-disqus-btn"
     class="rounded px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white md:px-3 md:py-2 md:text-lg"
@@ -55,6 +71,9 @@ const { shortname } = site.disqus;
 </div>
 
 <script>
+  // Added 2026-09-28: the name of the event a paid video's page sends (see the locked prop).
+  import { site } from "../config";
+
   const thread = document.getElementById("disqus_thread");
   const toggleBtn = document.getElementById("toggle-disqus-btn");
 
@@ -74,6 +93,17 @@ const { shortname } = site.disqus;
     const shortname = thread.dataset.disqusShortname;
 
     let disqusLoaded = false;
+
+    // Added 2026-09-28: a locked block (a paid video) shows its button once the page's access
+    // check has put the player in place. The event is the only link between the two scripts.
+    const loader = document.getElementById("disqus_loader_container");
+    if (loader?.dataset.locked === "true") {
+      document.addEventListener(
+        site.videoAccess.grantedEvent,
+        () => loader.classList.remove("hidden"),
+        { once: true },
+      );
+    }
 
     function loadDisqus() {
       if (disqusLoaded || !url || !identifier || !shortname) return;

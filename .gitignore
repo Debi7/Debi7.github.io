@@ -2,6 +2,9 @@
 dist/
 .astro/
 .env.local
+# Added 2026-09-28: the local map of paid video ids for npm run video-access:dev (PAID-VIDEO.md).
+# Real ids of paid videos never enter the repository.
+workers/video-access/videos.local.json
 
 # Node
 node_modules/

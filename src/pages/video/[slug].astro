@@ -43,5 +43,13 @@ const commentsUrl = new URL(videoUrl(video), Astro.site).toString();
     script that binds to it; this file was one of the two copies of that block. The rendered
     markup is unchanged. */
   }
-  <Disqus url={commentsUrl} identifier={video.slug} />
+  {
+    /* Changed 2026-09-28, the owner's choice: on a paid video the comments stay hidden until the
+    access service has answered 200 (Disqus.astro, the locked prop). */
+  }
+  <Disqus
+    url={commentsUrl}
+    identifier={video.slug}
+    locked={video.data.access === "paid"}
+  />
 </VideoLayout>

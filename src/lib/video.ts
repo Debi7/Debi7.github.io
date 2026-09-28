@@ -18,9 +18,27 @@ import { t } from "../i18n/strings";
 
 export type Video = CollectionEntry<"video">;
 
+// A YouTube address in any of its forms: the watch and embed pages, the short youtu.be links and
+// the thumbnail host. Added 2026-09-28 for the guard below.
+const youtubeAddress = /youtu\.be\/|youtube(?:-nocookie)?\.com\/|ytimg\.com\//i;
+
 /** The published videos, newest first; the rule is published() in lists.ts. */
 export async function getVideos(): Promise<Video[]> {
-  return published("video");
+  // Changed 2026-09-28 (paid videos; .specify/consilium/2026-09-28-paid-video-access.md): the
+  // schema in src/content/config.ts keeps the id fields out of a paid entry, but it never sees
+  // the body, and the body of every video is printed on its page, in /video/rss.xml and in the
+  // search index. A timestamped link to the lecture in the text would hand its id to anyone, so
+  // a paid entry whose body holds a YouTube address fails the build here. Every video route goes
+  // through this function, so the check runs on every build.
+  const videos = await published("video");
+  for (const video of videos) {
+    if (video.data.access === "paid" && youtubeAddress.test(video.body)) {
+      throw new Error(
+        `src/content/video/${video.id}: a paid video must not link to YouTube in its text; its id lives only at the access service`,
+      );
+    }
+  }
+  return videos;
 }
 
 /** A video's own page, /video/<slug>/. */

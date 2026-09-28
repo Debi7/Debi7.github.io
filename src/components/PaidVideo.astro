@@ -1,0 +1,80 @@
+---
+// The player of a paid video: a stub of the player's size, the texts of its states, and the
+// frame the script fills in for a member. Added 2026-09-28; the design is the consilium verdict in
+// .specify/consilium/2026-09-28-paid-video-access.md, and PAID-VIDEO.md is the how-to.
+//
+// Nothing here knows the video. A paid entry carries no id (src/content/config.ts refuses one),
+// so the built page holds only the slug; the script asks the access service for the player address
+// with the visitor's Clerk session token, and the service answers it to a member only. This is
+// the lock; everything on this page, the stub included, is presentation.
+//
+// The component owns the markup its script binds to (CLAUDE.md): the stub, every state's text and
+// the frame's template are here, and src/scripts/paid-video.ts only shows one state or clones the
+// template. The texts are in the site's language, like the auth pages.
+//
+// The script tag stands at the top level of this template (CLAUDE.md, measured 2026-09-22). Astro
+// 4.16 hoists it for every page whose module graph imports this component - every page under
+// /video/, not only the paid ones (Configuration Reference, experimental.directRenderScript) - so
+// the script returns at once when there is no stub, and loads Clerk only through a dynamic import
+// on a paid page with a signed-in visitor.
+import { site } from "../config";
+
+interface Props {
+  // The entry's slug: the key the access service knows the video by.
+  slug: string;
+  // The video page's own address, the `next` of the sign-in link.
+  href: string;
+  title: string;
+}
+
+const { slug, href, title } = Astro.props;
+const signIn = site.auth.signIn + "?next=" + encodeURIComponent(href);
+---
+
+<div
+  data-paid-video={slug}
+  class="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-xl bg-gray-100 p-6 text-center shadow-lg dark:bg-slate-800"
+>
+  <noscript>
+    <p>Для просмотра лекции нужен включённый JavaScript.</p>
+  </noscript>
+  <p data-state="loading" hidden>Проверяем доступ...</p>
+  <div data-state="guest" hidden>
+    <p class="mb-3">Эта лекция доступна участникам клуба.</p>
+    <a
+      href={signIn}
+      class="inline-block rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90"
+      >Войти</a
+    >
+  </div>
+  <div data-state="denied" hidden>
+    <p class="mb-3">
+      Лекция откроется после оплаты участия в клубе. Написать нам можно через
+      значок письма внизу страницы.
+    </p>
+    <button
+      type="button"
+      data-recheck
+      class="rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+    >
+      Проверить ещё раз
+    </button>
+  </div>
+  <p data-state="missing" hidden>Лекция ещё не подключена. Загляните позже.</p>
+  <p data-state="failed" hidden>
+    Видео сейчас недоступно. Обновите страницу позже.
+  </p>
+</div>
+<template data-paid-player>
+  {
+    /* The same attributes as the public player in VideoLayout.astro; change the two together. */
+  }
+  <iframe
+    class="aspect-video w-full rounded-xl shadow-lg"
+    title={title}
+    allowfullscreen></iframe>
+</template>
+
+<script>
+  import "../scripts/paid-video";
+</script>

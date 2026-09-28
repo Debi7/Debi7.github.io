@@ -17,9 +17,16 @@
 // is left empty. `videoPlatform` and `videoUrl` are stored and not read: every video is a
 // YouTube video for now. The address was `youtube.com{post.data.videoId}` until 2026-09-22;
 // VIDEO-PAGE.md, section 2.
+//
+// Added 2026-09-28: a paid video (`access: paid`) gets PaidVideo.astro in the player's place,
+// which asks the access service for the player address; the entry itself holds no id
+// (VIDEO-PAGE.md 6.1, PAID-VIDEO.md). `player` is computed for a public video only, although the
+// schema already keeps videoId out of a paid one, so that this file cannot print an id for a paid
+// entry even if the schema's rule were loosened.
 import ArticleLayout from "./ArticleLayout.astro";
 import type { MarkdownHeading } from "astro";
-import { videoLink, type Video } from "../lib/video";
+import { videoLink, videoUrl, type Video } from "../lib/video";
+import PaidVideo from "../components/PaidVideo.astro";
 
 interface Props {
   video: Video;
@@ -30,9 +37,18 @@ interface Props {
 
 const { video, headings, prev, next } = Astro.props;
 const { data } = video;
-const player = data.videoId
-  ? `https://www.youtube.com/embed/${data.videoId}`
-  : undefined;
+const paid = data.access === "paid";
+// Changed 2026-09-28 at the owner's request, to send fewer visitors off to YouTube: the
+// privacy-enhanced host youtube-nocookie.com, where YouTube sets no cookie until play is
+// pressed, and rel=0, which limits the videos suggested at the end to this video's own channel.
+// That is all YouTube allows: the title, the channel link, the logo and "More videos" always
+// show ("YouTube Embedded Player Parameters"), and hiding or covering a link in the player is
+// against its Developer Policies, III.I.4 and III.I.6. The paid player gets the same address
+// from workers/video-access/worker.mjs; change the two together.
+const player =
+  !paid && data.videoId
+    ? `https://www.youtube-nocookie.com/embed/${data.videoId}?rel=0`
+    : undefined;
 ---
 
 <ArticleLayout
@@ -57,6 +73,15 @@ const player = data.videoId
     - будет рендериться сам плеер */
   }
   <div slot="media" class="video-wrapper mb-8">
+    {
+      paid && (
+        <PaidVideo
+          slug={video.slug}
+          href={videoUrl(video)}
+          title={data.title}
+        />
+      )
+    }
     {
       player && (
         <iframe

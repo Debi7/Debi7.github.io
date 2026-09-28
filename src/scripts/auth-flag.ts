@@ -14,6 +14,10 @@
 // show the signed-out icon to a signed-in visitor for a while (until the next auth page corrects
 // it), but never the other way round. The flag is presentation: Clerk decides who is signed in,
 // and whatever protects paid content later decides what a visitor may read, never this value.
+// Amended 2026-09-28: a paid video's page loads Clerk too (src/scripts/paid-video.ts, through a
+// dynamic import), and it writes the flag the same way, since the listener lives in auth.ts. It
+// also reads the flag first, to spare a guest the Clerk load; the access service, not this value,
+// decides who gets the video (PAID-VIDEO.md).
 import { site } from "../config";
 
 // Every access to localStorage is wrapped, because a private window or blocked site data makes the

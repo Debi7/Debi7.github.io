@@ -105,9 +105,33 @@ export const site = {
   // Changed later on 2026-09-26 by the owner: the key now points at another development instance,
   // supreme-ladybug-7080.clerk.accounts.dev, chosen on purpose. The demo sign-in of check:auth
   // passes against it as it did against the first one.
+  // Added 2026-09-28: the access service for paid videos (workers/video-access/) is configured
+  // with this same key and derives from it the Clerk instance whose tokens it accepts. When the
+  // key changes, change the service's CLERK_PUBLISHABLE_KEY too, or every member gets "video
+  // unavailable" (workers/video-access/README.md).
   clerk: {
     publishableKey:
       "pk_test_c3VwcmVtZS1sYWR5YnVnLTcwODAuY2xlcmsuYWNjb3VudHMuZGV2JA",
+  },
+
+  // Added 2026-09-28 (paid videos; .specify/consilium/2026-09-28-paid-video-access.md): the
+  // access service that gives a member the player address of a paid video. GitHub Pages runs no
+  // code, so it is a Cloudflare Worker, workers/video-access/. `endpoint` is its address, empty
+  // until the owner creates the Worker (its README says how); while it is empty a paid page says
+  // the video is unavailable. `devEndpoint` is the same code run on this machine by
+  // `npm run video-access:dev`, which `npm run dev` asks instead: import.meta.env.DEV picks one at
+  // build time, so a bundle carries one address. `playerHosts` are the only hosts a player
+  // address may point to; the page refuses anything else the service returns, so a broken or
+  // taken-over service cannot put another page, or a script address, into the player frame.
+  // grantedEvent added 2026-09-28, the owner's choice for comments on a paid video (hide the block
+  // until the access service has answered 200): src/scripts/paid-video.ts dispatches this event on
+  // the document once the player is in place, and Disqus.astro shows its button when it hears it.
+  // The name is spelled here once, so the two scripts cannot drift apart.
+  videoAccess: {
+    endpoint: "",
+    devEndpoint: "http://127.0.0.1:8787",
+    playerHosts: ["www.youtube.com", "www.youtube-nocookie.com"],
+    grantedEvent: "paid-video:granted",
   },
 
   // Changed 2026-09-26 with the move to Clerk (CLERK.md step 2): the pages are three - sign-in,

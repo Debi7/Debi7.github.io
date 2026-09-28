@@ -12,6 +12,11 @@
 // runs in Node at build time, and never a file the header or the layout loads: Clerk is by far the
 // heaviest code on the site (package.json has the measured size), so it has to stay on the three
 // pages that need it.
+// Amended 2026-09-28: a fourth caller, src/scripts/paid-video.ts, reaches this module through a
+// dynamic import() only, on a paid video's page, and only once the header's flag says someone is
+// signed in. The rule behind the paragraph above still holds: no static import outside the three
+// auth pages, so the Clerk chunk stays off every page a guest opens (checked in dist/ on
+// 2026-09-28; PAID-VIDEO.md).
 //
 // Why the instance is created inside a function and not at module scope. A throw at module scope
 // would take the rest of the page's bundle down with it; inside a function the failure reaches the

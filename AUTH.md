@@ -112,3 +112,7 @@ and is not to be touched for now. Reading stays open to everyone. To write, a vi
 comment frame (or registers there), which is Disqus's own account, not the club's. If guests can still post without
 any account, that is a switch in the Disqus admin (guest commenting) on the colleague's Disqus account, not code; the
 exact name of the setting was not checked.
+
+Changed 2026-09-28, the owner's choice: on a paid video the comments block stays hidden until the access service has
+let the visitor watch (`Disqus.astro`, the `locked` prop; `PAID-VIDEO.md` section 1). Posts and public videos keep
+their comments for everyone. Disqus itself is not changed.

@@ -159,6 +159,10 @@ out the protected thing. The rest of the site stays static on GitHub Pages; the 
 Any of these is a new architectural decision: the first piece of the site that runs outside GitHub Pages. It should
 go through its own consilium before it is built.
 
+**Decided and built on 2026-09-28: option A.** The consilium of that day (`.specify/consilium/2026-09-28-paid-video-access.md`)
+chose a Cloudflare Worker, `workers/video-access/`, which returns the YouTube embed address to a member; option B can
+come later without changing the site. How to set it up, add a paid video and see it is `PAID-VIDEO.md`.
+
 ## 6. Taking payments
 
 ### 6.1 The first question: where does the club receive the money?
@@ -289,6 +293,9 @@ workspace menu at the top left.
 
    Nothing on the site uses these claims until the lock of section 5 exists; adding them early does no harm.
 
+   Amended 2026-09-28: the lock exists now (`PAID-VIDEO.md`), so this step is required. Without these claims every
+   member is refused.
+
 ### 7.3 The access record
 
 Paid access is two fields in a user's **public** metadata, written exactly like this:
@@ -304,6 +311,8 @@ Paid access is two fields in a user's **public** metadata, written exactly like 
 - `memberUntil`: the last day of access, always in the form `YYYY-MM-DD`. The lock treats the day as included and
   stops access the day after, with no action from anyone. For access with no end date, agree on a far date such as
   `2099-12-31` rather than leaving the field out, so every record has the same shape.
+- Added 2026-09-28, when the lock was built: the day ends at midnight UTC, and anything but exactly `true` and a
+  real date in that form means "no access" - a missing field too. A typo closes access; it never opens it.
 
 Administrative notes go into the user's **private** metadata, which the visitor's browser cannot read:
 
