@@ -62,8 +62,14 @@ const initials = site.title
       640px, which removes the crowded band altogether rather than truncating anything. He chose
       640px when the menu had five items and no logo; REVIEW-VIDEO.md remark 4 has the history. */
     }
+    {
+      /* Changed 2026-09-28 with the menu scroll fix (Menu.astro): sm:shrink-[100] makes the title
+      give way first, as it did before the right-hand group below got min-w-0, so the menu keeps
+      every item in view at 640px to 1023px and scrolls only when it truly does not fit. Without it
+      the two shared the shrinking and the menu hid about 40px at 680px. */
+    }
     <div
-      class="min-w-0 max-w-[70%] truncate text-lg font-bold sm:max-w-md sm:text-xl lg:flex-shrink-0"
+      class="min-w-0 max-w-[70%] truncate text-lg font-bold sm:max-w-md sm:shrink-[100] sm:text-xl lg:flex-shrink-0"
     >
       <a
         href="/"
@@ -111,7 +117,11 @@ const initials = site.title
         <span class="hidden min-[400px]:inline">{site.title}</span>
       </a>
     </div>
-    <div class="flex items-center gap-2">
+    {
+      /* Changed 2026-09-28: min-w-0, so this group can be narrower than the menu inside it and the
+      menu's own scrolling takes over (Menu.astro has the reason). */
+    }
+    <div class="flex min-w-0 items-center gap-2">
       <Menu />
       {
         /* Changed 2026-09-22 at the owner's request: the switch stays in the bar at every width

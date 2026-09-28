@@ -143,8 +143,18 @@ const isPanel = variant === "panel";
     // )
     // }
 
-    <nav class="hidden w-full justify-end whitespace-nowrap sm:flex">
-      <div class="min-[640px]:max-[708px]:scrollbar-none relative flex items-center justify-between min-[640px]:max-[708px]:flex min-[640px]:max-[708px]:overflow-x-auto">
+    // Changed 2026-09-28, the colleague's report that the menu does not scroll between 640px and
+    // 708px: min-w-0 on the nav and on the scrolling div. Both are flex items, and a flex item's
+    // min-width is auto, so each grew to the full width of the list and there was never anything
+    // to scroll; with more items the menu pushed the logo and the icons out of the header instead
+    // (measured in headless Edge with three extra items; Header.astro gives its right-hand group
+    // the same min-w-0). With today's items the menu still fits at those widths, so nothing moves
+    // until it does not. scrollbar-none is written plainly now: the variant
+    // min-[640px]:max-[708px]:scrollbar-none produced nothing, because Tailwind does not know the
+    // class, so the default scrollbar would have shown; the style block below hides it, and only
+    // this band scrolls anyway.
+    <nav class="hidden w-full min-w-0 justify-end whitespace-nowrap sm:flex">
+      <div class="scrollbar-none relative flex min-w-0 items-center justify-between min-[640px]:max-[708px]:flex min-[640px]:max-[708px]:overflow-x-auto">
         <ul class="flex list-none flex-row items-center space-x-1 py-2 min-[640px]:max-[708px]:w-max min-[640px]:max-[708px]:flex-nowrap min-[640px]:max-[708px]:px-2 lg:space-x-3">
           {site.menu.map((item) => (
             <li

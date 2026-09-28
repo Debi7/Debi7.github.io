@@ -182,6 +182,13 @@ name in the forms should not be in quotes.
     Checked: no such line in two builds, 147 pages, `[types]` about 0.9 s instead of 2 s; `astro dev` still
     pre-bundles `@clerk/clerk-js`, `@clerk/ui`, `@clerk/localizations` and React. Side effect: the first `astro dev`
     after a build bundles them again, a few seconds once.
+  - The colleague's report that the menu does not scroll between 640px and 708px. Measured in headless Edge: at
+    those widths every item fits (392px of 404px for a guest, 470px of 480px with Account), so there was nothing to
+    scroll; with three extra items the menu pushed the logo and the icons out of the header instead, because the
+    scrolling div, the nav and the header's right-hand group are flex items with `min-width: auto`, and the variant
+    `min-[640px]:max-[708px]:scrollbar-none` produced no CSS. Now `min-w-0` on the three and a plain `scrollbar-none`;
+    the title gives way first (`sm:shrink-[100]`), so the header at 390px to 1280px is unchanged (screenshots at
+    680px identical) and the overfull menu scrolls (527px of 620px) with every icon on screen.
 
 ### Verification
 
