@@ -13,7 +13,7 @@ export const site = {
   language: "ru",
   social: {
     github: "https://debi7.github.io/",
-    email: "your.email@example.com",
+    email: " ",
     telegram: "@name",
   },
 
