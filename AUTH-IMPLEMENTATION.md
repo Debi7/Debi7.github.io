@@ -235,6 +235,10 @@ name in the forms should not be in quotes.
     past the edge from 280px to 600px with the globe turned several times (the sampler catches a 57px overshoot
     when the words are enlarged on purpose), drags follow the finger in four directions, the page does not scroll,
     a tap and a click open the word. Details in `src/scripts/tag-cloud.ts` and the README section on the cloud.
+  - 2026-09-29, not about sign-in either: hover effects on touch screens (the colleague's request). A PostCSS plugin
+    in the new `postcss.config.cjs` gives every `:hover` rule an `:active` twin, and `site.ts` attaches an empty
+    passive `touchstart` handler to the body, without which iOS Safari ignores `:active` (MDN compatibility data).
+    Checked on the build: 86 `:hover` rules, all with twins, no Tailwind class name changed; `check` clean.
 
 ### Verification
 
