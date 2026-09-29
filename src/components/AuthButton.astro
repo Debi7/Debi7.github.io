@@ -1,52 +1,19 @@
 ---
-// The sign-in icon in the header, added by the colleague on 2026-09-25 (commit 35e8f80).
-//
-// Rewritten the same day with the browser-side sign-in. What changed and why:
-// (Reworded 2026-09-26 for the move to Clerk, CLERK.md step 6: the first two items named the
-// previous auth provider, which CLERK.md section 0 orders out of this branch. The design stands.)
-//
-// - The link goes to the sign-in page, and to the member's page once a session exists. It read
-//   "/login" before, a route that never existed, so the icon led to a 404.
-// - The script reads only the small flag the auth pages keep in localStorage
-//   (src/scripts/auth-flag.ts) and never imports the auth library: this component is on every
-//   page through Header.astro, and Clerk weighs about 720 KB gzip with React (measured 2026-09-26, see package.json) against about 70 KB of JavaScript
-//   on the whole rest of the site. The flag is a hint for the icon; Clerk decides who is signed in.
-// - The markup is a link and nothing else. The earlier version wrapped the <a> in a <button>, which
-//   HTML does not allow, declared Props (href, className) that nothing read, and gave the SVG a
-//   namespace that is not the SVG namespace; all three are gone.
-// - The submit handler that used to end this file bound to a form on another page and could never
-//   run; it lives in src/pages/auth/signin.astro now, next to its form.
-//
-// The icon used to be hidden on the home page, the colleague's choice (her note below describes the
-// check), with no reason recorded. Changed the evening of 2026-09-25 at the owner's word: the home
-// page is now the one page a guest sees - the carousel and a header of Home, the theme switch and
-// this icon (AUTH.md section 10) - so the icon is the way in and shows there too. The check went
-// with the condition it served; her note stays, as CLAUDE.md asks of existing comments.
 import { site } from "../config";
-
-// Проверяем, является ли текущая страница главной
-// (The two lines that followed this note, reading Astro.url.pathname and computing isHomePage,
-// were removed on the evening of 2026-09-25; see the paragraph above. The note is kept as it was.)
 ---
 
 <div class="flex flex-1 justify-end">
-  {
-    /* Changed 2026-09-28 at the colleague's request, relayed by the owner: -mr-2. The header row
-    has the same 24px padding on both sides, but this link's p-2 kept the icon 8px inside it, and
-    the icon's own blank edge adds about 2px, so the right-hand gap read 34px against the logo's
-    24px (measured in headless Edge at 360px to 1280px). The negative margin cancels the padding
-    on the right only, so the icon moves to the edge while the tap area stays 40px wide. The owner
-    kept it after a look. */
-  }
   <a
     id="auth-link"
     href={site.auth.signIn}
+    data-signin-href={site.auth.signIn}
     data-account-href={site.auth.account}
     class="-mr-2 ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
     aria-label="Войти на сайт"
     title="Войти на сайт"
   >
     <svg
+      id="icon-signin"
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
@@ -61,23 +28,49 @@ import { site } from "../config";
         d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
       ></path>
     </svg>
+
+    <svg
+      id="icon-user"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="hidden h-6 w-6"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="8" r="4"></circle>
+      <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+    </svg>
   </a>
 </div>
 
 <script>
-  // Top level of the template, never inside a `{cond && (...)}` expression (the link sat in one
-  // until the evening of 2026-09-25): a bundled script inside such a block is not hoisted at all
-  // (CLAUDE.md, measured 2026-09-22). The script decides for itself whether there is a link to
-  // update.
   import { readAuthFlag } from "../scripts/auth-flag";
-
-  // Changed 2026-09-26 (CLERK.md step 2): the member's page is site.auth.account now, and the data
-  // attribute is data-account-href to match; it was data-dashboard-href.
   const link = document.getElementById("auth-link");
-  if (link instanceof HTMLAnchorElement && readAuthFlag()) {
-    const account = link.dataset.accountHref;
-    if (account !== undefined) link.href = account;
-    link.setAttribute("aria-label", "Личный кабинет");
-    link.title = "Личный кабинет";
+  const iconSignIn = document.getElementById("icon-signin");
+  const iconUser = document.getElementById("icon-user");
+  function applyAuthState() {
+    if (!(link instanceof HTMLAnchorElement)) return;
+    const signInHref = link.dataset.signinHref;
+    const accountHref = link.dataset.accountHref;
+    if (readAuthFlag()) {
+      if (accountHref) link.href = accountHref;
+      link.setAttribute("aria-label", "Личный кабинет");
+      link.title = "Личный кабинет";
+      iconSignIn?.classList.add("hidden");
+      iconUser?.classList.remove("hidden");
+    } else {
+      if (signInHref) link.href = signInHref;
+      link.setAttribute("aria-label", "Войти на сайт");
+      link.title = "Войти на сайт";
+      iconSignIn?.classList.remove("hidden");
+      iconUser?.classList.add("hidden");
+    }
   }
+  applyAuthState();
+  window.addEventListener("auth-flag-change", applyAuthState);
+  window.addEventListener("storage", applyAuthState);
 </script>
