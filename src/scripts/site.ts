@@ -25,6 +25,16 @@
 // Not the theme bootstrap (localStorage -> `dark` class): that one stays inline in
 // src/components/Head.astro so it runs before the stylesheets load.
 
+// --- Pressed state on touch screens ---
+// Added 2026-09-29 with postcss.config.cjs, which gives every hover effect an `:active` twin so that
+// a finger on a link or a button shows what the mouse pointer shows. iOS Safari ignores `:active`
+// on touch unless a touchstart handler exists: MDN's compatibility data for `:active` says "By
+// default, Safari on iOS does not use the :active state unless there is a touchstart event handler
+// on the relevant element or on the <body> element." This handler does nothing but exist. It is
+// passive, so it never delays scrolling, and it sits on the body, which is the element the note
+// names. This file is a deferred module, so the body is there when it runs.
+document.body.addEventListener("touchstart", () => {}, { passive: true });
+
 // --- Theme (dark / light) ---
 // Ported ahead of §7 because the header's toggle button is useless without it.
 // Verbatim from the themeInit block in head/js.html, including the DOMContentLoaded
