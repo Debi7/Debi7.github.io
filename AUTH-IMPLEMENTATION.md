@@ -274,6 +274,10 @@ name in the forms should not be in quotes.
     while the owner's server kept the old hash. The owner restarts with `npm run dev:clean`. So that it cannot happen
     again, `astro.config.mjs` has a small integration that moves the cache to `KB_VITE_CACHE_DIR` when that is set,
     and CLAUDE.md asks every spare server to set it; checked: such a server left `node_modules/.vite` untouched.
+  - 2026-09-30, the back-to-top button that the audit entry above found: it starts `pointer-events-none` and
+    `invisible` now, and the script toggles `invisible` with the other classes, so before the first scroll it can be
+    neither tapped nor reached with Tab. Checked on the built site at 390px: hidden and out of reach on load, visible,
+    tappable and focusable after a scroll down, hidden and out of reach again back at the top.
 
 ### Verification
 
