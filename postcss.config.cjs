@@ -25,10 +25,25 @@
 //
 // iOS Safari needs one more thing, in src/scripts/site.ts: it does not apply `:active` on touch at
 // all unless a touchstart handler is attached (MDN browser compatibility data for `:active`).
+//
+// A PRESS ON A TOUCH SCREEN IS INSTANT (added 2026-09-30)
+//
+// The colleague saw no lift on a search result on a phone although the twin was there. A tap keeps
+// `:active` for a fraction of a second, and many of these effects are animated for longer - the
+// shadow of a search result for 0.3s, the pill behind a home page menu item for 0.3s, the footer icons
+// for 0.2s, every Tailwind `transition` for 0.15s - so a tap ended the effect before it had shown, and
+// a card that navigates took the page away as well. Each twin therefore also gets, under
+// `@media (hover: none)`, a rule setting `transition-duration: 0s` on the pressed element: the effect
+// appears at once under the finger and fades out at its usual speed when the finger lifts, because a
+// transition takes its timing from the state it is going to. A device with a mouse matches
+// `(hover: hover)` and keeps every animation as it was. An audit of the built CSS the same day found
+// all 85 hover selectors already twinned; this timing was what the phones were missing.
 /** @type {import("postcss").PluginCreator<void>} */
 const hoverAlsoActive = () => ({
   postcssPlugin: "hover-also-active",
-  Rule(rule) {
+  // Changed 2026-09-30: takes the node constructors PostCSS hands every visitor, for the touch rule
+  // described in the header.
+  Rule(rule, { AtRule, Rule }) {
     if (!rule.selector.includes(":hover")) return;
     const selectors = rule.selectors;
     const added = selectors
@@ -38,6 +53,14 @@ const hoverAlsoActive = () => ({
     // A rule already carrying its twins adds nothing, which is also what stops PostCSS visiting it
     // again and again after the change.
     if (added.length > 0) rule.selectors = [...selectors, ...added];
+    // Added 2026-09-30: the instant press on a touch screen, placed right after the rule it belongs
+    // to. Its selectors carry `:active` and no `:hover`, so the visitor leaves it alone.
+    if (added.length === 0) return;
+    const pressed = new Rule({ selectors: added });
+    pressed.append({ prop: "transition-duration", value: "0s" });
+    const touchOnly = new AtRule({ name: "media", params: "(hover: none)" });
+    touchOnly.append(pressed);
+    rule.after(touchOnly);
   },
 });
 hoverAlsoActive.postcss = true;

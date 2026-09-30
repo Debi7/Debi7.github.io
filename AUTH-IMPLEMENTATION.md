@@ -239,6 +239,11 @@ name in the forms should not be in quotes.
     in the new `postcss.config.cjs` gives every `:hover` rule an `:active` twin, and `site.ts` attaches an empty
     passive `touchstart` handler to the body, without which iOS Safari ignores `:active` (MDN compatibility data).
     Checked on the build: 86 `:hover` rules, all with twins, no Tailwind class name changed; `check` clean.
+  - 2026-09-30, the same subject: the colleague saw no lift on a search result on a phone. A tap is shorter than most
+    of the hover animations (0.15 to 0.3 s), so the plugin now also writes `transition-duration: 0s` for each
+    `:active` twin under `@media (hover: none)`: instant under the finger, the usual fade after it. An audit of the
+    build found every hover selector twinned and nothing hover-only left but deliberate cases (README). Checked in
+    headless Edge: a pressed search result under touch emulation, 0s and the lifted shadow; with a mouse, 0.3s.
 
 ### Verification
 
