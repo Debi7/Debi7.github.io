@@ -215,6 +215,14 @@ document.addEventListener("DOMContentLoaded", function () {
       setOpen(false);
     });
 
+    // Added 2026-09-30: a link in the panel that keeps the visitor on the page - the Account item
+    // while the account page is open (Menu.astro, src/scripts/same-page.ts) - loads nothing, so no
+    // new page closes the panel; it closes here. The link's own listener has run by the time the
+    // click bubbles up to the panel, so its preventDefault is already visible.
+    panel.addEventListener("click", function (e) {
+      if (e.defaultPrevented) setOpen(false);
+    });
+
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && isOpen()) {
         setOpen(false);

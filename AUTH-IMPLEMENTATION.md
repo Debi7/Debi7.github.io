@@ -302,6 +302,15 @@ name in the forms should not be in quotes.
     same-tab event, `check:auth` 19/19. Then, at the owner's request, the icon holds clicks after the first until the
     page changes (5 s at most, free again after Back, new-tab clicks untouched); on a slowed network three quick clicks
     made one request to `/auth/signin/`.
+  - 2026-10-01, a click on the page the icon leads to (the owner's request): new `src/scripts/same-page.ts`, used by
+    `AuthButton.astro` and by the Account item of `Menu.astro` (marked `data-menu-account` in the bar and the panel).
+    On the sign-in page the click does nothing; on the account page it sets `location.hash = ""`, which is how Clerk's
+    `HashRouter` (`@clerk/ui` 1.36.0, listens for `hashchange`) goes to the first tab; `site.ts` closes the phone panel
+    after a click it prevented. The icon carries `aria-current="page"` there. The sign-up page keeps the icon's
+    navigation to sign-in (owner). Checked on the built site with the demo account: no document request on the
+    sign-in page (first step and the password step, `next` and the typed password kept), on the account page from
+    the icon, the bar item and the phone panel (Security tab back to the first, panel closed); the sign-up icon and
+    the Account item on `/about/` still navigate.
   - 2026-09-30, "504 (Outdated Optimize Dep)" again on the owner's sign-in page: `npm run check` at 23:12 (astro sync
     starts a Vite of its own) rewrote `node_modules/.vite/deps` under the owner's server, started at 22:59. Every
     command but `astro dev` now uses `node_modules/.vite-tools` (integration `separate-vite-cache`); checked: `check`

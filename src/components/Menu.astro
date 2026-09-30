@@ -89,6 +89,13 @@ const currentClasses = (current: "page" | "true" | undefined) => [
 // they take about 68px out of a row that was 55px too wide at its worst, and every width from
 // 640px to 1600px was re-measured afterwards.
 const isPanel = variant === "panel";
+
+// Added 2026-09-30 at the owner's request: the Account item carries data-menu-account in both
+// variants, by which the script at the bottom finds it, so that a click on it while the account
+// page is open loads nothing and brings Clerk's card back to its first tab
+// (src/scripts/same-page.ts). No other item is affected.
+const accountMark = (url: string) =>
+  url === site.auth.account ? "" : undefined;
 ---
 
 {
@@ -108,6 +115,7 @@ const isPanel = variant === "panel";
                 ...currentClasses(ariaCurrent(item.url)),
               ]}
               aria-current={ariaCurrent(item.url)}
+              data-menu-account={accountMark(item.url)}
               href={item.url}
             >
               {item.name}
@@ -200,6 +208,7 @@ const isPanel = variant === "panel";
                   ...currentClasses(ariaCurrent(item.url)),
                 ]}
                 aria-current={ariaCurrent(item.url)}
+                data-menu-account={accountMark(item.url)}
                 href={item.url}
               >
                 {item.name}
@@ -233,6 +242,8 @@ const isPanel = variant === "panel";
   // the system for reduced motion. In the band the line under the menu is shown all the time, as in
   // her version, as the hint that the row moves; outside it the line still appears only while the
   // row overflows.
+  // Added later on 2026-09-30, for the Account item at the end of this script.
+  import { stayOnPage } from "../scripts/same-page";
   const scroller = document.querySelector("[data-menu-scroller]");
   const line = document.querySelector("[data-menu-scroll-line]");
   const list = scroller?.firstElementChild;
@@ -318,6 +329,17 @@ const isPanel = variant === "panel";
       true,
     );
   }
+
+  // Added later on 2026-09-30, at the owner's request: on the account page the Account item, in the
+  // bar and in the panel, loads nothing and brings Clerk's card back to its first tab, as the
+  // header's icon does (src/scripts/same-page.ts). site.ts closes the panel after such a click,
+  // since no new page does it.
+  document.querySelectorAll("[data-menu-account]").forEach((account) => {
+    if (!(account instanceof HTMLAnchorElement)) return;
+    account.addEventListener("click", (event) => {
+      stayOnPage(event, account);
+    });
+  });
 </script>
 
 <style>
