@@ -72,7 +72,7 @@ const { prevUrl, nextUrl, numbers, class: className } = Astro.props;
       {prevUrl ? (
         <a
           href={prevUrl}
-          class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-start"
+          class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:justify-self-start dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -123,7 +123,7 @@ const { prevUrl, nextUrl, numbers, class: className } = Astro.props;
       {nextUrl ? (
         <a
           href={nextUrl}
-          class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800 sm:justify-self-end"
+          class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:justify-self-end dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
         >
           {t.pagination_next}
           <svg

@@ -1,5 +1,11 @@
 ---
 /* кнопка Наверх/Back to Top */
+
+// Noted 2026-09-30, from a Tailwind 3.4 audit the owner ordered: bg-[#11213b] is the dark theme's
+// --panel-bg from src/styles/custom.css written out by hand, and hover:bg-[#233358] a lighter step
+// of it. Left as literals on purpose: the button is dark in both themes, while var(--panel-bg) is
+// light in the light theme, so the variable cannot stand in for it. Change these two together
+// with that variable if the dark palette moves.
 ---
 
 <button

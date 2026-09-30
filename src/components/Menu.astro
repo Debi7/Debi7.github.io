@@ -153,19 +153,44 @@ const isPanel = variant === "panel";
     // min-[640px]:max-[708px]:scrollbar-none produced nothing, because Tailwind does not know the
     // class, so the default scrollbar would have shown; the style block below hides it, and only
     // this band scrolls anyway.
-    <nav class="hidden w-full min-w-0 justify-end whitespace-nowrap sm:flex">
-      <div class="scrollbar-none relative flex min-w-0 items-center justify-between min-[640px]:max-[708px]:flex min-[640px]:max-[708px]:overflow-x-auto">
-        <ul class="flex list-none flex-row items-center space-x-1 py-2 min-[640px]:max-[708px]:w-max min-[640px]:max-[708px]:flex-nowrap min-[640px]:max-[708px]:px-2 lg:space-x-3">
+    //
+    // Changed 2026-09-30, the colleague's question whether the scroll works at all, since in
+    // DevTools nothing moved. Measured in headless Edge: with today's items (six for a guest, seven
+    // for a member) the row fits at every width from 640px, so there is nothing to scroll and
+    // nothing can move - a scroller only scrolls what it hides. With three extra items it did scroll
+    // at 700px, but at 760px, 900px and 1100px, outside the 640-708px band, the row spilled over the
+    // icons instead. Three changes:
+    // 1. overflow-x-auto at every width where this bar shows (it is hidden below 640px), so a row
+    //    that does not fit scrolls wherever that happens; while it fits nothing changes.
+    // 2. The scroll line is shown by the script below only while the row really overflows. It was
+    //    shown across the whole band, where it promised a scroll that was not there.
+    // 3. The line moved out of the scrolling div into the nav, which is relative now for it. An
+    //    absolutely placed child of a scroll container scrolls with the content, so the line slid
+    //    away as the menu was scrolled; while the row overflows, the div is exactly as wide as the
+    //    nav, so the line stays where it was drawn.
+    //
+    // Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: redundant classes out, the
+    // band written the documented way. The band's flex on the div repeated the base flex, the
+    // band's flex-nowrap on the list is what a flex row does anyway, and h-[2px] on the line is
+    // h-0.5. The band itself reads sm:max-[708px] now, the same 640px to 708px ("Responsive
+    // Design", targeting a breakpoint range). scrollbar-none became a real utility in
+    // tailwind.config.cjs; the scoped rules at the bottom of this file are gone.
+    <nav class="relative hidden w-full min-w-0 justify-end whitespace-nowrap sm:flex">
+      <div
+        data-menu-scroller
+        class="relative flex min-w-0 items-center justify-between overflow-x-auto scrollbar-none"
+      >
+        <ul class="flex list-none flex-row items-center space-x-1 py-2 sm:max-[708px]:w-max sm:max-[708px]:px-2 lg:space-x-3">
           {site.menu.map((item) => (
             <li
               class:list={[
-                "text-base text-gray-600 hover:text-gray-900 dark:text-gray-200 dark:hover:text-white lg:text-lg",
+                "text-base text-gray-600 hover:text-gray-900 lg:text-lg dark:text-gray-200 dark:hover:text-white",
                 item.url === site.auth.account && "members-only",
               ]}
             >
               <a
                 class:list={[
-                  "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 lg:py-2",
+                  "rounded px-1.5 py-1 transition-colors hover:bg-gray-100 lg:py-2 dark:hover:bg-slate-800",
                   ...currentClasses(ariaCurrent(item.url)),
                 ]}
                 aria-current={ariaCurrent(item.url)}
@@ -176,20 +201,43 @@ const isPanel = variant === "panel";
             </li>
           ))}
         </ul>
-
-        <span class="pointer-events-none absolute bottom-0 left-0 right-0 hidden h-[2px] bg-gray-400/20 backdrop-blur-[3px] min-[640px]:max-[708px]:block" />
       </div>
+
+      <span
+        data-menu-scroll-line
+        class="pointer-events-none absolute bottom-0 left-0 right-0 hidden h-0.5 bg-gray-400/20 backdrop-blur-[3px]"
+      />
     </nav>
   )
 }
 
+<script>
+  // Added 2026-09-30: shows the scroll line under the header menu only while the row is wider than
+  // the room it has (see the note above the bar). The ResizeObserver catches every change of either
+  // width - a resized window, the web font arriving, the Account item appearing for a member. Astro
+  // runs a bundled script once per page, although this component renders twice (bar and panel).
+  const scroller = document.querySelector("[data-menu-scroller]");
+  const line = document.querySelector("[data-menu-scroll-line]");
+  if (scroller instanceof HTMLElement && line instanceof HTMLElement) {
+    const update = () => {
+      // A pixel of slack, so that a fractional width rounded up never shows the line on its own.
+      line.classList.toggle(
+        "hidden",
+        scroller.scrollWidth - scroller.clientWidth <= 1,
+      );
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(scroller);
+    if (scroller.firstElementChild)
+      observer.observe(scroller.firstElementChild);
+    update();
+  }
+</script>
+
 <style>
   /* Скрытие дефолтного скроллбара */
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-none {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  /* Moved 2026-09-30: the two rules that stood here, hiding the scrollbar of .scrollbar-none, are
+     the scrollbar-none utility in tailwind.config.cjs now, where Tailwind knows the class and lets
+     it take variants. The note above is kept, as every comment in this project is; the block
+     emits nothing. */
 </style>

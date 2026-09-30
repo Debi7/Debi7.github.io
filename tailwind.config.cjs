@@ -5,9 +5,19 @@
 // makes Tailwind 3 emit the same values for the same class names. Every number below was
 // read from the compiled Hugo stylesheet (reference/hugo-main.css).
 
+// Added 2026-09-30 for the scrollbar-none utility registered under `plugins` below.
+const plugin = require("tailwindcss/plugin");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: "class",
+  // Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: "selector", where it was
+  // "class". Tailwind's Dark Mode page says the selector strategy replaced the class strategy in
+  // v3.4.1, and this project runs 3.4.19. Same trigger, the dark class on <html>, but the variant
+  // compiles to :where(.dark, .dark *) with the specificity of the utility alone, where "class"
+  // gave :is(.dark *) and one class more - and :where() is what the Hugo build (Tailwind 4) emits
+  // in reference/hugo-main.css. Checked by comparing the computed colours of every element on ten
+  // pages in dark mode, at 1280px and 390px, before and after.
+  darkMode: "selector",
   content: ["./src/**/*.{astro,html,md,mdx,js,ts}"],
   theme: {
     extend: {
@@ -67,6 +77,11 @@ module.exports = {
       // from its oklch values. Tailwind 4 tree-shakes the theme, so a colour class used for
       // the first time in a later step will NOT be listed here: re-derive the table from
       // reference/hugo-main.css when new colour classes appear. See MIGRATION-PLAN.md 3.2.
+      //
+      // Corrected 2026-09-30, from a Tailwind 3.4 audit the owner ordered: the Hugo stylesheet
+      // defines 25 colours, not 19. The 19 are the ones pinned below; the other six - blue-50,
+      // blue-100, gray-50, gray-100, gray-200 and green-50 - convert to exactly Tailwind 3's
+      // values (0/255 apart), so they need no entry.
       colors: {
         // Added in commit 125643b (2026-09-19) as candidate light backgrounds with a faint
         // tint - mint, lavender and warm cream on grey - and moved here from the duplicate
@@ -121,5 +136,22 @@ module.exports = {
   },
   // Deliberately empty: @tailwindcss/typography is NOT active in the Hugo build.
   // `prose` / `not-prose` are plain hook classes styled by main.css.
-  plugins: [],
+  //
+  // Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: no longer empty, but still
+  // without the typography plugin - the one entry is a local utility. `scrollbar-none` hides a
+  // scroller's scrollbar (the header menu, Menu.astro, which defined it in its scoped style block).
+  // A class defined there looks like a utility but is not one to Tailwind, so it takes no
+  // variants: `min-[640px]:max-[708px]:scrollbar-none` generated nothing. Registered here it is a
+  // real utility that works with any variant (Plugins, "Adding utilities", static utilities).
+  plugins: [
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        ".scrollbar-none": {
+          "-ms-overflow-style": "none",
+          "scrollbar-width": "none",
+          "&::-webkit-scrollbar": { display: "none" },
+        },
+      });
+    }),
+  ],
 };

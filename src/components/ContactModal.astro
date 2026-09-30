@@ -18,8 +18,14 @@
       ✕
     </button>
 
+    {
+      /* Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: font-bilingual, the site's
+      serif, where it was font-serif. The config never sets `serif`, so that class gave Tailwind's
+      default stack (Georgia and the like) and the heading stood apart from every other heading
+      on the site (Font Family, "Customizing your theme"). */
+    }
     <h3
-      class="mb-4 font-serif text-xl font-semibold text-zinc-900 dark:text-zinc-100"
+      class="mb-4 font-bilingual text-xl font-semibold text-zinc-900 dark:text-zinc-100"
     >
       Обратная связь
     </h3>

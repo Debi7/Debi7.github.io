@@ -133,22 +133,29 @@ for (const heading of headings) {
   this sidebar: its --fg, --fg-muted, --fg-faint, --accent-soft, --accent-strong and --line
   variables, light and dark. They are scoped to the sidebar under their own names, because this
   project does not define those variables. */
+  /* Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: the values are theme() calls
+  now, where they were hex literals. Those literals are Tailwind 3's default palette, and
+  tailwind.config.cjs pins the blues, the greys and the slates to the values of the Hugo build
+  (Tailwind 4), so the sidebar was a shade off the rest of the site - its blue-700 was #1d4ed8
+  against the site's #1447e6. Each literal became the colour of the same name
+  (Functions & Directives, theme(), which also documents the "/ 18%" opacity); the unpinned ones
+  resolve to exactly the value they replace. */
   .toc-sidebar {
-    --toc-fg: #1f2937;
-    --toc-fg-muted: #4b5563;
-    --toc-fg-faint: #6b7280;
-    --toc-accent-soft: #eff6ff;
-    --toc-accent-strong: #1d4ed8;
-    --toc-line: #e5e7eb;
+    --toc-fg: theme(colors.gray.800);
+    --toc-fg-muted: theme(colors.gray.600);
+    --toc-fg-faint: theme(colors.gray.500);
+    --toc-accent-soft: theme(colors.blue.50);
+    --toc-accent-strong: theme(colors.blue.700);
+    --toc-line: theme(colors.gray.200);
   }
 
   :global(html.dark) .toc-sidebar {
-    --toc-fg: #e5e7eb;
-    --toc-fg-muted: #cbd5e1;
-    --toc-fg-faint: #94a3b8;
-    --toc-accent-soft: #3b82f62e;
-    --toc-accent-strong: #bfdbfe;
-    --toc-line: #334155;
+    --toc-fg: theme(colors.gray.200);
+    --toc-fg-muted: theme(colors.slate.300);
+    --toc-fg-faint: theme(colors.slate.400);
+    --toc-accent-soft: theme(colors.blue.500 / 18%);
+    --toc-accent-strong: theme(colors.blue.200);
+    --toc-line: theme(colors.slate.700);
   }
 
   /* Shown only from a 92rem (1472px) wide window up, the reference theme's breakpoint. It is a
@@ -213,7 +220,7 @@ for (const heading of headings) {
   }
 
   .toc-nav a:focus-visible {
-    outline: 2px solid #93c5fd;
+    outline: 2px solid theme(colors.blue.300);
     outline-offset: 2px;
   }
 

@@ -244,11 +244,30 @@ name in the forms should not be in quotes.
     `:active` twin under `@media (hover: none)`: instant under the finger, the usual fade after it. An audit of the
     build found every hover selector twinned and nothing hover-only left but deliberate cases (README). Checked in
     headless Edge: a pressed search result under touch emulation, 0s and the lifted shadow; with a mouse, 0.3s.
+  - 2026-09-30, the header menu again: the colleague asked whether her sideways scroll works, since nothing moved in
+    DevTools. With today's items the row fits from 640px (392px and 470px at 706px), so there is nothing to scroll.
+    With three extra items it scrolled at 700px but spilled over the icons at 760px and 1100px, outside the
+    640-708px band. Now `overflow-x-auto` wherever the bar shows, the line under it only while the row overflows
+    (a ResizeObserver in `Menu.astro`), and the line on the nav so that it does not scroll away. Measured again:
+    no line and nothing moves with today's items; with the extra items the row scrolls at 700px, 760px and 1100px,
+    the line matches the row and stays put after a scroll to the end. README, under the hamburger section.
   - 2026-09-30, `astro check` failed after the colleague's commit e019697 (the Yandex Metrika counter in
     `Base.astro`): "Cannot find name 'ym'" twice. `ym` is declared in `src/env.d.ts`, as a possibly undefined
     global like the earlier worked example there. Noted, not changed: the block that sends a hit on
     `astro:page-load` never runs, because that event comes from `<ViewTransitions />`, which the site does not use
     (Astro 4 docs, "View Transitions", lifecycle events); the counter's own init already counts every page load.
+  - 2026-09-30, a Tailwind 3.4 audit at the owner's request (3.4.19 installed), done by a read-only agent against the
+    Tailwind docs and checked against the code before anything changed. Applied: theme() colours in `search.css` and
+    `TocSidebar.astro`; the light-mode hover of the white controls in `custom.css`; `darkMode: "selector"`; the
+    `scrollbar-none` utility as a config plugin and three redundant menu classes out; keyboard focus rings on the
+    hamburger and the category toggles; font stacks via theme() in `main.css`; the feedback heading in the site's
+    serif; comment corrections in the config and `ScrollToTop.astro`. The audit was wrong about one thing: the theme
+    toggle already had a focus ring from `main.css`, so it was left alone. `darkMode` checked by diffing the computed
+    colours of 4712 elements on ten pages in dark mode at 1280px and 390px: identical but for the tag cloud words,
+    whose opacity is the sphere's animation. Not applied, on purpose: `future.hoverOnlyWhenSupported` (it would hide
+    every `hover:` and its `:active` twin from phones), the old class names copied from Hugo. README, "Tailwind 3.4
+    audit". Found on the way, not fixed: the back-to-top button is invisible but catches taps at the bottom right until
+    the page has been scrolled down and back, because `pointer-events-none` is added only then.
   - 2026-09-30, the owner's sign-in page failed on localhost:4321 with "504 (Outdated Optimize Dep)" on the three
     Clerk bundles. Cause: a dev server started here on a spare port shares `node_modules/.vite` with the owner's,
     began re-optimising the dependencies (Clerk takes over 15 s) and was stopped half-way, leaving no `deps` folder

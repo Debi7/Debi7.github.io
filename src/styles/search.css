@@ -11,6 +11,16 @@
    Tailwind: this file has to style markup that Tailwind never sees, so a utility class would not
    be generated for it. .dark is the class Head.astro puts on <html>. */
 
+/* Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: the colours are theme() calls,
+   where they were hex literals. The note above is right that no utility class can reach this
+   markup, but theme() is a CSS function that Tailwind resolves in every stylesheet it processes
+   (Functions & Directives, theme()), and this file goes through it like any other. The literals
+   were Tailwind 3's default palette, while tailwind.config.cjs pins the blues, the greys and the
+   slates to the values of the Hugo build (Tailwind 4), so a link here was #2563eb against #155dfc
+   everywhere else. Each literal became the colour of the same name; the unpinned ones resolve to
+   exactly the value they replace. The shadows keep their rgb(): black at an opacity, not a
+   palette colour. */
+
 .search-page {
   margin: 0 auto;
   max-width: 64rem;
@@ -24,27 +34,27 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid theme(colors.gray.200);
   border-radius: 0.5rem;
-  background: #fff;
+  background: theme(colors.white);
   padding: 0 0.875rem;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 .dark .search-field {
-  border-color: #334155;
-  background: #0f172a;
+  border-color: theme(colors.slate.700);
+  background: theme(colors.slate.900);
 }
 
 .search-field:focus-within {
-  border-color: #2563eb;
+  border-color: theme(colors.blue.600);
 }
 
 .search-field__icon {
   flex: 0 0 auto;
   width: 1.15rem;
   height: 1.15rem;
-  color: #9ca3af;
+  color: theme(colors.gray.400);
 }
 
 .search-field__input {
@@ -54,12 +64,12 @@
   background: transparent;
   padding: 0.85rem 0;
   font-size: 1rem;
-  color: #1f2937;
+  color: theme(colors.gray.800);
   outline: none;
 }
 
 .dark .search-field__input {
-  color: #f3f4f6;
+  color: theme(colors.gray.100);
 }
 
 /* The browser draws its own clear button inside type="search", and it sits right beside ours and
@@ -78,19 +88,19 @@
   background: transparent;
   padding: 0.25rem 0.25rem;
   font-size: 0.875rem;
-  color: #2563eb;
+  color: theme(colors.blue.600);
 }
 
 .dark .search-field__clear {
-  color: #93c5fd;
+  color: theme(colors.blue.300);
 }
 
 .search-field__clear:hover {
-  color: #1d4ed8;
+  color: theme(colors.blue.700);
 }
 
 .dark .search-field__clear:hover {
-  color: #bfdbfe;
+  color: theme(colors.blue.200);
 }
 
 /* The broom. 1.15rem matches the magnifier on the other side of the field, so the two icons read
@@ -130,12 +140,12 @@
 
 .search-facet + .search-facet {
   margin-top: 1.25rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid theme(colors.gray.200);
   padding-top: 1.25rem;
 }
 
 .dark .search-facet + .search-facet {
-  border-top-color: #334155;
+  border-top-color: theme(colors.slate.700);
 }
 
 .search-facet__title {
@@ -145,12 +155,12 @@
   justify-content: space-between;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #1f2937;
+  color: theme(colors.gray.800);
   list-style: none;
 }
 
 .dark .search-facet__title {
-  color: #e5e7eb;
+  color: theme(colors.gray.200);
 }
 
 /* The disclosure triangle is replaced by a chevron that turns, which is the shape the reference
@@ -187,26 +197,26 @@
   gap: 0.5rem;
   padding: 0.3rem 0;
   font-size: 0.875rem;
-  color: #374151;
+  color: theme(colors.gray.700);
 }
 
 .dark .search-facet__item {
-  color: #cbd5e1;
+  color: theme(colors.slate.300);
 }
 
 .search-facet__item:hover {
-  color: #2563eb;
+  color: theme(colors.blue.600);
 }
 
 .dark .search-facet__item:hover {
-  color: #93c5fd;
+  color: theme(colors.blue.300);
 }
 
 .search-facet__check {
   flex: 0 0 auto;
   width: 0.9rem;
   height: 0.9rem;
-  accent-color: #2563eb;
+  accent-color: theme(colors.blue.600);
 }
 
 .search-facet__name {
@@ -218,7 +228,7 @@
 .search-facet__count {
   flex: 0 0 auto;
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: theme(colors.gray.400);
   font-variant-numeric: tabular-nums;
 }
 
@@ -227,11 +237,11 @@
 .search-status {
   margin: 0 0 1rem;
   font-size: 0.875rem;
-  color: #4b5563;
+  color: theme(colors.gray.600);
 }
 
 .dark .search-status {
-  color: #cbd5e1;
+  color: theme(colors.slate.300);
 }
 
 .search-results {
@@ -243,7 +253,7 @@
 .search-result {
   position: relative;
   border-radius: 0.5rem;
-  background: #fff;
+  background: theme(colors.white);
   padding: 1rem 1.25rem;
   box-shadow:
     0 1px 2px 0 rgb(0 0 0 / 0.05),
@@ -273,11 +283,11 @@
 }
 
 .search-result:hover .search-result__title {
-  color: #2563eb;
+  color: theme(colors.blue.600);
 }
 
 .dark .search-result:hover .search-result__title {
-  color: #93c5fd;
+  color: theme(colors.blue.300);
 }
 
 .search-result + .search-result {
@@ -285,7 +295,7 @@
 }
 
 .dark .search-result {
-  background: #0f172a;
+  background: theme(colors.slate.900);
 }
 
 .search-result__title {
@@ -295,50 +305,50 @@
   z-index: 2;
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1f2937;
+  color: theme(colors.gray.800);
   text-decoration: none;
 }
 
 .search-result__title:hover {
-  color: #2563eb;
+  color: theme(colors.blue.600);
 }
 
 .dark .search-result__title {
-  color: #f3f4f6;
+  color: theme(colors.gray.100);
 }
 
 .dark .search-result__title:hover {
-  color: #93c5fd;
+  color: theme(colors.blue.300);
 }
 
 .search-result__meta {
   margin-top: 0.25rem;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: theme(colors.gray.500);
 }
 
 .search-result__section {
   display: inline-block;
   border-radius: 9999px;
-  background: #eff6ff;
+  background: theme(colors.blue.50);
   padding: 0.05rem 0.5rem;
-  color: #1d4ed8;
+  color: theme(colors.blue.700);
 }
 
 .dark .search-result__section {
-  background: #1e293b;
-  color: #93c5fd;
+  background: theme(colors.slate.800);
+  color: theme(colors.blue.300);
 }
 
 .search-result__snippet {
   margin-top: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.6;
-  color: #4b5563;
+  color: theme(colors.gray.600);
 }
 
 .dark .search-result__snippet {
-  color: #cbd5e1;
+  color: theme(colors.slate.300);
 }
 
 /* The line that says the query was found in the entry's tags. Smaller and quieter than the
@@ -346,11 +356,11 @@
 .search-result__why {
   margin-top: 0.5rem;
   font-size: 0.75rem;
-  color: #6b7280;
+  color: theme(colors.gray.500);
 }
 
 .dark .search-result__why {
-  color: #94a3b8;
+  color: theme(colors.slate.400);
 }
 
 /* mark carries a yellow background of the browser's own, which is the one colour on the page
@@ -358,12 +368,12 @@
    one: the default mark on a dark card is unreadable. */
 .search-result mark {
   border-radius: 0.2rem;
-  background: #dbeafe;
+  background: theme(colors.blue.100);
   padding: 0 0.1rem;
   color: inherit;
 }
 
 .dark .search-result mark {
-  background: #1d4ed8;
-  color: #f8fafc;
+  background: theme(colors.blue.700);
+  color: theme(colors.slate.50);
 }
