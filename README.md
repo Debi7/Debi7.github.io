@@ -294,6 +294,8 @@ Rewritten on 2026-09-28: the branch `clerk-auth` replaced the previous sign-in p
 
 **Lectures on Yandex Disk (2026-09-30).** At the owner's request a paid lecture can live on Yandex Disk instead of YouTube; the first is `/video/lecture-part-3/`, first in the Video list by its date (2026-09-29), and in the search like every lecture (block 2 aside). Its entry carries no address; the access service maps the slug to the file's public link (`{"yandexDisk": "..."}` in `VIDEOS`) and hands a member a short-lived direct address of the file, which the page plays in the browser's own video player, only from the hosts in `site.videoAccess.fileHosts`. It works locally with `npm run dev:all` (restart it after this change), and on the live site once the service is deployed. The limits - Yandex's unpublished download limits, one quality, a member can download the file, the public link is the key to it, a possible captcha from Cloudflare's servers - are in `PAID-VIDEO.md` section 10.
 
+**Yandex Metrika (2026-09-30).** The colleague added the counter to `Base.astro` (commit e019697). [METRIKA.md](METRIKA.md), written for the colleague's review at the owner's request, answers the questions about the counter's name and code settings, describes what the counter code does today (the block on `astro:page-load` never runs; local visits are counted too), and proposes changes that are not built yet: keeping personal data out of Session Replay, counting the published site only, three goals, and the counter number in `src/config.ts`.
+
 ## Deployment
 
 Live at **https://debi7.github.io/**, built and published by GitHub Actions on every push to `main`.

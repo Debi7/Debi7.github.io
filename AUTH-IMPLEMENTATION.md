@@ -292,6 +292,8 @@ name in the forms should not be in quotes.
     (MP4 with the index at the start, byte ranges), playback and a seek in headless Edge, `check:video-access` 41/41,
     the build (first on `/video/`, in the search without block 2, the link in no file of `dist/`). Not checked end to
     end with the demo member: the owner's running service had the old code. Limits in `PAID-VIDEO.md` section 10.
+  - 2026-09-30, `METRIKA.md` for the colleague's review (the owner's request): answers on the Yandex Metrika counter's
+    name and code settings, checked against Yandex's help, and proposals for the site that are not built yet.
 
 ### Verification
 
