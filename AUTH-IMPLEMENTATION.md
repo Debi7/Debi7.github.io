@@ -284,6 +284,14 @@ name in the forms should not be in quotes.
     after a drag dropped, `touch-action: pan-y` only while the spring is on. Checked on the built site under touch
     emulation: at 700px and 780px a 120px drag moved the row 14.5px and it came back, the page stayed, a vertical move left it
     alone; at 794px no line and no movement; the line starts under the row at 640px to 793px, for a guest and a member.
+  - 2026-09-30, paid lectures from Yandex Disk, the owner's decision; the first is `lecture-part-3` (first in the
+    Video list, dated 2026-09-29, placeholder texts, block 2). A `VIDEOS` value may be `{"yandexDisk": "<link>"}`;
+    the Worker asks Yandex Disk's public API after the membership check and answers a short-lived `videoUrl`
+    (VERSION 2026-09-30.1); the page plays it in a video element from `template[data-paid-file]`, only on
+    `site.videoAccess.fileHosts`. The link is in the ignored `videos.local.json` only. Checked: the API, the file
+    (MP4 with the index at the start, byte ranges), playback and a seek in headless Edge, `check:video-access` 41/41,
+    the build (first on `/video/`, in the search without block 2, the link in no file of `dist/`). Not checked end to
+    end with the demo member: the owner's running service had the old code. Limits in `PAID-VIDEO.md` section 10.
 
 ### Verification
 

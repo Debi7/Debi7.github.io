@@ -290,6 +290,8 @@ Open the Worker -> **Settings** -> **Variables and Secrets** -> **Add**, three t
   than one address is written with commas, no spaces.
 - `VIDEOS`, type **Secret**: the list of paid lectures, one line per lecture, `{"<slug>": "<YouTube id>", ...}`
   (`PAID-VIDEO.md` section 4).
+  Added 2026-09-30: a lecture stored on Yandex Disk takes its public link instead of an id,
+  `"<slug>": {"yandexDisk": "https://disk.yandex.ru/i/<key>"}`, in the same list (`PAID-VIDEO.md` section 10).
 
 Then **Deploy**. Two facts about secrets matter for everyday work:
 

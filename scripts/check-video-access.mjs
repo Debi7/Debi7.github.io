@@ -14,7 +14,13 @@ const site = "http://localhost:4321";
 const env = {
   CLERK_PUBLISHABLE_KEY: "pk_test_" + btoa(host + "$"),
   ALLOWED_ORIGINS: `${site},https://debi7.github.io`,
-  VIDEOS: JSON.stringify({ "paid-demo": "M7lc1UVf-VE" }),
+  // Changed 2026-09-30: two entries on Yandex Disk as well - a file's public link, and a folder's,
+  // which the Worker must refuse (worker.mjs, VERSION 2026-09-30.1). Made-up keys.
+  VIDEOS: JSON.stringify({
+    "paid-demo": "M7lc1UVf-VE",
+    "disk-demo": { yandexDisk: "https://disk.yandex.ru/i/testKey-1" },
+    "disk-folder": { yandexDisk: "https://disk.yandex.ru/d/folderKey" },
+  }),
 };
 
 const algorithm = {
@@ -41,10 +47,33 @@ const publicJwk = {
 // Every fetch the Worker makes lands here; nothing leaves the machine. Only the made-up instance
 // has a key list, and only while jwksAvailable is true.
 let jwksAvailable = true;
-globalThis.fetch = async (url) =>
-  String(url) === `https://${host}/.well-known/jwks.json` && jwksAvailable
+// Added 2026-09-30: Yandex Disk's public API, made up the same way. yandexAnswer picks what it does
+// ("ok", "down", or "elsewhere" - a download address on a host that is not Yandex's), and every
+// call is counted, with the public link it asked about, so the checks can see that a visitor
+// without access never makes the Worker ask.
+const yandexApi =
+  "https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=";
+let yandexAnswer = "ok";
+let yandexCalls = 0;
+let yandexAskedFor = "";
+globalThis.fetch = async (url) => {
+  const address = String(url);
+  if (address.startsWith(yandexApi)) {
+    yandexCalls++;
+    yandexAskedFor = decodeURIComponent(address.slice(yandexApi.length));
+    if (yandexAnswer === "down") return new Response("down", { status: 503 });
+    const downloadHost =
+      yandexAnswer === "elsewhere"
+        ? "evil.example"
+        : "downloader.disk.yandex.ru";
+    return new Response(
+      JSON.stringify({ href: `https://${downloadHost}/disk/test?token=1` }),
+    );
+  }
+  return address === `https://${host}/.well-known/jwks.json` && jwksAvailable
     ? new Response(JSON.stringify({ keys: [publicJwk] }))
     : new Response("down", { status: 502 });
+};
 
 const encode = (value) =>
   Buffer.from(
@@ -306,6 +335,54 @@ await expect(
   "member, slug not text",
   { auth: await bearer(base), body: { slug: 5 } },
   400,
+);
+
+// Added 2026-09-30: a lecture on Yandex Disk.
+const disk = { slug: "disk-demo" };
+const callsBefore = yandexCalls;
+await expect(
+  "not a member, Yandex Disk slug: Yandex is not asked",
+  { auth: await bearer({ ...base, member: false }), body: disk },
+  403,
+  () => yandexCalls === callsBefore,
+);
+await expect(
+  "member, Yandex Disk slug",
+  { auth: await bearer(base), body: disk },
+  200,
+  (a) => {
+    const answer = JSON.parse(a.text);
+    return (
+      new URL(answer.videoUrl).hostname === "downloader.disk.yandex.ru" &&
+      answer.embedUrl === undefined &&
+      yandexAskedFor === "https://disk.yandex.ru/i/testKey-1" &&
+      a.headers.get("Cache-Control") === "private, no-store"
+    );
+  },
+);
+await expect(
+  "member, Yandex Disk answer carries no link",
+  { auth: await bearer(base), body: disk },
+  200,
+  (a) => !a.text.includes("testKey-1"),
+);
+yandexAnswer = "down";
+await expect(
+  "member, Yandex Disk down",
+  { auth: await bearer(base), body: disk },
+  503,
+);
+yandexAnswer = "elsewhere";
+await expect(
+  "member, Yandex Disk gives another host",
+  { auth: await bearer(base), body: disk },
+  503,
+);
+yandexAnswer = "ok";
+await expect(
+  "member, a folder link in VIDEOS",
+  { auth: await bearer(base), body: { slug: "disk-folder" } },
+  503,
 );
 
 // A broken setting or an unreachable Clerk: 503, never an open door.

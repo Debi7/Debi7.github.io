@@ -31,6 +31,18 @@
 //   ALLOWED_ORIGINS        text    the site's origins, comma-separated
 //   VIDEOS                 secret  {"<slug>": "<YouTube id>", ...}
 //
+// Added 2026-09-30 (VERSION 2026-09-30.1), the owner's decision to take lectures from Yandex Disk
+// as well: a value in VIDEOS may also be {"yandexDisk": "https://disk.yandex.ru/i/<key>"}, the
+// file's public link. For such a slug a member gets
+//     200 {"videoUrl": "https://downloader.disk.yandex.ru/..."}
+// instead of an embedUrl: a direct address of the file that the Worker asks Yandex Disk's public
+// API for on every request (cloud-api.yandex.net, no account or token needed for a public file).
+// That address stops working after a while, so a member who copies it out of the page holds
+// nothing lasting, and the public link itself never leaves the Worker. The site plays it in a
+// plain video element (src/components/PaidVideo.astro). An answer from Yandex that is not a
+// download address on downloader.disk.yandex.ru, or no answer within 8 seconds, is a 503 like any
+// other broken dependency. The limits of hosting lectures this way are in PAID-VIDEO.md, section 10.
+//
 // The token checks follow Clerk's "Manual JWT verification" (Core 3). The signing key is looked up
 // by the token's kid in the instance's key list (JWKS), and the instance is the one named by
 // CLERK_PUBLISHABLE_KEY - never the token's own iss, or a token from anybody's Clerk instance would
@@ -46,7 +58,8 @@
 
 // Sent as X-Video-Access-Version, so that a pasted copy that fell behind the repository shows.
 // Raised to 2026-09-28.2 the same day, when the player address moved to youtube-nocookie.com.
-const VERSION = "2026-09-28.2";
+// Raised to 2026-09-30.1 when a slug could point at a file on Yandex Disk (the note above).
+const VERSION = "2026-09-30.1";
 const LEEWAY_SECONDS = 5;
 // A kid not in the cached key list makes the Worker fetch the list again, at most this often, so a
 // stream of made-up kids cannot turn every request into a request to Clerk.
@@ -182,6 +195,44 @@ function videoIds(raw) {
   return videos.map;
 }
 
+// Added 2026-09-30: Yandex Disk, for a VIDEOS value of the form {"yandexDisk": "<public link>"}.
+// Only the public link of a single file, https://disk.yandex.ru/i/<key> (disk.yandex.com too); a
+// folder's link (/d/) or anything else is not a usable value and ends in a 503.
+const YANDEX_DISK_LINK = /^https:\/\/disk\.yandex\.(ru|com)\/i\/[\w-]+$/;
+const YANDEX_DISK_API =
+  "https://cloud-api.yandex.net/v1/disk/public/resources/download";
+const YANDEX_DOWNLOAD_HOST = "downloader.disk.yandex.ru";
+
+// The direct address of a public file, fresh from Yandex Disk's API. Throws on anything unexpected,
+// which the handler turns into a 503; the message names Yandex's status, never the link.
+async function yandexDiskFile(link) {
+  const response = await fetch(
+    `${YANDEX_DISK_API}?public_key=${encodeURIComponent(link)}`,
+    {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    },
+  );
+  if (!response.ok) {
+    throw new Error(`Yandex Disk answered ${response.status}`);
+  }
+  const body = await response.json();
+  let url;
+  try {
+    url = new URL(body?.href);
+  } catch {
+    url = undefined;
+  }
+  if (
+    url === undefined ||
+    url.protocol !== "https:" ||
+    url.hostname !== YANDEX_DOWNLOAD_HOST
+  ) {
+    throw new Error("Yandex Disk gave no usable download address");
+  }
+  return url.href;
+}
+
 function reply(status, body, origin, extra = {}) {
   const headers = new Headers({
     "Cache-Control": "private, no-store",
@@ -256,6 +307,20 @@ export default {
       // Object.hasOwn, so that "__proto__" or "constructor" is not found on the prototype.
       const id = Object.hasOwn(ids, slug) ? ids[slug] : undefined;
       if (id === undefined) return reply(404, { error: "not_connected" }, cors);
+      // Added 2026-09-30: a file on Yandex Disk (the note at the top). Asked only here, after the
+      // membership check, so a visitor without access never makes the Worker call Yandex.
+      if (
+        typeof id === "object" &&
+        id !== null &&
+        typeof id.yandexDisk === "string" &&
+        YANDEX_DISK_LINK.test(id.yandexDisk)
+      ) {
+        return reply(
+          200,
+          { videoUrl: await yandexDiskFile(id.yandexDisk) },
+          cors,
+        );
+      }
       if (typeof id !== "string" || !/^[\w-]+$/.test(id)) {
         throw new Error(`VIDEOS holds no usable id for ${slug}`);
       }

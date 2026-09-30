@@ -145,6 +145,12 @@ async function run(box: HTMLElement): Promise<void> {
   await check(false);
 
   function play(target: HTMLElement, body: unknown): void {
+    // Added 2026-09-30: a lecture stored as a file (Yandex Disk) comes as {"videoUrl"}, played in a
+    // video element; the rest of this function is the frame for a player page, as before.
+    if (typeof body === "object" && body !== null && "videoUrl" in body) {
+      playFile(target, body.videoUrl);
+      return;
+    }
     const address =
       typeof body === "object" && body !== null && "embedUrl" in body
         ? body.embedUrl
@@ -174,6 +180,36 @@ async function run(box: HTMLElement): Promise<void> {
     target.replaceWith(frame);
     // Added 2026-09-28: the comments of a paid video are shown only now (the owner's choice), and
     // Disqus.astro owns that block, so it is told by an event rather than reached into.
+    document.dispatchEvent(new CustomEvent(site.videoAccess.grantedEvent));
+  }
+
+  // Added 2026-09-30: the same steps as play() for a direct file address - https on one of
+  // site.videoAccess.fileHosts or nothing, then the video element from its template - so a broken
+  // or taken-over service cannot make the page load a file from anywhere else.
+  function playFile(target: HTMLElement, address: unknown): void {
+    const hosts: readonly string[] = site.videoAccess.fileHosts;
+    let url: URL | undefined;
+    try {
+      url = typeof address === "string" ? new URL(address) : undefined;
+    } catch {
+      url = undefined;
+    }
+    const template = document.querySelector<HTMLTemplateElement>(
+      "template[data-paid-file]",
+    );
+    const video = template?.content.firstElementChild?.cloneNode(true);
+    if (
+      url === undefined ||
+      url.protocol !== "https:" ||
+      !hosts.includes(url.hostname) ||
+      !(video instanceof HTMLVideoElement)
+    ) {
+      console.error("Paid video: refused the file address", address);
+      show("failed");
+      return;
+    }
+    video.src = url.href;
+    target.replaceWith(video);
     document.dispatchEvent(new CustomEvent(site.videoAccess.grantedEvent));
   }
 }
