@@ -302,6 +302,10 @@ name in the forms should not be in quotes.
     same-tab event, `check:auth` 19/19. Then, at the owner's request, the icon holds clicks after the first until the
     page changes (5 s at most, free again after Back, new-tab clicks untouched); on a slowed network three quick clicks
     made one request to `/auth/signin/`.
+  - 2026-09-30, "504 (Outdated Optimize Dep)" again on the owner's sign-in page: `npm run check` at 23:12 (astro sync
+    starts a Vite of its own) rewrote `node_modules/.vite/deps` under the owner's server, started at 22:59. Every
+    command but `astro dev` now uses `node_modules/.vite-tools` (integration `separate-vite-cache`); checked: `check`
+    and `build` left `node_modules/.vite` untouched. New `npm run dev:all:clean` for the owner, and the cure in README.
 
 ### Verification
 
