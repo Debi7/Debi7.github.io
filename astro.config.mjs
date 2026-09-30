@@ -83,6 +83,22 @@ export default defineConfig({
         },
       },
     },
+    // Added 2026-09-30, after a dev server on a spare port broke the owner's. Every `astro dev` keeps
+    // Vite's pre-bundled dependencies in node_modules/.vite, so two servers of this project share
+    // one cache: the second one re-optimised it, was stopped half-way, and left no deps folder
+    // behind, while the owner's server on 4321 still handed out the old hash - the sign-in page then
+    // failed with "504 (Outdated Optimize Dep)" on the three Clerk bundles. With KB_VITE_CACHE_DIR
+    // set, a server keeps its cache there instead; unset, nothing changes. CLAUDE.md, "Workflow",
+    // asks every server started beside the owner's to set it.
+    {
+      name: "separate-vite-cache",
+      hooks: {
+        "astro:config:setup": ({ updateConfig }) => {
+          const cacheDir = process.env.KB_VITE_CACHE_DIR;
+          if (cacheDir) updateConfig({ vite: { cacheDir } });
+        },
+      },
+    },
   ],
 
   markdown: {

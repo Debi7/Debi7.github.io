@@ -249,6 +249,12 @@ name in the forms should not be in quotes.
     global like the earlier worked example there. Noted, not changed: the block that sends a hit on
     `astro:page-load` never runs, because that event comes from `<ViewTransitions />`, which the site does not use
     (Astro 4 docs, "View Transitions", lifecycle events); the counter's own init already counts every page load.
+  - 2026-09-30, the owner's sign-in page failed on localhost:4321 with "504 (Outdated Optimize Dep)" on the three
+    Clerk bundles. Cause: a dev server started here on a spare port shares `node_modules/.vite` with the owner's,
+    began re-optimising the dependencies (Clerk takes over 15 s) and was stopped half-way, leaving no `deps` folder
+    while the owner's server kept the old hash. The owner restarts with `npm run dev:clean`. So that it cannot happen
+    again, `astro.config.mjs` has a small integration that moves the cache to `KB_VITE_CACHE_DIR` when that is set,
+    and CLAUDE.md asks every spare server to set it; checked: such a server left `node_modules/.vite` untouched.
 
 ### Verification
 
