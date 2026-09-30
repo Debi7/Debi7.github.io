@@ -244,6 +244,11 @@ name in the forms should not be in quotes.
     `:active` twin under `@media (hover: none)`: instant under the finger, the usual fade after it. An audit of the
     build found every hover selector twinned and nothing hover-only left but deliberate cases (README). Checked in
     headless Edge: a pressed search result under touch emulation, 0s and the lifted shadow; with a mouse, 0.3s.
+  - 2026-09-30, `astro check` failed after the colleague's commit e019697 (the Yandex Metrika counter in
+    `Base.astro`): "Cannot find name 'ym'" twice. `ym` is declared in `src/env.d.ts`, as a possibly undefined
+    global like the earlier worked example there. Noted, not changed: the block that sends a hit on
+    `astro:page-load` never runs, because that event comes from `<ViewTransitions />`, which the site does not use
+    (Astro 4 docs, "View Transitions", lifecycle events); the counter's own init already counts every page load.
 
 ### Verification
 
