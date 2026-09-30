@@ -278,6 +278,12 @@ name in the forms should not be in quotes.
     `invisible` now, and the script toggles `invisible` with the other classes, so before the first scroll it can be
     neither tapped nor reached with Tab. Checked on the built site at 390px: hidden and out of reach on load, visible,
     tappable and focusable after a scroll down, hidden and out of reach again back at the top.
+  - 2026-09-30, the header menu once more, the owner choosing the colleague's original idea (option B): in a band
+    from 640px to 793px inclusive (hers was 640-708px) the line under the menu shows all the time, and while the items fit a finger drag pulls the row
+    up to 15px (tanh resistance) and it springs back on release; finger only, reduced motion respected, the click
+    after a drag dropped, `touch-action: pan-y` only while the spring is on. Checked on the built site under touch
+    emulation: at 700px and 780px a 120px drag moved the row 14.5px and it came back, the page stayed, a vertical move left it
+    alone; at 794px no line and no movement; the line starts under the row at 640px to 793px, for a guest and a member.
 
 ### Verification
 

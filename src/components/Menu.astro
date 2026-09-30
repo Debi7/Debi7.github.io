@@ -175,12 +175,18 @@ const isPanel = variant === "panel";
     // h-0.5. The band itself reads sm:max-[708px] now, the same 640px to 708px ("Responsive
     // Design", targeting a breakpoint range). scrollbar-none became a real utility in
     // tailwind.config.cjs; the scoped rules at the bottom of this file are gone.
+    //
+    // Changed later on 2026-09-30, at the owner's word: point 2 above now holds outside a band from
+    // 640px to 793px only. Inside it the line is shown all the time and the row springs a little
+    // under a finger, the colleague's original idea; the script below explains how. The band was
+    // hers, 640px to 708px, and the owner widened it to 793px inclusive; the list's band classes
+    // (w-max and the side padding) moved with it.
     <nav class="relative hidden w-full min-w-0 justify-end whitespace-nowrap sm:flex">
       <div
         data-menu-scroller
         class="relative flex min-w-0 items-center justify-between overflow-x-auto scrollbar-none"
       >
-        <ul class="flex list-none flex-row items-center space-x-1 py-2 sm:max-[708px]:w-max sm:max-[708px]:px-2 lg:space-x-3">
+        <ul class="flex list-none flex-row items-center space-x-1 py-2 sm:max-[793px]:w-max sm:max-[793px]:px-2 lg:space-x-3">
           {site.menu.map((item) => (
             <li
               class:list={[
@@ -216,21 +222,101 @@ const isPanel = variant === "panel";
   // the room it has (see the note above the bar). The ResizeObserver catches every change of either
   // width - a resized window, the web font arriving, the Account item appearing for a member. Astro
   // runs a bundled script once per page, although this component renders twice (bar and panel).
+  //
+  // Changed later on 2026-09-30, the owner's choice of the colleague's original idea (option B):
+  // between 640px and 793px inclusive - her band of 640px to 708px, widened by the owner - the row
+  // answers a finger even when every item fits. A
+  // native scroller cannot move a row that has nothing hidden, so the script does it: a horizontal
+  // drag pulls the list a little way with growing resistance (at most `reach` px), and on release
+  // it springs back. Only for a finger (pointerType "touch"), only in the band, only while the row
+  // fits - when it overflows the ordinary scroll is there instead - and not for a visitor who asked
+  // the system for reduced motion. In the band the line under the menu is shown all the time, as in
+  // her version, as the hint that the row moves; outside it the line still appears only while the
+  // row overflows.
   const scroller = document.querySelector("[data-menu-scroller]");
   const line = document.querySelector("[data-menu-scroll-line]");
-  if (scroller instanceof HTMLElement && line instanceof HTMLElement) {
+  const list = scroller?.firstElementChild;
+  if (
+    scroller instanceof HTMLElement &&
+    line instanceof HTMLElement &&
+    list instanceof HTMLElement
+  ) {
+    // Tailwind's sm:max-[793px], the band of the list's own classes above.
+    const band = window.matchMedia("(min-width: 640px) and (max-width: 793px)");
+    const stillPlease = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const grab = 6; // px a finger travels before a touch counts as a drag, so a tap stays a tap
+    const reach = 15; // px the row can be pulled at most
+    let overflowing = false;
+    const springs = () => band.matches && !overflowing && !stillPlease.matches;
     const update = () => {
       // A pixel of slack, so that a fractional width rounded up never shows the line on its own.
-      line.classList.toggle(
-        "hidden",
-        scroller.scrollWidth - scroller.clientWidth <= 1,
-      );
+      overflowing = scroller.scrollWidth - scroller.clientWidth > 1;
+      line.classList.toggle("hidden", !overflowing && !band.matches);
+      // The nav is a few pixels wider than the row when the row fits (5px to 11px, measured), so
+      // the line starts where the row starts, as it did in the colleague's version; 0 when the row
+      // overflows, because the row then fills the nav.
+      line.style.left = `${scroller.offsetLeft}px`;
+      // pan-y leaves the vertical page scroll to the browser and hands the sideways move to the
+      // script; without it the browser may claim the gesture and cancel the pointer.
+      scroller.style.touchAction = springs() ? "pan-y" : "";
     };
     const observer = new ResizeObserver(update);
     observer.observe(scroller);
-    if (scroller.firstElementChild)
-      observer.observe(scroller.firstElementChild);
+    observer.observe(list);
+    // The nav too: when the title beside it gives way, the row keeps its size but moves.
+    if (line.parentElement) observer.observe(line.parentElement);
+    band.addEventListener("change", update);
+    stillPlease.addEventListener("change", update);
     update();
+
+    let drag: { id: number; x: number; y: number; moved: boolean } | null =
+      null;
+    // A drag ends with the finger on a link, which the browser then clicks; that click is dropped.
+    let swallowUntil = 0;
+    scroller.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "touch" || !springs()) return;
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    });
+    scroller.addEventListener("pointermove", (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (!drag.moved) {
+        // A mostly vertical move is the page scrolling; the row stays out of it.
+        if (Math.abs(dy) > grab && Math.abs(dy) >= Math.abs(dx)) {
+          drag = null;
+          return;
+        }
+        if (Math.abs(dx) <= grab) return;
+        drag.moved = true;
+        list.style.transition = "none";
+      }
+      // tanh gives the resistance: close to the finger at first, never past `reach`.
+      list.style.transform = `translateX(${reach * Math.tanh(dx / (reach * 4))}px)`;
+    });
+    const letGo = (e: PointerEvent) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (drag.moved) {
+        swallowUntil = performance.now() + 400;
+        // An ease that overshoots a little, for the spring.
+        list.style.transition =
+          "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)";
+        list.style.transform = "";
+      }
+      drag = null;
+    };
+    scroller.addEventListener("pointerup", letGo);
+    scroller.addEventListener("pointercancel", letGo);
+    scroller.addEventListener(
+      "click",
+      (e) => {
+        if (performance.now() < swallowUntil) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      },
+      true,
+    );
   }
 </script>
 
