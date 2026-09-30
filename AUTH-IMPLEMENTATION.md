@@ -294,6 +294,14 @@ name in the forms should not be in quotes.
     end with the demo member: the owner's running service had the old code. Limits in `PAID-VIDEO.md` section 10.
   - 2026-09-30, `METRIKA.md` for the colleague's review (the owner's request): answers on the Yandex Metrika counter's
     name and code settings, checked against Yandex's help, and proposals for the site that are not built yet.
+  - 2026-09-30, the header's sign-in icon, the colleague's question: on a slow CPU (x6) a member's page was painted
+    15-130 ms before the icon switched, and Back after a sign-out restored a page from the back-forward cache still
+    marked `kb-member`. The icons now follow that class through CSS, an inline block sets the account address at once,
+    and `AuthButton.astro` re-applies class, address and label on `auth-flag-change` (now sent by `auth-flag.ts`),
+    `storage` and `pageshow`. Checked: first frame right at CPU x6 on three pages, a guest's header after Back, the
+    same-tab event, `check:auth` 19/19. Then, at the owner's request, the icon holds clicks after the first until the
+    page changes (5 s at most, free again after Back, new-tab clicks untouched); on a slowed network three quick clicks
+    made one request to `/auth/signin/`.
 
 ### Verification
 
