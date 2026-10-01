@@ -40,6 +40,19 @@ import "../../styles/clerk.css";
   const status = document.getElementById("auth-status");
   const next = nextPath(new URLSearchParams(location.search).get("next"));
 
+  // Added 2026-10-01 at the owner's request, the colleague's proposal of 2026-09-28 (AUTH.md
+  // section 12): "Помощь" on the card of other ways in, and "Написать в поддержку" on Clerk's help
+  // card, open the site's feedback form instead. Clerk's button only opens a mailto: link to a
+  // made-up address (12.2), and Clerk has no option to change what it does, so the click is caught
+  // before Clerk sees it. The selectors are the classes Clerk puts on the two elements, measured on
+  // @clerk/ui 1.36.0 (Clerk's documentation, "Bring your own CSS", points a site to these cl-
+  // classes); recheck them after a Clerk update - if they change, the click simply reaches Clerk
+  // again, as before this change.
+  const helpTargets =
+    ".cl-footerAction__havingTrouble .cl-footerActionLink, .cl-signIn-havingTrouble .cl-button";
+  // The subject of the letter, a site string like the form's own labels.
+  const helpSubject = "Проблема со входом";
+
   try {
     const clerk = await getClerk();
     if (clerk.isSignedIn) {
@@ -62,6 +75,35 @@ import "../../styles/clerk.css";
         forceRedirectUrl:
           site.auth.signIn + "?next=" + encodeURIComponent(next),
       });
+      // Added 2026-10-01 (helpTargets above). On the document in the capture phase, so it runs
+      // before the listeners React keeps on the root Clerk is mounted into; stopPropagation keeps
+      // the click from reaching them, so no mailto: and no switch to Clerk's help card. The email
+      // field is filled from the address the visitor already typed into Clerk's form
+      // (signIn.identifier, SignInResource in @clerk/shared), when it is an email address.
+      document.addEventListener(
+        "click",
+        (event) => {
+          if (
+            !(event.target instanceof Element) ||
+            !root.contains(event.target) ||
+            !event.target.closest(helpTargets)
+          ) {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          const typed = clerk.client?.signIn.identifier ?? "";
+          document.dispatchEvent(
+            new CustomEvent(site.contact.openEvent, {
+              detail: {
+                email: typed.includes("@") ? typed : "",
+                subject: helpSubject,
+              },
+            }),
+          );
+        },
+        true,
+      );
       status?.remove();
     }
   } catch (error) {

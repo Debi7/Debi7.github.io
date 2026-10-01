@@ -48,9 +48,32 @@ export function writeAuthFlag(expiresAt: Date): void {
   window.dispatchEvent(new Event(authFlagEvent));
 }
 
+// Added 2026-10-01 at the owner's request (AUTH.md section 12.7): the member's name and email, for
+// the feedback form, which is on every page and loads no Clerk. Written wherever the flag is
+// written, so a name changed on the account page follows; cleared with the flag below, on a
+// sign-out or when a page that loads Clerk finds no session. An empty pair is not kept. The value
+// stays in the member's own browser for as long as the session does, which shows nothing beyond
+// what the session itself already gives whoever uses that browser.
+export function writeAuthContact(name: string, email: string): void {
+  try {
+    if (name === "" && email === "") {
+      localStorage.removeItem(site.auth.contactKey);
+    } else {
+      localStorage.setItem(
+        site.auth.contactKey,
+        JSON.stringify({ name, email }),
+      );
+    }
+  } catch {
+    // Storage unavailable: the form simply stays empty.
+  }
+}
+
 export function clearAuthFlag(): void {
   try {
     localStorage.removeItem(site.auth.flagKey);
+    // Added 2026-10-01: the member's name and email go with the flag (writeAuthContact above).
+    localStorage.removeItem(site.auth.contactKey);
   } catch {
     // Nothing to clear if nothing could be stored.
   }
