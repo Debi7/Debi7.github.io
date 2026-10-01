@@ -9,6 +9,8 @@ root of the repository (section 5.2 is the deployment, step by step).
   Dashboard. No wrangler and no npm dependency.
 - `videos.local.json` is the local map of slugs to video ids for `npm run video-access:dev`. Git ignores it: real
   ids of paid videos never enter the repository. The live map is the Worker's secret `VIDEOS`.
+  Added 2026-09-30: a value may also be `{"yandexDisk": "https://disk.yandex.ru/i/<key>"}`, the public link of a
+  lecture on Yandex Disk; the service then answers a short-lived file address (`PAID-VIDEO.md` section 10).
 - `npm run check:video-access` tests the file without a network; `npm run video-access:dev` runs it on this machine
   at `http://127.0.0.1:8787`.
 - `CLOUDFLARE.md` at the root of the repository: why Cloudflare, registering the account, the costs and the

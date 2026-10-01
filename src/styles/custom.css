@@ -70,6 +70,25 @@ html.dark .bg-white {
   background-color: var(--panel-bg) !important;
 }
 
+/* Added 2026-09-30, from a Tailwind 3.4 audit the owner ordered. The rule above paints every
+   `.bg-white` with `!important`, and a utility without it cannot win, so the hover backgrounds of
+   the white controls never showed in light mode: `hover:bg-gray-50` on the pagination, the year
+   switcher and the buttons of the account page, `hover:bg-blue-50/30` on the previous and next
+   cards under an article. The grey ones were never broken in dark mode - main.css has
+   `.dark .hover\:bg-gray-50:hover` with `!important` - so these rules are for light mode only, and
+   the class names in the components stay as they are, because that dark rule finds them by name.
+   The grey is one step darker than the class says: the theme's author went from white to gray-50,
+   but the panels here are already #fafaf9, which gray-50 (#f9fafb) cannot be told from, so the
+   same step from this panel is gray-100 (#f3f4f6). The blue is the class's own value, blue-50 at
+   30%. Like every hover, both get their :active twin from postcss.config.cjs. */
+html:not(.dark) .bg-white.hover\:bg-gray-50:hover {
+  background-color: #f3f4f6 !important;
+}
+
+html:not(.dark) .bg-white.hover\:bg-blue-50\/30:hover {
+  background-color: rgb(239 246 255 / 0.3) !important;
+}
+
 /* --- Your own rules go below ---------------------------------------------- */
 
 /* Examples - remove the surrounding comment markers to switch one on.

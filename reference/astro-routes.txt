@@ -125,6 +125,7 @@
 /video/2025/page/2/
 /video/2026/
 /video/2026/page/2/
+/video/lecture-part-3/
 /video/my-first-video/
 /video/paid-demo-2/
 /video/video-1/

@@ -83,6 +83,32 @@ export default defineConfig({
         },
       },
     },
+    // Added 2026-09-30, after a dev server on a spare port broke the owner's. Every `astro dev` keeps
+    // Vite's pre-bundled dependencies in node_modules/.vite, so two servers of this project share
+    // one cache: the second one re-optimised it, was stopped half-way, and left no deps folder
+    // behind, while the owner's server on 4321 still handed out the old hash - the sign-in page then
+    // failed with "504 (Outdated Optimize Dep)" on the three Clerk bundles. With KB_VITE_CACHE_DIR
+    // set, a server keeps its cache there instead; unset, nothing changes. CLAUDE.md, "Workflow",
+    // asks every server started beside the owner's to set it.
+    // Changed later on 2026-09-30, when the owner's sign-in page failed the same way again: the
+    // culprit that time was `npm run check`. astro check runs astro sync first, which starts a Vite
+    // of its own, and it rewrote node_modules/.vite/deps with three of Astro's internal
+    // dependencies at 23:12:19 while the owner's server, started at 22:59:36, still handed out the
+    // hash of its Clerk bundles. So every command but `astro dev` - build, preview, sync, and check
+    // through sync (Astro 4.16, `astro:config:setup`, the `command` option) - now keeps its cache
+    // in node_modules/.vite-tools, and the dev servers are the only users of node_modules/.vite.
+    // KB_VITE_CACHE_DIR, when set, still wins.
+    {
+      name: "separate-vite-cache",
+      hooks: {
+        "astro:config:setup": ({ command, updateConfig }) => {
+          const cacheDir =
+            process.env.KB_VITE_CACHE_DIR ??
+            (command === "dev" ? undefined : "node_modules/.vite-tools");
+          if (cacheDir) updateConfig({ vite: { cacheDir } });
+        },
+      },
+    },
   ],
 
   markdown: {

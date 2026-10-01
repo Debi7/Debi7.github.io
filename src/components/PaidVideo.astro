@@ -74,6 +74,23 @@ const signIn = site.auth.signIn + "?next=" + encodeURIComponent(href);
     title={title}
     allowfullscreen></iframe>
 </template>
+<template data-paid-file>
+  {
+    /* Added 2026-09-30: the player for a lecture stored as a file (Yandex Disk), which the service
+    answers with a direct address instead of a player page (workers/video-access/worker.mjs). The
+    same frame as the iframe above; black behind the picture, as a player is. preload="metadata"
+    fetches only the header of the file until the member presses play; playsinline keeps it in the
+    page on an iPhone. controlslist="nodownload" only hides the browser's own download button - it
+    is no protection, which PAID-VIDEO.md, section 10 says plainly. */
+  }
+  <video
+    class="aspect-video w-full rounded-xl bg-black shadow-lg"
+    aria-label={title}
+    controls
+    preload="metadata"
+    playsinline
+    controlslist="nodownload"></video>
+</template>
 
 <script>
   import "../scripts/paid-video";

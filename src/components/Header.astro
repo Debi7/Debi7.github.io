@@ -100,7 +100,7 @@ const initials = site.title
               alt=""
               width="32"
               height="32"
-              class="mr-2 inline-block h-8 w-8 rounded-full object-cover align-middle ring-1 ring-gray-200 dark:ring-slate-700 sm:h-6 sm:w-6"
+              class="mr-2 inline-block h-8 w-8 rounded-full object-cover align-middle ring-1 ring-gray-200 sm:h-6 sm:w-6 dark:ring-slate-700"
             />
           )
         }
@@ -178,10 +178,18 @@ const initials = site.title
       {
         /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the hamburger is for everyone again. */
       }
+      {
+        /* Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: a keyboard focus ring
+        next to focus:outline-none, which had left no sign of focus on this button (Outline Style,
+        "Removing outlines"). It copies its classes from ThemeToggle.astro, but that button's focus
+        ring comes from main.css through the theme-toggle-btn class, which this one does not carry;
+        the ring here is the same one - 3px of rgb(59 130 246 / 0.45), 6px corners - so the two
+        buttons side by side in the header show the same focus. */
+      }
       <button
         id="menu-toggle"
         type="button"
-        class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-gray-700 focus:outline-none dark:text-gray-200 sm:hidden"
+        class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-gray-700 focus:outline-none focus-visible:rounded-md focus-visible:ring-[3px] focus-visible:ring-[rgb(59_130_246/0.45)] sm:hidden dark:text-gray-200"
         aria-label="Open menu"
         aria-expanded="false"
         aria-controls="site-menu"

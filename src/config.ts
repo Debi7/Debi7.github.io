@@ -136,6 +136,11 @@ export const site = {
     endpoint: "",
     devEndpoint: "http://127.0.0.1:8787",
     playerHosts: ["www.youtube.com", "www.youtube-nocookie.com"],
+    // Added 2026-09-30, with lectures on Yandex Disk: the only hosts a video file's address may
+    // point to - the service answers such a slug with {"videoUrl"}, a direct address of the file
+    // that the page plays in a video element instead of a frame. The address redirects on to
+    // Yandex's storage hosts; the check is on the address the service gives, as for playerHosts.
+    fileHosts: ["downloader.disk.yandex.ru"],
     grantedEvent: "paid-video:granted",
     signedInEvent: "paid-video:signed-in",
   },

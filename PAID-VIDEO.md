@@ -396,3 +396,92 @@ the reasoning.
 - `scripts/dev-all.mjs` (`npm run dev:all`): the service and the site together, and stopping both for certain.
 - `scripts/check-video-access.mjs` (`npm run check:video-access`): 35 tests of the service, no network needed.
 - `src/content/video/paid-demo.md`: the example, a draft.
+
+Added 2026-09-30: section 10 adds the files for lectures on Yandex Disk, and the service's tests number 41 since then.
+
+## 10. Lectures on Yandex Disk
+
+Added 2026-09-30, at the owner's request. A paid lecture can live on Yandex Disk instead of YouTube. The first one is
+`src/content/video/lecture-part-3.md`: `/video/lecture-part-3/`, first in the Video list by its date, 2026-09-29. A
+visitor sees what section 1 describes; only the player differs - the browser's own video player instead of YouTube's.
+
+### 10.1 How it works
+
+- The entry is an ordinary paid entry (`access: paid`) with no address of the video; `src/content/config.ts` refuses
+  one.
+- In `VIDEOS` the slug maps to the file's public link instead of a YouTube id:
+  `"lecture-part-3": {"yandexDisk": "https://disk.yandex.ru/i/<key>"}`. Only the link of a single file (`/i/`), never
+  of a folder (`/d/`).
+- For a member, and only after the membership check, the service asks Yandex Disk's public API
+  (`cloud-api.yandex.net`; no account or token is needed for a public file) for a direct address of the file and
+  answers `{"videoUrl": "https://downloader.disk.yandex.ru/..."}`. The page accepts that address only on a host in
+  `site.videoAccess.fileHosts` and plays it in a `<video>` element (`src/components/PaidVideo.astro`).
+- The video travels from Yandex straight to the member's browser. The service only hands over the address, so a
+  lecture costs the Worker one small request, not its traffic.
+- The card, the feed, the table of contents and the search treat it like any paid lecture: the title, the description
+  and the text above block 2 are in the search index; block 2 and the link are not.
+
+### 10.2 Adding a lecture from Yandex Disk
+
+1. Upload the MP4 to Yandex Disk. In the file's menu choose "Поделиться", make sure access is "Доступ по ссылке", and
+   copy the link, of the form `https://disk.yandex.ru/i/<key>`.
+2. Create the entry as in section 4: `access: paid`, and no link anywhere in it.
+3. Add the slug to `VIDEOS`: locally in `workers/video-access/videos.local.json` (ignored by git), on the live site in
+   the Worker's secret (`CLOUDFLARE.md` section 6; the whole list is typed again).
+4. Locally an edit of `videos.local.json` needs no restart; a change to the service's code (`worker.mjs`) needs
+   `npm run dev:all` stopped and started again.
+5. Check it signed in as the demo member (section 3): the player appears and its time line can be dragged to the middle.
+
+### 10.3 Limits and risks
+
+- **Yandex Disk is a file store, not a video host.** Yandex limits how much a public file may be downloaded and does
+  not publish the thresholds. Every view downloads up to the whole file (478 MB for `lecture-part-3`). Past the limit
+  Yandex can close the link for a while, and every member then sees "Видео сейчас недоступно" until it reopens. Fine
+  for a small club, without a guarantee; if the audience grows, lectures belong on a video host.
+- **One quality.** No adaptive streaming: the file plays as it was uploaded (`lecture-part-3`: 1280x720, about
+  0.56 Mbit/s), so a slow connection pauses to buffer instead of switching to a lower quality.
+- **The index at the start of the file.** Playback starts at once only when the MP4 keeps its index (the `moov` box) at
+  the start ("faststart"); `lecture-part-3` does. A file without it makes the browser fetch the end first; re-save it
+  with `ffmpeg -i in.mp4 -c copy -movflags +faststart out.mp4` before uploading.
+- **A member can download the lecture.** The direct address is in the page while it plays. The browser's own download
+  button is hidden (`controlslist="nodownload"`), but "Save video as" and the developer tools still reach it. The
+  address works only for a limited time (Yandex does not document how long), so a copied address stops working; a
+  downloaded file does not. With YouTube a member could not download, but could pass the id on for good.
+- **The public link is the key to the file.** Whoever has it can watch and download the file on Yandex Disk,
+  bypassing the site. Keep it only in `VIDEOS` and its master copy (`CLOUDFLARE.md` 6.8). If it leaks: in Yandex Disk
+  close access to the file, share it again (a new link), and put the new link into `VIDEOS`.
+- **Captcha.** A plain request for the Disk page from this machine got a captcha; the API and the download host did
+  not. Whether Yandex treats requests from Cloudflare's servers the same way shows only once the service is deployed;
+  a captcha there would come out as a 503, "Видео сейчас недоступно".
+- **Yandex on every play.** The service asks Yandex each time a member opens the lecture, with an 8-second limit; if
+  Yandex is slow or down, the member gets "Видео сейчас недоступно" and can reload later.
+- **One access for all paid lectures.** A member who has access sees every paid lecture, on YouTube or on Yandex Disk;
+  there is no access per lecture (the owner's decision of 2026-09-30).
+- **Nothing plays on the live site yet.** Until the service is deployed (section 5.2, `CLOUDFLARE.md` section 6) and
+  its `VIDEOS` carries the slug, a signed-in member sees "Видео сейчас недоступно", as with `paid-demo-2`.
+
+### 10.4 Checked on 2026-09-30
+
+- The file, through Yandex Disk's public API: MP4, 478 MB, 1 h 58 min, 1280x720, index at the start, antivirus
+  "clean".
+- The API gives a download address on `downloader.disk.yandex.ru`, which redirects to Yandex's storage; the file comes
+  as `video/mp4`, with byte ranges (seeking works) and `Content-Disposition: attachment`, which a video element
+  ignores.
+- Headless Edge played such an address in a plain video element: the metadata after 1.7 s, a seek to the middle in
+  0.8 s, then playing.
+- `npm run check:video-access`: 41/41, six of them new for Yandex Disk - a visitor without access never makes the
+  service call Yandex, the answer carries no link, and Yandex down, a foreign download host or a folder link each give 503.
+- The build: `/video/lecture-part-3/` first on `/video/`, in the search index without block 2, and the link in no file
+  of `dist/`.
+- Not checked end to end with the demo member through `npm run dev:all`: the service running on this machine at the
+  time still had the code from before, and it is the owner's process. After a restart, section 10.2 step 5 is that
+  check.
+
+### 10.5 The files
+
+- `workers/video-access/worker.mjs`: `yandexDiskFile()` and the `{"yandexDisk"}` value (VERSION 2026-09-30.1).
+- `src/config.ts`, `site.videoAccess.fileHosts`: the hosts a file address may point to.
+- `src/components/PaidVideo.astro`: the second template, `template[data-paid-file]`, with the video element.
+- `src/scripts/paid-video.ts`: `playFile()`, for an answer with `videoUrl`.
+- `scripts/check-video-access.mjs`: a made-up Yandex Disk API and the six new tests.
+- `src/content/video/lecture-part-3.md`: the first lecture on Yandex Disk.

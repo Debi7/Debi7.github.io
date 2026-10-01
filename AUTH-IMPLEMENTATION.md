@@ -244,6 +244,80 @@ name in the forms should not be in quotes.
     `:active` twin under `@media (hover: none)`: instant under the finger, the usual fade after it. An audit of the
     build found every hover selector twinned and nothing hover-only left but deliberate cases (README). Checked in
     headless Edge: a pressed search result under touch emulation, 0s and the lifted shadow; with a mouse, 0.3s.
+  - 2026-09-30, the header menu again: the colleague asked whether her sideways scroll works, since nothing moved in
+    DevTools. With today's items the row fits from 640px (392px and 470px at 706px), so there is nothing to scroll.
+    With three extra items it scrolled at 700px but spilled over the icons at 760px and 1100px, outside the
+    640-708px band. Now `overflow-x-auto` wherever the bar shows, the line under it only while the row overflows
+    (a ResizeObserver in `Menu.astro`), and the line on the nav so that it does not scroll away. Measured again:
+    no line and nothing moves with today's items; with the extra items the row scrolls at 700px, 760px and 1100px,
+    the line matches the row and stays put after a scroll to the end. README, under the hamburger section.
+  - 2026-09-30, `astro check` failed after the colleague's commit e019697 (the Yandex Metrika counter in
+    `Base.astro`): "Cannot find name 'ym'" twice. `ym` is declared in `src/env.d.ts`, as a possibly undefined
+    global like the earlier worked example there. Noted, not changed: the block that sends a hit on
+    `astro:page-load` never runs, because that event comes from `<ViewTransitions />`, which the site does not use
+    (Astro 4 docs, "View Transitions", lifecycle events); the counter's own init already counts every page load.
+  - 2026-09-30, a Tailwind 3.4 audit at the owner's request (3.4.19 installed), done by a read-only agent against the
+    Tailwind docs and checked against the code before anything changed. Applied: theme() colours in `search.css` and
+    `TocSidebar.astro`; the light-mode hover of the white controls in `custom.css`; `darkMode: "selector"`; the
+    `scrollbar-none` utility as a config plugin and three redundant menu classes out; keyboard focus rings on the
+    hamburger and the category toggles; font stacks via theme() in `main.css`; the feedback heading in the site's
+    serif; comment corrections in the config and `ScrollToTop.astro`. The audit was wrong about one thing: the theme
+    toggle already had a focus ring from `main.css`, so it was left alone. `darkMode` checked by diffing the computed
+    colours of 4712 elements on ten pages in dark mode at 1280px and 390px: identical but for the tag cloud words,
+    whose opacity is the sphere's animation. Not applied, on purpose: `future.hoverOnlyWhenSupported` (it would hide
+    every `hover:` and its `:active` twin from phones), the old class names copied from Hugo. README, "Tailwind 3.4
+    audit". Found on the way, not fixed: the back-to-top button is invisible but catches taps at the bottom right until
+    the page has been scrolled down and back, because `pointer-events-none` is added only then.
+  - 2026-09-30, the owner's sign-in page failed on localhost:4321 with "504 (Outdated Optimize Dep)" on the three
+    Clerk bundles. Cause: a dev server started here on a spare port shares `node_modules/.vite` with the owner's,
+    began re-optimising the dependencies (Clerk takes over 15 s) and was stopped half-way, leaving no `deps` folder
+    while the owner's server kept the old hash. The owner restarts with `npm run dev:clean`. So that it cannot happen
+    again, `astro.config.mjs` has a small integration that moves the cache to `KB_VITE_CACHE_DIR` when that is set,
+    and CLAUDE.md asks every spare server to set it; checked: such a server left `node_modules/.vite` untouched.
+  - 2026-09-30, the back-to-top button that the audit entry above found: it starts `pointer-events-none` and
+    `invisible` now, and the script toggles `invisible` with the other classes, so before the first scroll it can be
+    neither tapped nor reached with Tab. Checked on the built site at 390px: hidden and out of reach on load, visible,
+    tappable and focusable after a scroll down, hidden and out of reach again back at the top.
+  - 2026-09-30, the header menu once more, the owner choosing the colleague's original idea (option B): in a band
+    from 640px to 793px inclusive (hers was 640-708px) the line under the menu shows all the time, and while the items fit a finger drag pulls the row
+    up to 15px (tanh resistance) and it springs back on release; finger only, reduced motion respected, the click
+    after a drag dropped, `touch-action: pan-y` only while the spring is on. Checked on the built site under touch
+    emulation: at 700px and 780px a 120px drag moved the row 14.5px and it came back, the page stayed, a vertical move left it
+    alone; at 794px no line and no movement; the line starts under the row at 640px to 793px, for a guest and a member.
+  - 2026-09-30, paid lectures from Yandex Disk, the owner's decision; the first is `lecture-part-3` (first in the
+    Video list, dated 2026-09-29, placeholder texts, block 2). A `VIDEOS` value may be `{"yandexDisk": "<link>"}`;
+    the Worker asks Yandex Disk's public API after the membership check and answers a short-lived `videoUrl`
+    (VERSION 2026-09-30.1); the page plays it in a video element from `template[data-paid-file]`, only on
+    `site.videoAccess.fileHosts`. The link is in the ignored `videos.local.json` only. Checked: the API, the file
+    (MP4 with the index at the start, byte ranges), playback and a seek in headless Edge, `check:video-access` 41/41,
+    the build (first on `/video/`, in the search without block 2, the link in no file of `dist/`). Not checked end to
+    end with the demo member: the owner's running service had the old code. Limits in `PAID-VIDEO.md` section 10.
+  - 2026-09-30, `METRIKA.md` for the colleague's review (the owner's request): answers on the Yandex Metrika counter's
+    name and code settings, checked against Yandex's help, and proposals for the site that are not built yet.
+  - 2026-09-30, the header's sign-in icon, the colleague's question: on a slow CPU (x6) a member's page was painted
+    15-130 ms before the icon switched, and Back after a sign-out restored a page from the back-forward cache still
+    marked `kb-member`. The icons now follow that class through CSS, an inline block sets the account address at once,
+    and `AuthButton.astro` re-applies class, address and label on `auth-flag-change` (now sent by `auth-flag.ts`),
+    `storage` and `pageshow`. Checked: first frame right at CPU x6 on three pages, a guest's header after Back, the
+    same-tab event, `check:auth` 19/19. Then, at the owner's request, the icon holds clicks after the first until the
+    page changes (5 s at most, free again after Back, new-tab clicks untouched); on a slowed network three quick clicks
+    made one request to `/auth/signin/`.
+  - 2026-10-01, a click on the page the icon leads to (the owner's request): new `src/scripts/same-page.ts`, used by
+    `AuthButton.astro` and by the Account item of `Menu.astro` (marked `data-menu-account` in the bar and the panel).
+    On the sign-in page the click does nothing; on the account page it sets `location.hash = ""`, which is how Clerk's
+    `HashRouter` (`@clerk/ui` 1.36.0, listens for `hashchange`) goes to the first tab; `site.ts` closes the phone panel
+    after a click it prevented. The icon carries `aria-current="page"` there. The sign-up page keeps the icon's
+    navigation to sign-in (owner). Checked on the built site with the demo account: no document request on the
+    sign-in page (first step and the password step, `next` and the typed password kept), on the account page from
+    the icon, the bar item and the phone panel (Security tab back to the first, panel closed); the sign-up icon and
+    the Account item on `/about/` still navigate.
+  - 2026-09-30, "504 (Outdated Optimize Dep)" again on the owner's sign-in page: `npm run check` at 23:12 (astro sync
+    starts a Vite of its own) rewrote `node_modules/.vite/deps` under the owner's server, started at 22:59. Every
+    command but `astro dev` now uses `node_modules/.vite-tools` (integration `separate-vite-cache`); checked: `check`
+    and `build` left `node_modules/.vite` untouched. New `npm run dev:all:clean` for the owner, and the cure in README.
+  - 2026-10-01, `MENU-SPRING.md` for the colleague (the owner's request; the client likes the spring): the header
+    menu's scroll and spring step by step, from the colleague's version (f80f6f9) through 0bd95d1, d88cc3c and
+    bb2ea1a, with the measurements and how to try it. Documentation only; no code changed.
 
 ### Verification
 

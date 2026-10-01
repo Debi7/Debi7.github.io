@@ -91,8 +91,11 @@ const helpText = "Click any category to expand or collapse articles";
         the panel's id agree, which is how the script finds what to open. */
         categories.map((category, key) => (
           <div class="overflow-hidden rounded-lg bg-white shadow-sm">
+            {/* Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: a keyboard focus
+            ring beside the theme's focus:outline-none (Outline Style, "Removing outlines"). Inset,
+            because the card around the button is overflow-hidden and would clip an outer ring. */}
             <button
-              class="category-toggle flex w-full items-center justify-between px-6 py-4 text-left focus:outline-none"
+              class="category-toggle flex w-full items-center justify-between px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
               data-target={`category-${key}`}
             >
               <div class="flex items-center">

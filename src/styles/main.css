@@ -9,16 +9,13 @@
 
 /* Tailwind 3 has no @theme block. The font stacks live in tailwind.config.cjs
    (theme.extend.fontFamily) and are mirrored here for the rules that use var(--font-*). */
+/* Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: the stacks are read from the
+   config with theme() instead of being written out a second time, so the two can no longer drift
+   apart (Functions & Directives, theme()). The compiled values are the ones that stood here. */
 :root {
-  --font-bilingual:
-    "Source Serif 4", "Noto Serif SC", "Source Han Serif SC",
-    "Source Han Serif CN", "Songti SC", "STSong", ui-serif, serif;
-  --font-code:
-    "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-  --font-ui:
-    "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-bilingual: theme(fontFamily.bilingual);
+  --font-code: theme(fontFamily.code);
+  --font-ui: theme(fontFamily.ui);
 }
 
 /* Hide elements until Alpine initializes */

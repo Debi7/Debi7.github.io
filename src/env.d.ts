@@ -41,3 +41,13 @@ interface Window {
 // kept as the worked example of how a third party's global is declared here, should another one
 // ever arrive: name it, type it from the vendor's documentation, and mark it `| undefined` when it
 // comes from a tag that can fail to load.
+
+// Added 2026-09-30 for the Yandex Metrika counter that commit e019697 put into
+// src/layouts/Base.astro: the vendor's snippet (an inline block in the head) publishes `ym` as a
+// global, and the bundled block at the end of the body calls it, so astro check reported "Cannot
+// find name 'ym'" twice. Following the note above: marked `| undefined`, because it comes from a
+// tag on mc.yandex.ru that a blocker or a slow network can stop, and the call there already checks
+// `typeof ym`. The arguments are left loose - the counter takes an id, a method name and arguments
+// that depend on the method, and the tag ships no type definitions.
+declare const ym:
+  ((counterId: number, method: string, ...args: unknown[]) => void) | undefined;

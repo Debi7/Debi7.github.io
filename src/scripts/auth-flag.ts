@@ -23,6 +23,14 @@ import { site } from "../config";
 // Every access to localStorage is wrapped, because a private window or blocked site data makes the
 // accessor throw, and a header that cannot remember a flag must still render.
 
+// Added 2026-09-30, after the colleague asked whether the header's icon follows every sign-in and
+// sign-out: the header (AuthButton.astro) listened for this event, but nothing sent it, so a change
+// of the flag on an open page - the sign-out button on the account page, before Clerk navigates
+// home - reached the header only on the next page load. Both writers below send it now. The
+// storage event covers the other tabs; the browser sends that one to them only, never to the tab
+// that wrote the value.
+export const authFlagEvent = "auth-flag-change";
+
 // Stored as the session's expiry in unix seconds.
 // (Changed 2026-09-26, CLERK.md step 4: Clerk reports the expiry as a Date - session.expireAt - so
 // the conversion to seconds happens here. The stored shape stays unix seconds, which is why the
@@ -36,6 +44,8 @@ export function writeAuthFlag(expiresAt: Date): void {
   } catch {
     // Storage unavailable: the header shows signed out, which is the safe side.
   }
+  // Added 2026-09-30: see authFlagEvent above.
+  window.dispatchEvent(new Event(authFlagEvent));
 }
 
 export function clearAuthFlag(): void {
@@ -44,6 +54,8 @@ export function clearAuthFlag(): void {
   } catch {
     // Nothing to clear if nothing could be stored.
   }
+  // Added 2026-09-30: see authFlagEvent above.
+  window.dispatchEvent(new Event(authFlagEvent));
 }
 
 // True while the last session the auth pages saw is still within its lifetime.
