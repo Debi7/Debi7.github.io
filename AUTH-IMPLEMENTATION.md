@@ -335,6 +335,10 @@ name in the forms should not be in quotes.
     carry `ym-disable-keys` (METRIKA.md 3.1, noted there). Checked with the demo account: the value written at
     sign-in (email only, the demo has no name), the footer form on `/about/` filled, cleared at sign-out, a leftover
     value without a session ignored, a name from a hand-made value filled and a typed name kept.
+  - 2026-10-01, `FEEDBACK-FORM.md` for the colleague (the owner's request to document the form's changes in detail):
+    all of commit edbedf8 in one place - the files, the three ways to open the form and the event's use from other
+    code, what each field gets, where the letters go, the member's name and email, every class before and after, how
+    to check, what was checked, what is open. Linked from README and AUTH.md 12.6. Documentation only.
 
 ### Verification
 

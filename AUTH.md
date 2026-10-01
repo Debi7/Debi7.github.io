@@ -229,6 +229,9 @@ At the owner's request the proposal of 12.3 is in the code, with the owner's cho
 поддержку" open the form, the email field is filled in, the letter carries the subject "Проблема со входом", and
 `supportEmail` stays unset (12.5: an address in the public code invites spam).
 
+`FEEDBACK-FORM.md` tells the whole story of the form in one place, for the colleague: this section, 12.7 and the
+restyle, with every class before and after.
+
 #### What a visitor sees
 
 1. Open `/auth/signin/`, type the email address, press "Продолжить".
