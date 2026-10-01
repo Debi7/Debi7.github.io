@@ -117,6 +117,7 @@ const page: PageLike = {
       flashes for a guest; still presentation only. */
     }
 
+{import.meta.env.DEV && (
     <script is:inline type="text/javascript">
       (function (m, e, t, r, i, k, a) {
         m[i] =
@@ -152,15 +153,16 @@ const page: PageLike = {
         accurateTrackBounce: true,
         trackLinks: true,
       });
-    </script><noscript
-      ><div>
+    </script>
+    )}
+    <noscript><div>
         <img
           src="https://mc.yandex.ru/watch/113224698"
           style="position:absolute; left:-9999px;"
           alt=""
         />
-      </div></noscript
-    >
+      </div></noscript>
+    
 
     <script is:inline define:vars={{ flagKey: site.auth.flagKey }}>
       (function () {

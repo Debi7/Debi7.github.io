@@ -67,4 +67,25 @@ import "../../styles/clerk.css";
   } catch (error) {
     showLoadFailure(status, error);
   }
+
+  document.addEventListener("click", (event) => {
+    // Ищем клик по кнопке
+    const target = event.target as HTMLElement;
+    const btnSupport = target.closest(
+      '[data-localization-key="signIn.alternativeMethods.getHelp.blockButton__emailSupport"]',
+    );
+
+    if (btnSupport) {
+      // Отменяем стандартное поведение Clerk
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Находим и открываем форму из футера
+      const feedbackForm = document.getElementById("contact-modal");
+      if (feedbackForm) {
+        // открытие формы
+        feedbackForm.classList.remove("hidden");
+      }
+    }
+  });
 </script>
