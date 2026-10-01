@@ -315,6 +315,9 @@ name in the forms should not be in quotes.
     starts a Vite of its own) rewrote `node_modules/.vite/deps` under the owner's server, started at 22:59. Every
     command but `astro dev` now uses `node_modules/.vite-tools` (integration `separate-vite-cache`); checked: `check`
     and `build` left `node_modules/.vite` untouched. New `npm run dev:all:clean` for the owner, and the cure in README.
+  - 2026-10-01, `MENU-SPRING.md` for the colleague (the owner's request; the client likes the spring): the header
+    menu's scroll and spring step by step, from the colleague's version (f80f6f9) through 0bd95d1, d88cc3c and
+    bb2ea1a, with the measurements and how to try it. Documentation only; no code changed.
 
 ### Verification
 
