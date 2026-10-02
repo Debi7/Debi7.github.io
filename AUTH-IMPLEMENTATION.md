@@ -339,6 +339,9 @@ name in the forms should not be in quotes.
     all of commit edbedf8 in one place - the files, the three ways to open the form and the event's use from other
     code, what each field gets, where the letters go, the member's name and email, every class before and after, how
     to check, what was checked, what is open. Linked from README and AUTH.md 12.6. Documentation only.
+  - 2026-10-02, "In plain words" at the top of `FEEDBACK-FORM.md` (the owner's request, after the colleague found the
+    detailed text hard going): six points, each "before - now - why" in a few lines, the `.bg-white` trap, what stayed
+    as it was, three checks. The detailed sections follow unchanged. Documentation only.
 
 ### Verification
 

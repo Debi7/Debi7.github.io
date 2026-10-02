@@ -6,6 +6,72 @@ one place: why, how, in which files, how to use it from other code, how to check
 changes are in commit edbedf8 on the branch `fix-bugs-v2`. The Clerk-side details are also in `AUTH.md` sections 12.6
 and 12.7; this file is the whole story of the form.
 
+Added on 2026-10-02 at the owner's request: "In plain words" below is the short version - what was there before, what
+is there now, and why, in a few lines each. The numbered sections after it are the details, for when they are needed.
+
+## In plain words
+
+**1. "Помощь" in the sign-in form did nothing.**
+
+- Before: Clerk's button opens a `mailto:` link to a made-up address. With no mail program on the computer, nothing
+  happens at all.
+- Why its class is not in our code: Clerk draws its form in the browser while the page runs, so it is in none of our
+  files. The class shows only in DevTools (right click, Inspect): "Помощь" is `cl-footerActionLink`.
+- Now: the sign-in page catches a click on that class before Clerk gets it, and opens our form instead.
+- Why catch the click: Clerk has no setting for what this button does.
+
+**2. The form opened only from the footer button.**
+
+- Before: the form's script listened to `#open-modal-btn` and nothing else.
+- Now: the form also listens for the event `contact:open`. Any script opens it with one line,
+  `document.dispatchEvent(new CustomEvent("contact:open"))`, and can pass an email and a subject along.
+- Why: the sign-in page, and anything later, can open the form without knowing about its buttons.
+
+**3. A letter did not say where it came from.**
+
+- Now: a letter sent after "Помощь" has the subject "Проблема со входом", and the email the visitor already typed into
+  Clerk is filled in.
+- How: a hidden field named `subject` - web3forms takes the subject from a field with exactly that name. From the
+  footer the field is switched off, so the letter is the same as before.
+
+**4. A member had to type their name and email.**
+
+- The problem: the form is on every page, but Clerk is heavy (656 KB) and loads only on a few pages (sign-in,
+  sign-up, the account page, a paid video), so the form cannot ask Clerk who the visitor is.
+- The fix: whenever Clerk is loaded, it puts the member's name and email into `localStorage`. The form takes them from
+  there, but only while the visitor is really signed in, and they are deleted on sign-out.
+- It writes into empty fields only, so nothing the visitor has typed disappears.
+
+**5. Metrika's Session Replay would record those fields.**
+
+- Metrika records a video of the visit, form fields included. The fields now carry the class `ym-disable-keys`, and the
+  recording shows asterisks instead.
+
+**6. The colours did not match the site.**
+
+- Before: `zinc` greys and a green `emerald` button, while the site uses `gray`/`slate` and blue buttons everywhere. In
+  the dark theme the fields were grey on a dark-blue card.
+- The trap worth remembering: `custom.css` paints every `.bg-white` with `!important`, which beats any Tailwind class.
+  - That is why `dark:bg-zinc-900` on the card never worked.
+  - It is also why the white fields are written `bg-[#ffffff]`: plain `bg-white` would turn them the colour of the
+    card, and they would disappear into it.
+- Now: the colours of Clerk's forms (`clerk.css`), and the same button as on the account page,
+  `rounded bg-blue-600 px-4 py-2 text-white hover:opacity-90`.
+- Next time: before picking colours, look at which classes the site already uses.
+
+**What stayed as it was.** The colleague's code - opening from the footer, closing, sending, the notices - was not
+touched; the new parts were added next to it. Only the colour of the success notice changed.
+
+**How to check it.**
+
+1. On `/auth/signin/`: type an email, press "Использовать другой метод", then "Помощь". Our form opens with the email
+   filled in.
+2. Sign in, then on any page press the envelope in the footer. The email is filled in.
+3. Switch the theme with the form open. The colours match the sign-in form.
+
+**One thing for later.** After a Clerk update the class `cl-footerActionLink` may change. "Помощь" then goes back to
+Clerk's own behaviour, and the fix is to update the class in `signin.astro`.
+
 ## 1. What changed, in short
 
 1. **"Помощь" opens the form.** "Помощь" in Clerk's sign-in form, and "Написать в поддержку" on Clerk's help card,
