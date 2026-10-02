@@ -126,6 +126,7 @@ can be instructed there (`site.videoAccess.signedInEvent`; `PAID-VIDEO.md` secti
 The colleague found that "Написать в поддержку" on Clerk's help card does nothing and proposed that it open the site's
 own feedback form. This section says how to reach the card, why the button fails, and how the proposal would work.
 Nothing in the code has changed yet; the colleague offered to wire it.
+(Built on 2026-10-01 at the owner's request; 12.6 says how it works and how to call it.)
 
 ### 12.1 How to reach it
 
@@ -195,6 +196,9 @@ It works without a mail program, and the message lands in a mailbox somebody rea
 The first point was answered the same evening: while the site is being tested, the messages go to the colleague's
 own address. How that is set is 12.5.
 
+The third point was measured on 2026-10-01, when the proposal was built (12.6): opened on the sign-in page, the form
+lies above Clerk's card in both themes.
+
 ### 12.5 Where the messages go, and how to change the address
 
 Two different things send mail here, and only one of them involves Clerk.
@@ -220,3 +224,176 @@ screens", Clerk's types). Two cautions. The address then stands in the site's pu
 which for a personal address means spam; the feedback form keeps the address out of the page. And Clerk reads a
 support address from the instance's settings too, but where the Dashboard sets it was not found. Once the button
 opens the feedback form, the letter goes through web3forms to the key's address and Clerk needs no address at all.
+
+### 12.6 Built on 2026-10-01: how it works and how to call it
+
+At the owner's request the proposal of 12.3 is in the code, with the owner's choices: both "Помощь" and "Написать в
+поддержку" open the form, the email field is filled in, the letter carries the subject "Проблема со входом", and
+`supportEmail` stays unset (12.5: an address in the public code invites spam).
+
+`FEEDBACK-FORM.md` tells the whole story of the form in one place, for the colleague: this section, 12.7 and the
+restyle, with every class before and after.
+
+#### What a visitor sees
+
+1. Open `/auth/signin/`, type the email address, press "Продолжить".
+2. On "Введите пароль", press "Использовать другой метод", then "Помощь" at the foot of that card.
+3. The form "Обратная связь" opens over the sign-in card. The field "Email для связи" already holds the address typed
+   into Clerk's form. Clerk's card stays where it was: no help card, no `mailto:`.
+4. Fill in the name and the message and press "Отправить письмо". The letter goes through web3forms, with the
+   subject "Проблема со входом", to the address of the access key (12.5); the notice "Сообщение отправлено!" shows,
+   as for the form opened from the footer.
+
+A visitor who reaches Clerk's help card some other way - the second-factor or passkey step (12.1) - gets the same form
+from its "Написать в поддержку".
+
+#### The pieces
+
+- **`src/config.ts`, `site.contact.openEvent`** (`"contact:open"`): the event that opens the form, spelled once, as
+  `site.videoAccess.grantedEvent` is.
+- **`src/components/ContactModal.astro`.** The modal carries the event's name in `data-open-event`, because its script
+  is inline and cannot import the config.
+  - The script listens for the event on the document. The event's `detail` may give an `email`, written only into an
+    empty field so that nothing the visitor typed is lost, and a `subject`.
+  - A hidden `subject` input, web3forms' field for the subject of the letter ("The Name attribute must be called
+    subject", web3forms docs, "Email Subject line"), is disabled and so not sent, unless the event gave a subject.
+  - The envelope button in the footer switches it off again, so a letter from the footer keeps web3forms' own subject.
+  - The colleague's handlers (opening from the footer, closing, sending, the notices) work as before; the new parts
+    are listeners of their own next to them. The only line of hers that changed is the colour of the success notice
+    (the restyle below).
+- **`src/pages/auth/signin.astro`.**
+  - `helpTargets`, the two Clerk elements, by the classes Clerk puts on them (measured on `@clerk/ui` 1.36.0):
+    `.cl-footerAction__havingTrouble .cl-footerActionLink` is "Помощь", `.cl-signIn-havingTrouble .cl-button` is
+    "Написать в поддержку".
+  - `helpSubject`, the subject.
+  - A click listener on the document, registered once Clerk's form is mounted.
+
+#### How the click is caught
+
+The listener runs in the capture phase on the document, so it runs before the listeners React keeps on the element
+Clerk is mounted into (`#clerk-signin`). For a click inside that element on one of the two targets, it calls
+`preventDefault()` and `stopPropagation()`: Clerk never sees the click, so it neither opens the help card nor follows
+the `mailto:`. It then reads the address the visitor typed, `clerk.client.signIn.identifier` (`SignInResource` in
+`@clerk/shared`), keeps it only if it contains "@", and sends the event with that `email` and the subject. Every
+other click passes untouched.
+
+#### Opening the form from any other script
+
+The form is on every page, through `Base.astro`, so any script can open it:
+
+```ts
+import { site } from "../config";
+
+document.dispatchEvent(
+  new CustomEvent(site.contact.openEvent, {
+    detail: { email: "visitor@example.com", subject: "Тема письма" },
+  }),
+);
+```
+
+- Both fields of `detail` are optional; `new Event(site.contact.openEvent)` opens the empty form, as the footer does.
+- `email` fills the email field only when it is empty.
+- `subject` becomes the subject of the letter; without it the letter keeps web3forms' default subject.
+- An inline script, which cannot import the config, would have to spell `"contact:open"` itself; a bundled script is
+  the better place.
+- To try it on any page, paste into the browser console:
+  `document.dispatchEvent(new CustomEvent("contact:open", { detail: { email: "a@example.com", subject: "Test" } }))`.
+
+#### Checked on 2026-10-01
+
+In headless Edge on the built site, without signing in. `fetch` was replaced in the page so that no letter was sent;
+the probe read what would have gone to web3forms.
+
+- **"Помощь".** The form opened with `demo+clerk_test@example.com` in the email field and the subject on. Clerk's card
+  stayed on "Использовать другой метод", at `/auth/signin/#/factor-one`, and no navigation was requested. Sent:
+  `subject`, `name`, `email`, `message`. The form closed after the answer.
+- **"Написать в поддержку".** It cannot be reached through the form any more, because "Помощь" is caught first. So
+  an element with the same two classes was put into `#clerk-signin`; it opened the form with the email and the
+  subject. This checks the selector and the listener, not Clerk's card itself.
+- **The footer button on the same page.** It opened the form with the subject off; sent: `name`, `email`, `message`.
+- **Both themes.** The form lies above Clerk's card in both (12.4).
+- **The build.** `npm run check` 0 errors, `npm run build` green.
+
+#### After a Clerk update
+
+Recheck the two selectors. On the sign-in page, open the card of other ways in and run in the console:
+
+```js
+document.querySelectorAll(
+  ".cl-footerAction__havingTrouble .cl-footerActionLink",
+).length;
+```
+
+It should print 1. Then press "Помощь": the feedback form should open. If Clerk renamed its classes, nothing breaks
+outright: the click reaches Clerk again, which opens its help card and its `mailto:` link to the made-up address
+(12.2). Inspect the two elements in the browser's developer tools (Clerk's documentation, "Bring your own CSS", shows
+how) and put the new classes into `helpTargets` in `src/pages/auth/signin.astro`.
+
+#### The look of the form
+
+Restyled the same day at the owner's request, so that the form looks like the rest of the site in both themes:
+
+- the card: rounded-lg, with the site's panel colour;
+- the fields: white with a gray-300 border in the light theme, slate-800 with a slate-700 border in the dark theme,
+  the colours of Clerk's inputs in `src/styles/clerk.css`;
+- focus: a blue border and ring;
+- the button: the site's own blue button;
+- the notice: the site's green.
+
+The old and new classes, and the reason for each, are listed at the top of `ContactModal.astro`. Screenshots of the
+form over the sign-in page were compared before and after, in both themes.
+
+### 12.7 A member's name and email in the feedback form, 2026-10-01
+
+At the owner's request, a signed-in member finds the feedback form already filled in, however it is opened - the
+envelope in the footer, the open event of 12.6, or any other script. The name is filled when Clerk's profile has one,
+and the email always; the message is left to the member.
+
+#### Where the two come from
+
+The form is on every page, and Clerk is loaded only by the sign-in, sign-up and account pages and a paid video's page
+(CLAUDE.md: never from a file the header or the layout loads, because Clerk is about 656 KB gzip). So the form cannot
+ask Clerk. Instead, the pages that load Clerk keep a copy, next to the session flag the header already reads:
+
+- `src/scripts/auth.ts`, `syncAuthFlag()`, runs on every change Clerk reports and on Clerk's navigations. With the
+  flag it now writes the member's `fullName` and `primaryEmailAddress.emailAddress`.
+- `src/scripts/auth-flag.ts`, `writeAuthContact(name, email)`, stores them as JSON under `site.auth.contactKey`
+  (`"kb-auth-contact"`, `src/config.ts`). An empty pair is not kept. `clearAuthFlag()` removes the value with the
+  flag: on a sign-out, and whenever a page that loads Clerk finds no session.
+- `src/components/ContactModal.astro`, `fillMember()`, runs each time the form opens. It reads the value only while
+  the document is marked `kb-member` - the mark the head block of `Base.astro` sets from a valid session flag, the
+  same mark the header's icon follows - and writes into empty fields only. A leftover value without a valid session
+  (a session that expired without a sign-out) is therefore not used.
+
+A name changed on the account page follows on the next change Clerk reports there. A member who was already signed in
+before this change gets the form filled after the next visit to a page that loads Clerk (the account page, the
+sign-in page or a paid video), where the value is written for the first time.
+
+#### Privacy
+
+- The name and email stay in the member's own browser while the session lasts. Whoever uses that browser is signed in
+  anyway, so the value shows nothing the session does not already give.
+- Yandex Metrika's Session Replay would record the filled fields. The three visible fields therefore carry
+  `ym-disable-keys`, Yandex's class for "prohibit the recording of a field's contents"; METRIKA.md proposal 3.1 notes
+  this part as done.
+
+#### Checked on 2026-10-01
+
+In headless Edge on the built site, with the demo account (`CLERK.md`):
+
+- **After the sign-in.** The value held the demo's email and an empty name: the demo profile has no name.
+- **On `/about/`, which loads no Clerk.** The footer's form opened with the email filled, the name and the message
+  empty. All three fields carried `ym-disable-keys`.
+- **After the sign-out.** The value and the flag were both gone, and the form opened empty.
+- **A leftover value without a session.** It was not used: the form stayed empty.
+- **A member with a name.** A valid flag and a value with a name were put in the browser by hand, since the demo
+  profile was not changed. The form filled both. A name typed over it was kept when the form was closed and opened
+  again.
+- **The build.** `npm run check` 0 errors, `npm run build` green.
+
+#### How to try it
+
+Sign in, open any page, press the envelope in the footer: the email is there, and the name if the profile has one.
+Whether a member can enter a name at all depends on the instance's settings in the Clerk Dashboard (first and last
+name among the user's attributes), which this repository does not record; the demo profile has none. Sign out and
+open the form again: it is empty.

@@ -75,6 +75,11 @@ Yandex provides two CSS classes for this, both documented on the same help page:
 
 Four files, a class each; nothing a visitor can see changes.
 
+Done in part on 2026-10-01, at the owner's word: the feedback form now fills in a signed-in member's name and email
+by itself (AUTH.md section 12.7), so its three visible fields - name, email, message - carry `ym-disable-keys`. The
+hidden fields (the access key, the subject) hold nothing personal. The Clerk elements (`ym-hide-content`) are still a
+proposal.
+
 ### 3.2 Count the published site only (recommended)
 
 Load the counter only in the built site: the counter code in `Base.astro` goes inside a condition on

@@ -163,6 +163,20 @@ export const site = {
     signUp: "/auth/signup/",
     account: accountPath,
     flagKey: "kb-auth-expires",
+    // Added 2026-10-01 at the owner's request: the localStorage key of the member's name and email,
+    // written next to the flag by the pages that load Clerk and cleared with it, so that the
+    // feedback form (ContactModal.astro), which loads no Clerk, can fill them in for a member
+    // (src/scripts/auth-flag.ts, AUTH.md section 12.7).
+    contactKey: "kb-auth-contact",
+  },
+
+  // Added 2026-10-01 at the owner's request (AUTH.md section 12.6): the event that opens the
+  // feedback form, ContactModal.astro, from any script, besides the envelope button in the footer.
+  // The sign-in page sends it when a visitor presses "Помощь" or "Написать в поддержку" in Clerk's
+  // form. Sent on the document; its detail may carry `email` and `subject` to fill in. Spelled here
+  // once, as videoAccess.grantedEvent is, so the sender and the form cannot drift apart.
+  contact: {
+    openEvent: "contact:open",
   },
 
   pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },

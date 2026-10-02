@@ -1,19 +1,61 @@
 ---
-
+// Added 2026-10-01 at the owner's request (AUTH.md section 12.6): the form can also be opened by
+// the event site.contact.openEvent, sent on the document by any script - today the sign-in page,
+// when a visitor presses "Помощь" or "Написать в поддержку" in Clerk's form. The event's name
+// reaches the inline script below through data-open-event, since an inline script cannot import
+// the config; its detail may carry `email` and `subject` to fill in.
+//
+// Restyled the same day at the owner's request: the form takes the site's look in both themes,
+// the values Clerk's forms were given in src/styles/clerk.css and the site's own buttons
+// (src/pages/auth/account.astro, PaidVideo.astro). It used zinc greys and an emerald button,
+// which no other part of the site uses; in the dark theme its fields were grey on a dark-blue
+// card. The classes it had, so the change can be followed or undone:
+//   card     rounded-2xl border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900 (bg-white kept)
+//   close    text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200
+//   heading  text-zinc-900 dark:text-zinc-100
+//   labels   text-xs text-zinc-500 dark:text-zinc-400
+//   fields   rounded-xl border-zinc-200 bg-zinc-50 focus:border-emerald-500 dark:border-zinc-700
+//            dark:bg-zinc-800
+//   button   rounded-xl bg-emerald-600 py-2.5 text-sm font-medium shadow-md transition-colors
+//            hover:bg-emerald-700
+//   toast    bg-emerald-600 on success
+// What they are now, and where each comes from:
+//   card     rounded-lg like every card on the site, gray-200 / slate-700 border. Its background
+//            was already --panel-bg in both themes: custom.css paints .bg-white with !important,
+//            so dark:bg-zinc-900 never applied and is gone.
+//   heading  gray-800 / gray-200, Clerk's foreground colours.
+//   labels   text-sm, the size of the labels in Clerk's forms, gray-500 / slate-400.
+//   fields   white with a gray-300 border, slate-800 with a slate-700 border in the dark theme,
+//            text gray-800 / gray-200, and a blue-600 (dark: blue-500) border and ring on focus -
+//            the input colours in clerk.css. White is bg-[#ffffff]: plain bg-white would be
+//            repainted to --panel-bg by custom.css and the fields would melt into the card.
+//   button   the site's button exactly - rounded bg-blue-600 px-4 py-2 text-white, opacity on
+//            hover - at full width.
+//   toast    green-600 on success, the pinned palette's green; red-600 on an error, as before.
+//
+// Added later the same day at the owner's request (AUTH.md section 12.7): for a signed-in member
+// the form fills in the name, when Clerk's profile has one, and the email, however it is opened;
+// the message is left to the member. The two come from localStorage under site.auth.contactKey
+// (data-member-key below), which the pages that load Clerk write next to the session flag, since
+// this form is on every page and must not load Clerk. The three fields carry ym-disable-keys, so
+// that Yandex Metrika's Session Replay does not record what is in them.
+import { site } from "../config";
 ---
 
 <div
   id="contact-modal"
   class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+  data-open-event={site.contact.openEvent}
+  data-member-key={site.auth.contactKey}
 >
   <!-- Контейнер модалки -->
   <div
-    class="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+    class="relative w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-2xl dark:border-slate-700"
   >
     <!-- Кнопка закрытия -->
     <button
       id="close-modal-btn"
-      class="absolute right-4 top-4 text-xl text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+      class="absolute right-4 top-4 text-xl text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-gray-200"
     >
       ✕
     </button>
@@ -25,7 +67,7 @@
       on the site (Font Family, "Customizing your theme"). */
     }
     <h3
-      class="mb-4 font-bilingual text-xl font-semibold text-zinc-900 dark:text-zinc-100"
+      class="mb-4 font-bilingual text-xl font-semibold text-gray-800 dark:text-gray-200"
     >
       Обратная связь
     </h3>
@@ -41,45 +83,68 @@
         value="51da2319-2d97-4cfd-99e3-4fd9c76df946"
       />
 
+      {
+        /* Added 2026-10-01 (AUTH.md section 12.6): the subject of the letter, web3forms' `subject`
+        field ("The Name attribute must be called subject", web3forms docs, "Email Subject line").
+        Disabled, and therefore not sent, unless the form was opened by the open event with a
+        subject - "Проблема со входом" from the sign-in page; opened from the footer, the letter
+        keeps web3forms' own subject as before. */
+      }
+
+      {
+        /* Added 2026-10-01 at the owner's request: ym-disable-keys on the three fields below, Yandex
+        Metrika's class that keeps a field's contents out of Session Replay (the Webvisor) - replaced
+        with asterisks in the recording (Yandex's help, "Enabling and configuring Session Replay";
+        METRIKA.md proposal 3.1, which covers this form). Needed now that a member's name and email
+        are filled in by themselves (fillMember in the script below), not only typed. */
+      }
+      <input
+        id="contact-subject"
+        type="hidden"
+        name="subject"
+        value=""
+        disabled
+      />
+
       <div>
-        <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400"
+        <label class="mb-1 block text-sm text-gray-500 dark:text-slate-400"
           >Ваше имя</label
         >
         <input
           type="text"
           name="name"
           required
-          class="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+          class="ym-disable-keys w-full rounded border border-gray-300 bg-[#ffffff] p-2.5 text-sm text-gray-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:focus:border-blue-500 dark:focus:ring-blue-500"
         />
       </div>
 
       <div>
-        <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400"
+        <label class="mb-1 block text-sm text-gray-500 dark:text-slate-400"
           >Email для связи</label
         >
         <input
           type="email"
           name="email"
           required
-          class="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+          class="ym-disable-keys w-full rounded border border-gray-300 bg-[#ffffff] p-2.5 text-sm text-gray-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:focus:border-blue-500 dark:focus:ring-blue-500"
         />
       </div>
 
       <div>
-        <label class="mb-1 block text-xs text-zinc-500 dark:text-zinc-400"
+        <label class="mb-1 block text-sm text-gray-500 dark:text-slate-400"
           >Сообщение</label
         >
         <textarea
           name="message"
           rows="4"
           required
-          class="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-sm focus:border-emerald-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800"
+          class="ym-disable-keys w-full rounded border border-gray-300 bg-[#ffffff] p-2.5 text-sm text-gray-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:focus:border-blue-500 dark:focus:ring-blue-500"
         ></textarea>
       </div>
 
       <button
         type="submit"
-        class="w-full rounded-xl bg-emerald-600 py-2.5 text-sm font-medium text-white shadow-md transition-colors hover:bg-emerald-700"
+        class="w-full rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90"
       >
         Отправить письмо
       </button>
@@ -104,7 +169,8 @@
   // Универсальная функция toast
   function showToast(message, type = "success") {
     const colors = {
-      success: "bg-emerald-600",
+      // Changed 2026-10-01 (the restyle noted at the top): green-600, the site's green, was emerald-600.
+      success: "bg-green-600",
       error: "bg-red-600",
     };
 
@@ -142,6 +208,66 @@
   openBtn?.addEventListener("click", () => {
     modal?.classList.remove("hidden");
     modal?.classList.add("flex");
+  });
+
+  // Added 2026-10-01 (AUTH.md section 12.6): the second way in, the open event (its name is in
+  // data-open-event on the modal, from site.contact.openEvent). The detail may give an email
+  // address, written only into an empty field so that nothing the visitor typed is overwritten,
+  // and a subject, which switches the hidden subject field on.
+  const emailInput = form?.querySelector('input[name="email"]');
+  const subjectInput = document.getElementById("contact-subject");
+  const openEvent = modal?.dataset.openEvent;
+
+  // Added 2026-10-01 at the owner's request (AUTH.md section 12.7): for a member, the name and the
+  // email from Clerk's profile, which the pages that load Clerk keep under the key in
+  // data-member-key (site.auth.contactKey, written by src/scripts/auth-flag.ts). Read only while
+  // the document is marked kb-member - the mark the head block of Base.astro sets from a valid
+  // session flag - and written only into empty fields; the message is left to the visitor.
+  const nameInput = form?.querySelector('input[name="name"]');
+  function fillMember() {
+    if (!document.documentElement.classList.contains("kb-member")) return;
+    let member = null;
+    try {
+      member = JSON.parse(
+        localStorage.getItem(modal?.dataset.memberKey) || "null",
+      );
+    } catch {
+      // Storage unavailable or the value unreadable: the fields stay as they are.
+    }
+    if (!member || typeof member !== "object") return;
+    if (nameInput && !nameInput.value && typeof member.name === "string") {
+      nameInput.value = member.name;
+    }
+    if (emailInput && !emailInput.value && typeof member.email === "string") {
+      emailInput.value = member.email;
+    }
+  }
+
+  if (openEvent) {
+    document.addEventListener(openEvent, (event) => {
+      const detail =
+        event instanceof CustomEvent && event.detail ? event.detail : {};
+      if (emailInput && !emailInput.value && typeof detail.email === "string") {
+        emailInput.value = detail.email;
+      }
+      // Added with fillMember above: after the event's own email, so an address the sender gave wins.
+      fillMember();
+      if (subjectInput) {
+        subjectInput.value =
+          typeof detail.subject === "string" ? detail.subject : "";
+        subjectInput.disabled = subjectInput.value === "";
+      }
+      modal?.classList.remove("hidden");
+      modal?.classList.add("flex");
+    });
+  }
+  // Added with it: opened from the footer button, the form sends no subject, as before, even if
+  // the open event had switched it on earlier on this page. A listener of its own, next to the
+  // button's original one above.
+  openBtn?.addEventListener("click", () => {
+    if (subjectInput) subjectInput.disabled = true;
+    // Added with fillMember above: a member opening the form from the footer gets it filled too.
+    fillMember();
   });
 
   // закрыть

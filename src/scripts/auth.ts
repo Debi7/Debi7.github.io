@@ -34,7 +34,8 @@ import { Clerk } from "@clerk/clerk-js";
 import { localization } from "./clerk-ru";
 import { ui } from "@clerk/ui";
 import { site } from "../config";
-import { clearAuthFlag, writeAuthFlag } from "./auth-flag";
+// writeAuthContact added 2026-10-01 (syncAuthFlag below).
+import { clearAuthFlag, writeAuthContact, writeAuthFlag } from "./auth-flag";
 
 let pending: Promise<Clerk> | undefined;
 
@@ -67,9 +68,16 @@ function withTrailingSlash(to: string): string {
 // The flag follows Clerk's session: written while there is one, cleared when Clerk says there is
 // none (null), left alone while Clerk does not know yet (undefined). Shared by the listener and
 // the navigation hooks in load(), which say why both are needed.
+// Changed 2026-10-01 at the owner's request (AUTH.md section 12.7): with the flag, the member's
+// name and email from Clerk's profile, for the feedback form; clearAuthFlag() clears them too.
 function syncAuthFlag(session: Clerk["session"]): void {
-  if (session) writeAuthFlag(session.expireAt);
-  else if (session === null) clearAuthFlag();
+  if (session) {
+    writeAuthFlag(session.expireAt);
+    writeAuthContact(
+      session.user?.fullName ?? "",
+      session.user?.primaryEmailAddress?.emailAddress ?? "",
+    );
+  } else if (session === null) clearAuthFlag();
 }
 
 async function load(): Promise<Clerk> {

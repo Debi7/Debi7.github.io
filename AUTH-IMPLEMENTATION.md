@@ -318,6 +318,27 @@ name in the forms should not be in quotes.
   - 2026-10-01, `MENU-SPRING.md` for the colleague (the owner's request; the client likes the spring): the header
     menu's scroll and spring step by step, from the colleague's version (f80f6f9) through 0bd95d1, d88cc3c and
     bb2ea1a, with the measurements and how to try it. Documentation only; no code changed.
+  - 2026-10-01, "Помощь" in Clerk's sign-in form opens the site's feedback form (the colleague's proposal, AUTH.md
+    12.3, built at the owner's request; 12.6 has the details). `site.contact.openEvent` in `src/config.ts`;
+    `ContactModal.astro` opens on that event, fills an empty email field and switches on a hidden `subject`
+    (web3forms) from its detail; `signin.astro` catches clicks on `.cl-footerAction__havingTrouble .cl-footerActionLink`
+    and `.cl-signIn-havingTrouble .cl-button` in the capture phase and sends the event with the typed address
+    (`signIn.identifier`) and "Проблема со входом". Same day, the form restyled to the site's colours in both themes
+    (the old and new classes at the top of `ContactModal.astro`). Checked in headless Edge with `fetch` replaced, so no
+    letter left: "Помощь" opened the form with email and subject and no navigation, the second selector on a stand-in
+    element, the footer button without a subject, the form above Clerk's card in both themes; before and after
+    screenshots in both themes; `check` and `build` green.
+  - 2026-10-01, a member's name and email in the feedback form (the owner's request, option A; AUTH.md 12.7):
+    `syncAuthFlag()` in `auth.ts` also calls the new `writeAuthContact()` in `auth-flag.ts`, which keeps
+    `{ name, email }` under `site.auth.contactKey`; `clearAuthFlag()` removes it with the flag. `ContactModal.astro`
+    fills empty name and email fields from it on every opening while the document is `kb-member`; the three fields
+    carry `ym-disable-keys` (METRIKA.md 3.1, noted there). Checked with the demo account: the value written at
+    sign-in (email only, the demo has no name), the footer form on `/about/` filled, cleared at sign-out, a leftover
+    value without a session ignored, a name from a hand-made value filled and a typed name kept.
+  - 2026-10-01, `FEEDBACK-FORM.md` for the colleague (the owner's request to document the form's changes in detail):
+    all of commit edbedf8 in one place - the files, the three ways to open the form and the event's use from other
+    code, what each field gets, where the letters go, the member's name and email, every class before and after, how
+    to check, what was checked, what is open. Linked from README and AUTH.md 12.6. Documentation only.
 
 ### Verification
 
