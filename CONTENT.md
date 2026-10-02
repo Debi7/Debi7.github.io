@@ -8,6 +8,10 @@ the documentation step of [MIGRATION-PLAN.md](MIGRATION-PLAN.md).
 Every step below was tried on a copy of the site on 2026-09-19: a post made from `templates/post.md`, kept as a draft,
 published, dated later in the day, given an image, and left without a title.
 
+Updated on 2026-10-02 at the owner's request, to match the site as it is now: paid lectures (YouTube and Yandex Disk)
+and their materials for members, the build refusing a public lecture without `videoId`, formulas typeset since
+2026-09-22, the lectures' real category name, and the branches the work goes through before `main`.
+
 Run the commands from the repository root. Preview with `npm run dev` at <http://localhost:4321/>; the page reloads
 on save. Before committing run `npm run fix` and `npm run check` (see [README.md](README.md)).
 
@@ -17,6 +21,10 @@ on save. Before committing run `npm run fix` and `npm run check` (see [README.md
 - Templates for new posts: `templates/`; see "Create a post" below.
 - Images for posts: `public/images/`, shown at `/images/...`; see "Images in a post" below.
 - Videos: `src/content/video/<name>.md`, one file per lecture. The file name is the address: `/video/<name>/`.
+- Paid lectures: the same folder, with `access: paid`. The id of the YouTube video, or the link of the Yandex Disk
+  file, is never written in the repository: it goes into the access service's list `VIDEOS` (a Cloudflare secret;
+  locally `workers/video-access/videos.local.json`, which git ignores). See "A paid lecture" below.
+- Pictures for the members' part of a paid lecture: `public/images/video/<name>/`.
 - The Posts list, the Video list, the tag pages and the category pages: generated from the entries. Nothing to
   create by hand.
 - The search index: generated too, at `/search/data.json`. Nothing to create or update by hand; see "Search".
@@ -44,7 +52,8 @@ On the GitHub website:
    `/posts/2025/` is where the posts of 2025 are listed.
 4. Paste the template, and fill in `title`, `date` and the text. Keep `draft: true` while the post is being written.
 5. Choose "Commit changes" and commit to the `main` branch. Every commit to `main` rebuilds and publishes the site; a
-   draft stays off it.
+   draft stays off it. (Added 2026-10-02: work committed to another branch, as the code changes are, reaches the site
+   only when that branch is merged into `main`.)
 6. To publish: edit the file, set `draft` to `false` and `date` to the moment of publication, and commit again. See
    "The date and time" below: a time later than the build keeps the post hidden.
 
@@ -141,13 +150,25 @@ The page title "Posts" is written in `src/pages/posts/[...page].astro`.
 - Tables in GitHub style are supported.
 - Link to another post by its address with the trailing slash: `[text](/posts/<name>/)`.
 - Images: see "Images in a post" below.
-- Not rendered in a post yet: formulas between dollar signs, which come out as code, and the callout boxes of the Hugo
-  theme, which come out as raw text. Both are waiting on `MIGRATION-PLAN.md` §6.
+- Formulas: `$E = mc^2$` inside a line, and `$$ ... $$` on lines of their own for a formula set apart. They are
+  typeset while the site is built (KaTeX, since 2026-09-22), so they arrive ready and need no script in the browser.
+  (Corrected 2026-10-02: this line said formulas came out as code; that was true until 2026-09-22.)
+- Not rendered in a post yet: the callout boxes of the Hugo theme, which come out as raw text. They are waiting on
+  `MIGRATION-PLAN.md` §6.
 
 ## Videos
 
 A video lecture is a file in `src/content/video/`, and everything about it works like a post: same front matter, same
 dates, same drafts, same tags and categories. What it adds is a player at the top of the page.
+(Corrected 2026-10-02: the front matter is not quite the same. A lecture has no `lastmod`, `summary`, `share_title` or
+`share_description`, and it has `videoId`, `duration` and `access` of its own; the reference below lists them.)
+
+A lecture is public or paid:
+
+- **Public** (the default): anyone can watch it. Its YouTube id is in the file. "Create a video" below.
+- **Paid** (`access: paid`, since 2026-09-28): anyone sees the page, its description and its card, but the player
+  appears only for a member the administrator has granted access. The file holds no address of the video. "A paid
+  lecture" below.
 
 ### Create a video
 
@@ -161,12 +182,18 @@ dates, same drafts, same tags and categories. What it adds is a player at the to
 without one still builds, and the page then carries an empty player: it is the field to check first when a lecture
 looks broken.
 
+Corrected 2026-10-02: since 2026-09-28 the paragraph above is no longer true. A public lecture without `videoId` stops
+the build with "a public video needs its videoId", naming the file, so a lecture can no longer go out with an empty
+player.
+
 ### Front matter reference
 
 - `title` - required.
 - `date` - required, with `+03:00` at the end. A date in the future keeps the lecture off the published site until
   then; `npm run dev` shows it anyway.
-- `videoId` - the YouTube id. Treat it as required.
+- `videoId` - the YouTube id. Treat it as required. (Since 2026-09-28 the build requires it of a public lecture, and
+  refuses it, with `videoUrl` and `thumbnail`, on a paid one.)
+- `access` - `public` (the default, so it can be left out) or `paid`. Added 2026-09-28; see "A paid lecture".
 - `description` - one sentence. It is what the card, the feed and the search result show; without it the first words
   of the text are used.
 - `duration` - free text printed on the card, usually `"12:34"`.
@@ -190,6 +217,48 @@ Nothing has to be registered anywhere. Once the file is in `src/content/video/` 
 
 The lists are newest first. Renaming the file changes the address, and the old one becomes a 404, so rename only
 what nobody has linked to yet.
+
+A paid lecture appears in all the same places. What its card, the feed and the search carry is only the public part:
+the title, the description and the text above the members' block. The members' block is written on the lecture's
+own page alone.
+
+### A paid lecture
+
+Added 2026-10-02. The full procedure, with the reasons and what to do when something does not work, is in
+[PAID-VIDEO.md](PAID-VIDEO.md): section 4 for a lecture on YouTube, section 10.2 for one on Yandex Disk. In short:
+
+1. **Put the video where it will be played from.**
+   - YouTube: upload it as "Unlisted", never "Public", with embedding allowed, and copy its id.
+   - Yandex Disk: upload the MP4, share it as "Доступ по ссылке", and copy the file's link,
+     `https://disk.yandex.ru/i/<key>`. The link of one file (`/i/`), never of a folder (`/d/`).
+2. **Give the id or the link to the access service**, under the lecture's name (the file name without `.md`), in the
+   list `VIDEOS`:
+   - YouTube: `"lecture-dowsing-2": "<id>"`;
+   - Yandex Disk: `"lecture-part-3": {"yandexDisk": "https://disk.yandex.ru/i/<key>"}`.
+
+   On the live site `VIDEOS` is a secret of the Cloudflare Worker, and the whole list is pasted again each time
+   (PAID-VIDEO.md step 4; its master copy is kept outside the repository). On your own computer it is
+   `workers/video-access/videos.local.json`, which git ignores.
+
+3. **Create the entry** `src/content/video/<name>.md` like a public one, with two differences:
+   - add `access: paid`;
+   - write no `videoId`, `videoUrl` or `thumbnail`, and no link to the video anywhere in the text: everything in the
+     file is public - the page, the feed, the search index and the repository. The build stops on any of those
+     fields and on a YouTube address in the text (`src/lib/video.ts`). It does not recognise a Yandex Disk link, so
+     check by eye that none is in the text.
+
+   `src/content/video/lecture-part-3.md` is a complete example.
+
+4. **Materials for members (optional).** In the text, after what everybody may read, wrap the members' part in
+   `<div data-members-only>` and `</div>`, each on a line of its own with a blank line after the opening one and
+   before the closing one. It stays hidden until the member's player appears. Only a paid lecture may have it, and the
+   build says so otherwise. Pictures for it go into `public/images/video/<name>/`.
+5. **Check it** with `npm run dev:all` (the site and the access service together): as a guest the page shows the
+   sign-in box, as the demo member the player (PAID-VIDEO.md section 3).
+6. **Publish** as any change: commit, and the lecture is on the site once the change reaches `main`.
+
+Who may watch is not set in the lecture: one membership opens every paid lecture. The administrator grants it to a
+person in the Clerk Dashboard (`CLERK-DASHBOARD.md`, the runbook for granting access).
 
 ## Images in a post
 
@@ -232,6 +301,10 @@ Two things decide how a new term looks:
   percent-encoded when copied.
 - **The label** on the page is the name with each word capitalised, which is what the Hugo theme did: `обучающее
 видео` prints as "Обучающее Видео". Write the name in the front matter the way it should read, in lower case.
+
+Noted 2026-10-02: `обучающее видео` above is only an example of the rule. The category the lectures really use is
+`обучающие видео`, at `/categories/обучающие-видео/` (renamed on 2026-09-22); a new lecture should name that one, or
+it starts a category of its own.
 
 A term is a subject, not a place: prefer an existing one to a near-synonym, because two tags that mean the same thing
 split the entries between two pages.
@@ -376,6 +449,8 @@ What it will not find:
 - an entry added since the last build. The index is built with the site, so a new lecture appears in the search when
   the GitHub Actions build has finished, not when the file is committed;
 - words in an image, and words in front matter fields other than the ones above;
+- the members' block of a paid lecture (added 2026-10-02): it is kept out of the index on purpose, so only the public
+  part of a paid lecture can be found;
 - a different form of a word. `маятник` does not find `маятника`: the search matches the letters as typed, with only
   the case folded and `ё` read as `е`. Two words in one query are an AND - both have to appear.
 
@@ -391,7 +466,11 @@ run, then the spelling.
 3. The file name is lower-case Latin letters, digits and hyphens, and is not a year.
    3a. For a lecture: `videoId` is the id and not the whole YouTube address, and the player shows the right video in
    `npm run dev`.
+   3b. For a paid lecture (added 2026-10-02): `access: paid`; no `videoId`, `videoUrl`, `thumbnail`, and no link to the
+   video in the text; its name is in `VIDEOS` with the id or the Yandex Disk link; the demo member sees the player in
+   `npm run dev:all`. See "A paid lecture".
 4. Every image is in `public/images/`, and its address in the text matches the file name exactly, letter case
    included.
 5. If you work on your own computer: `npm run fix`, `npm run check`, `npm run build`, `npm run check:pages`.
-6. Commit to `main`, and check in the "Actions" tab that the build succeeded.
+6. Commit to `main`, and check in the "Actions" tab that the build succeeded. A change made on another branch is
+   published when that branch is merged into `main` (added 2026-10-02).

@@ -342,6 +342,13 @@ name in the forms should not be in quotes.
   - 2026-10-02, "In plain words" at the top of `FEEDBACK-FORM.md` (the owner's request, after the colleague found the
     detailed text hard going): six points, each "before - now - why" in a few lines, the `.bg-white` trap, what stayed
     as it was, three checks. The detailed sections follow unchanged. Documentation only.
+  - 2026-10-02, `CONTENT.md` brought up to date (the owner's request: how posts and videos are added). New "A paid
+    lecture" (YouTube or Yandex Disk, `VIDEOS`, block 2, pointing to PAID-VIDEO.md 4 and 10.2), `access` in the video
+    reference, the public/paid split, and corrections beneath the stale lines: `videoId` is enforced since
+    2026-09-28, formulas typeset since 2026-09-22, the lectures' category is `обучающие видео`, branches reach the site
+    through `main`, block 2 is not searchable, checklist item 3b. `templates/video.md`: corrections under its stale
+    comments and the category value fixed (the old one would have made a second category). Noted, not changed:
+    `src/lib/video.ts` refuses YouTube addresses in a paid body but not Yandex Disk links.
 
 ### Verification
 

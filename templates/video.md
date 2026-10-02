@@ -5,6 +5,10 @@
 #
 # Required: title and date. Everything else below may be left out, except videoId -
 # without it the page is built with an empty player, so treat it as required in practice.
+# Corrected 2026-10-02: since 2026-09-28 the build stops on a public video without videoId
+# ("a public video needs its videoId"), so it is required outright.
+# For a PAID lecture this template is not enough: add `access: paid` and delete videoId,
+# videoUrl and thumbnail - see CONTENT.md, "A paid lecture", and PAID-VIDEO.md section 4.
 title: "Video title"
 description: "One sentence about the video. Shown on the card and in the feed."
 # The YouTube id, not the whole address: the part after watch?v=
@@ -18,7 +22,9 @@ duration: "12:34"
 # Lower-cased by the build. Each one gets its own page at /tags/<name>/, shared with the posts.
 tags: ["video", "биолокация"]
 # The lectures use "обучающее видео", which is the category page at /categories/обучающее-видео/.
-categories: ["обучающее видео"]
+# Corrected 2026-10-02: the category was renamed on 2026-09-22 and is "обучающие видео", at
+# /categories/обучающие-видео/; the old spelling here would have started a second category.
+categories: ["обучающие видео"]
 # true keeps the entry out of the published site while it is being written.
 draft: true
 # Optional and unused by the page today, kept because the schema accepts them:
