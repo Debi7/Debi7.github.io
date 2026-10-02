@@ -296,6 +296,12 @@ workspace menu at the top left.
    Amended 2026-09-28: the lock exists now (`PAID-VIDEO.md`), so this step is required. Without these claims every
    member is refused.
 
+   Amended 2026-10-02 with the admin panel and the members' statuses (`ADMIN.md`): a third claim,
+   `"status": "{{user.public_metadata.status}}"`, which the content, status and video services read. Without it nobody
+   can edit posts or assign statuses, and a blocked member is not recognised as blocked. The statuses themselves -
+   guest, student, expert, master, metr, admin, blocked - are given at `/admin/users/` by a metr or an admin, or by hand
+   here as `"status": "<value>"` in public metadata, next to the keys already there (ADMIN.md sections 1 and 4.1).
+
 ### 7.3 The access record
 
 Paid access is two fields in a user's **public** metadata, written exactly like this:
@@ -313,6 +319,10 @@ Paid access is two fields in a user's **public** metadata, written exactly like 
   `2099-12-31` rather than leaving the field out, so every record has the same shape.
 - Added 2026-09-28, when the lock was built: the day ends at midnight UTC, and anything but exactly `true` and a
   real date in that form means "no access" - a missing field too. A typo closes access; it never opens it.
+- Added 2026-10-02, the owner's status model (`ADMIN.md` section 1): a status opens the paid lectures as well. Any
+  status but guest and blocked - student, expert, master, metr, admin - is access with no end date, given at
+  `/admin/users/`; this record still opens them on its own, and the status `blocked` closes both (`PAID-VIDEO.md`
+  section 6).
 
 Administrative notes go into the user's **private** metadata, which the visitor's browser cannot read:
 

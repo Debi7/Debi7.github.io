@@ -29,7 +29,9 @@ import { readAuthFlag } from "./auth-flag";
 // code comes through the dynamic import in loadClerk().
 import type { Clerk } from "@clerk/clerk-js";
 
-type State = "loading" | "guest" | "denied" | "missing" | "failed";
+// "blocked" added 2026-10-02 with the owner's status model: the service answers 403 "blocked" to a
+// member whose status is blocked, which is not "pay to watch" (PaidVideo.astro).
+type State = "loading" | "guest" | "denied" | "missing" | "failed" | "blocked";
 
 // Clerk through auth.ts, loaded only when this function runs. A static import would put the Clerk
 // chunk (656 KB gzip, package.json) on every video page, for guests too.
@@ -112,7 +114,14 @@ async function run(box: HTMLElement): Promise<void> {
       } else if (answer.status === 200) {
         play(box, await answer.json());
       } else if (answer.status === 403) {
-        show("denied");
+        // Changed 2026-10-02: a 403 may now name the status "blocked" (the State type's note).
+        const refusal: unknown = await answer.json().catch(() => undefined);
+        const blocked =
+          typeof refusal === "object" &&
+          refusal !== null &&
+          "error" in refusal &&
+          refusal.error === "blocked";
+        show(blocked ? "blocked" : "denied");
       } else if (answer.status === 404) {
         show("missing");
       } else {

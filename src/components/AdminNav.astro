@@ -1,0 +1,50 @@
+---
+// The navigation row of the admin panel: back to the account page, and between the two panel pages.
+// Added 2026-10-02 at the owner's request ("there is no way back to the account page, from the posts
+// or from the users"). Not a port: the Hugo theme has no admin pages.
+//
+// One component for the two pages that show it, /admin/posts/ and /admin/users/, so the row cannot
+// differ between them. The addresses come from src/config.ts (site.auth.account and the two panel
+// pages in site.admin), the one home of every address the site builds by hand.
+//
+// Decisions that would otherwise look like mistakes:
+// - Plain markup with no script: the row is the same for every visitor, and the pages' scripts
+//   decide who may use them. A guest who opens the page is sent to sign-in by the page's script
+//   before the row matters.
+// - The page being shown is plain text with aria-current="page", not a link to itself, the way
+//   Pagination.astro marks the current page.
+// - The link classes are those of the panel links on the account page (src/pages/auth/account.astro).
+import { site } from "../config";
+
+interface Props {
+  current: "posts" | "users";
+}
+
+const { current } = Astro.props;
+const items = [
+  { key: "posts", href: site.admin.postsPage, label: "Публикации" },
+  { key: "users", href: site.admin.usersPage, label: "Пользователи" },
+] as const;
+const link = "text-blue-600 hover:underline dark:text-blue-400";
+---
+
+<nav
+  aria-label="Панель управления"
+  class="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-gray-200 pb-3 text-sm dark:border-slate-700"
+>
+  <a href={site.auth.account} class={link}>&larr; Личный кабинет</a>
+  <span aria-hidden="true" class="text-gray-400 dark:text-slate-500">|</span>
+  {
+    items.map((item) =>
+      item.key === current ? (
+        <span aria-current="page" class="font-semibold">
+          {item.label}
+        </span>
+      ) : (
+        <a href={item.href} class={link}>
+          {item.label}
+        </a>
+      ),
+    )
+  }
+</nav>

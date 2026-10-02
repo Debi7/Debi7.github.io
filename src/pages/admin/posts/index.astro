@@ -1,0 +1,218 @@
+---
+// The admin panel for posts, /admin/posts/. Added 2026-10-02 at the owner's request; the design is
+// the consilium verdict .specify/consilium/2026-10-02-admin-posts.md, and ADMIN.md is the how-to.
+//
+// An editor without a GitHub account lists, adds, edits and deletes the posts here. The page is
+// markup only; src/scripts/admin-posts.ts loads Clerk, asks the content service
+// (workers/content-admin/, site.admin in src/config.ts) and fills it in. Nothing here is a lock:
+// the service checks the editor's role on every request, and the page only hides what the visitor
+// could not use anyway.
+//
+// Decisions that would otherwise look like mistakes:
+// - Base.astro, as the auth pages use it, so the panel has the site's header, its theme switch and
+//   its two palettes: the owner asked for the panel to follow the site's light and dark themes.
+// - Every element the script fills is in this markup, including the rows and the tag buttons as
+//   templates: Tailwind sees their classes here, and a scoped style could not reach markup a script
+//   builds (CLAUDE.md, the search page pitfall), so the page has no style block at all.
+// - The fields use bg-[#ffffff], not bg-white: custom.css paints every .bg-white white with
+//   !important, which would keep them white in the dark theme (the same fix as the feedback form,
+//   FEEDBACK-FORM.md).
+// - noindex, and the sitemap leaves /admin/ out (astro.config.mjs): nothing here is for a search
+//   engine. The page is not in the menu; an editor opens it by its address.
+// - The labels are in Russian, the language of the site's own pages.
+import Base from "../../../layouts/Base.astro";
+// Added 2026-10-02 at the owner's request: the way back to the account page and to /admin/users/.
+import AdminNav from "../../../components/AdminNav.astro";
+// Added later on 2026-10-02 at the owner's request: the pager under the list.
+import AdminPager from "../../../components/AdminPager.astro";
+
+// The class lists the fields share, spelled once. Tailwind reads them here like any other class.
+const field =
+  "w-full rounded border border-gray-300 bg-[#ffffff] p-2.5 text-sm text-gray-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:focus:border-blue-500 dark:focus:ring-blue-500";
+const label = "mb-1 block text-sm text-gray-500 dark:text-slate-400";
+const error = "mt-1 text-xs text-red-600 dark:text-red-400";
+const primary =
+  "rounded bg-blue-600 px-4 py-2 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50";
+const secondary =
+  "rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-opacity hover:opacity-80 disabled:opacity-50 dark:border-slate-600 dark:text-gray-200";
+---
+
+<Base title="Публикации" noindex>
+  <section class="mx-auto max-w-3xl">
+    <AdminNav current="posts" />
+    <h1 class="mb-6 text-2xl font-bold">Публикации</h1>
+    <p id="admin-status" class="mb-4 text-sm" role="status" aria-live="polite">
+      Загрузка...
+    </p>
+    <noscript>
+      <p class="text-sm">
+        Для работы с публикациями нужен включённый JavaScript.
+      </p>
+    </noscript>
+
+    <p id="admin-forbidden" class="text-sm" hidden>
+      У этой учётной записи нет прав на публикации. Их выдаёт администратор
+      сайта.
+    </p>
+
+    <div id="admin-list" hidden>
+      <div class="mb-4 flex flex-wrap items-center gap-3">
+        <button id="admin-new" type="button" class={primary}>
+          Новая публикация
+        </button>
+      </div>
+      <ul
+        id="admin-posts"
+        class="divide-y divide-gray-200 border-y border-gray-200 dark:divide-slate-700 dark:border-slate-700"
+      >
+      </ul>
+      {
+        /* Added later on 2026-10-02 at the owner's request: 20 posts to a page
+        (AdminPager.astro). */
+      }
+      <AdminPager id="admin-pager" label="Страницы списка публикаций" />
+    </div>
+
+    <template id="admin-post-row">
+      <li class="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+        <div class="min-w-0 flex-1">
+          <a
+            data-title
+            class="font-medium text-blue-600 hover:underline dark:text-blue-400"
+          ></a>
+          <p class="text-xs text-gray-500 dark:text-slate-400">
+            <span data-date></span> · <span data-state></span> ·
+            <span data-slug></span>
+          </p>
+        </div>
+        <button data-edit type="button" class={secondary}>Изменить</button>
+        {
+          /* Added later on 2026-10-02 at the owner's request: a new post that starts as a copy of
+          this one, for editors who would rather change fields than write Markdown from nothing
+          (admin-posts.ts, copyPost). */
+        }
+        <button data-copy type="button" class={secondary}>Копировать</button>
+        <button data-delete type="button" class={secondary}>Удалить</button>
+      </li>
+    </template>
+
+    <form id="admin-editor" class="space-y-4" novalidate hidden>
+      <h2 id="admin-editor-heading" class="text-xl font-bold"></h2>
+
+      <div>
+        <label for="admin-title" class={label}>Заголовок</label>
+        <input id="admin-title" name="title" type="text" class={field} />
+        <p data-error-for="title" class={error} hidden></p>
+      </div>
+
+      <div>
+        <label for="admin-slug" class={label}>
+          Адрес: латинские буквы, цифры и дефисы, например poisk-vody. После
+          сохранения не меняется.
+        </label>
+        <input
+          id="admin-slug"
+          name="slug"
+          type="text"
+          class={field}
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <p data-error-for="slug" class={error} hidden></p>
+      </div>
+
+      <div>
+        <label for="admin-date" class={label}>
+          Дата публикации (время клуба, UTC+3). Запись с будущей датой появится
+          на сайте после первой сборки сайта после этой даты.
+        </label>
+        <input
+          id="admin-date"
+          name="date"
+          type="datetime-local"
+          step="1"
+          class={field}
+        />
+        <p data-error-for="date" class={error} hidden></p>
+      </div>
+
+      <div>
+        <label for="admin-description" class={label}>Краткое описание</label>
+        <input
+          id="admin-description"
+          name="description"
+          type="text"
+          class={field}
+        />
+        <p data-error-for="description" class={error} hidden></p>
+      </div>
+
+      <div>
+        <label for="admin-tags" class={label}>Теги, через запятую</label>
+        <input id="admin-tags" name="tags" type="text" class={field} />
+        <p data-error-for="tags" class={error} hidden></p>
+        <div data-terms-for="admin-tags" class="mt-2 flex flex-wrap gap-2">
+        </div>
+      </div>
+
+      <div>
+        <label for="admin-categories" class={label}>
+          Категории, через запятую
+        </label>
+        <input
+          id="admin-categories"
+          name="categories"
+          type="text"
+          class={field}
+        />
+        <p data-error-for="categories" class={error} hidden></p>
+        <div
+          data-terms-for="admin-categories"
+          class="mt-2 flex flex-wrap gap-2"
+        >
+        </div>
+      </div>
+
+      <label class="flex items-center gap-2 text-sm">
+        <input id="admin-draft" name="draft" type="checkbox" />
+        Черновик: сохранить, но не показывать на сайте
+      </label>
+
+      <div>
+        <label for="admin-body" class={label}>
+          Текст в Markdown. HTML-теги не принимаются; код - в обратных кавычках.
+        </label>
+        <textarea id="admin-body" name="body" rows="18" class={field}
+        ></textarea>
+        <p data-error-for="body" class={error} hidden></p>
+      </div>
+
+      <p
+        id="admin-form-error"
+        class="text-sm text-red-600 dark:text-red-400"
+        role="alert"
+        hidden
+      >
+      </p>
+
+      <div class="flex flex-wrap gap-3">
+        <button id="admin-save" type="submit" class={primary}>Сохранить</button>
+        <button id="admin-cancel" type="button" class={secondary}>
+          Отмена
+        </button>
+      </div>
+    </form>
+
+    <template id="admin-term">
+      <button
+        type="button"
+        class="rounded-full border border-gray-300 px-2 py-0.5 text-xs text-gray-600 hover:opacity-80 dark:border-slate-600 dark:text-slate-300"
+      ></button>
+    </template>
+  </section>
+</Base>
+
+<script>
+  // The panel's script; its header says what it does and why.
+  import "../../../scripts/admin-posts";
+</script>

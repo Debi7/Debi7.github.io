@@ -61,6 +61,14 @@ const signIn = site.auth.signIn + "?next=" + encodeURIComponent(href);
     </button>
   </div>
   <p data-state="missing" hidden>Лекция ещё не подключена. Загляните позже.</p>
+  {
+    /* Added 2026-10-02 with the owner's status model (ADMIN.md): a member with the status "blocked"
+    may open no material of the site, paid or not; the access service answers 403 "blocked", and
+    the account page says who closed it. */
+  }
+  <p data-state="blocked" hidden>
+    Доступ к материалам сайта для этой учётной записи закрыт.
+  </p>
   <p data-state="failed" hidden>
     Видео сейчас недоступно. Обновите страницу позже.
   </p>

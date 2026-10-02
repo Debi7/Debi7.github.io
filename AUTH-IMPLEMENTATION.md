@@ -357,6 +357,77 @@ name in the forms should not be in quotes.
     with `https://yadi.sk/i/...` inside its members' block stopped `npm run build` with the new message and was deleted;
     then `check` 0 errors, `build` green, `check:pages` passed, dev on 4387 answered 200 for `/video/` and
     `/video/lecture-part-3/`. Docs: `CONTENT.md` step 3 of "A paid lecture", `PAID-VIDEO.md` 2, 4, 10.2, 10.3, 10.5.
+  - 2026-10-02, the admin panel (the owner's request; consilium `.specify/consilium/2026-10-02-admin-posts.md`, route
+    direct-verified; ADMIN.md). Posts: `/admin/posts/` (`src/pages/admin/posts/index.astro`,
+    `src/scripts/admin-posts.ts`) and the Worker `workers/content-admin/worker.mjs` (GitHub token; list, get, save,
+    delete; only `src/content/posts/<slug>.md`; front matter written from typed fields; raw HTML and unsafe links
+    refused; edits patch only the changed lines of owned fields and stamp `lastmod`; 409 on a stale sha; never forced),
+    run locally by `scripts/content-admin-dev.mjs` with `scripts/github-stand-in.mjs` on this working copy. Mid-way the
+    owner set the status model - guest, student, expert, master, metr, admin, blocked; a metr or an admin assigns, only
+    they edit posts - so the temporary roles superuser/editor became the claim `status`: `/admin/users/`
+    (`src/pages/admin/users/index.astro`, `src/scripts/admin-users.ts`) and the Worker `workers/statuses/worker.mjs`
+    (Clerk secret key; list and set; rules: no self-change, `ADMIN_IDS` protected and never empty, a metr only within
+    guest-master and blocked and not lifting an admin's block; merge write of `status`, `statusBy`, `statusAt`, and in
+    private metadata who and from what), run locally by `scripts/statuses-dev.mjs` with the git-ignored
+    `workers/statuses/settings.local.json`. A blocked member: 403 "blocked" from the video Worker (VERSION 2026-10-02.1),
+    a state of its own in `PaidVideo.astro`/`paid-video.ts`, and a note on `/auth/account/`, which also shows the status
+    and links the panel for a metr or an admin. Also: `src/content/post-fields.ts` (the posts schema, loadable by plain
+    Node through `astro/zod`), `src/lib/post-url.ts` (re-exported by `posts.ts`), the `noindex` prop of `Base.astro`, the
+    sitemap filter for `/admin/`, `site.admin` in `src/config.ts`, `dev:all` with four processes, `.gitignore`.
+    Verified: `check:content-admin` 129/129 (tokens, statuses, 48 refused saves, accepted bodies, create, edit with the
+    comments kept, conflicts, delete, a round trip of all 24 posts without a commit, every written file against the real
+    schema and gray-matter, the session check equal to the video Worker's, the editing statuses equal to the config),
+    `check:statuses` 59/59, `check:video-access` 44/44, `check` 0 errors, `build` green, `check:pages` passed; a guest on
+    `/admin/posts/` is sent to sign-in (headless Edge, dev on 4387); the local content service answered 204/401/403; the
+    Clerk chunk is referenced by no new page but the two admin pages; screenshots of both pages in both themes. Found and
+    fixed on the way: importing `postUrl` from `posts.ts` put `astro:content` and a browser copy of every post, drafts
+    included, into `dist/_astro`. Not verified yet: a real save and a real status change signed in, which need the
+    owner's Clerk setup (ADMIN.md 4.1). Clerk facts from the Clerk docs MCP (Backend API "Merge and update a user's
+    metadata", "Count users", Core 3 "Customize your session token"); GitHub token facts from docs.github.com (web).
+  - 2026-10-02, later: the owner completed the status rules. `workers/statuses/worker.mjs` (VERSION 2026-10-02.2):
+    `guest` is never given, by anyone (403 "guest", refused before Clerk is asked), so `assignable` is every status
+    but guest for an admin and student, expert, master, blocked for a metr (`GIVEN`, `METR_GIVES`; `METR_SCOPE` stays
+    the members a metr may change). `workers/video-access/worker.mjs` (VERSION 2026-10-02.2): a status in `VIEWERS`
+    (student, expert, master, metr, admin) opens a paid lecture without `member`/`memberUntil`; blocked still closes
+    it first. `site.admin.lectureViewers` in `src/config.ts` is the source, compared with `VIEWERS` by
+    `check:video-access`. `admin-users.ts` says why a guest change is refused. No change was needed for the status on
+    the account page, the panel links for a metr or an admin, or "metr never gives admin": they were already so.
+    Docs: ADMIN.md 1, 2, 4.3, 4.4, 6, 7, 8; PAID-VIDEO.md 6; CLERK-DASHBOARD.md 7.3; README; CLAUDE.md; the verdict.
+    Verified: `check:statuses` 62/62 (three guest refusals added), `check:video-access` 56/56 (every viewer status
+    opens without paid access; none, null - what the token template gives a guest, Clerk Core 3 "JWT templates" -
+    "guest", "Student", "superstar" and "" do not; the drift check),
+    `check:content-admin` 129/129, `check` 0 errors, `build` green, `check:pages` passed, dev on 4387 answered 200 for
+    `/admin/users/` and `/auth/account/`.
+  - 2026-10-02, later: the owner's first signed-in test. `/admin/posts/` said "no rights" twice: first the public
+    metadata had no `status`, then the session token template had no `status` line. `/admin/users/` said "unavailable"
+    because `workers/statuses/settings.local.json` did not exist yet. At the owner's request both pages now say what
+    to fix: a 403 "forbidden" to an account whose metadata holds metr or admin gets a sentence naming the token
+    template (`admin-posts.ts` `explain()`, `admin-users.ts` `load()`), and the status Worker (VERSION 2026-10-02.3)
+    answers a broken `CLERK_SECRET_KEY` or `ADMIN_IDS` with 503 "not_configured", only after the metr/admin check,
+    which the users page turns into a sentence naming the local file or the Worker's settings. The owner confirmed
+    that a metr never gives metr (it was already so). Verified: `check:statuses` 63/63 (the four broken settings are
+    "not_configured", a student with broken settings still gets 403, Clerk down stays "unavailable"),
+    `check:content-admin` 129/129, `check:video-access` 56/56, `check` 0 errors, `build` green, `check:pages` passed.
+  - 2026-10-02, evening: the owner's requests after the first signed-in run, one after another. (1) A row at the top of
+    both admin pages back to the account page and to each other: `src/components/AdminNav.astro`. (2) The local Clerk
+    secret key out of plain text: `npm run statuses:key` (`scripts/statuses-key.mjs`, `scripts/statuses-secret.mjs`)
+    encrypts it with Windows DPAPI through PowerShell 5.1 into the git-ignored
+    `workers/statuses/clerk-secret.local.dpapi`; `scripts/statuses-dev.mjs` reads it from there (or from the environment
+    variable `CLERK_SECRET_KEY`) and ignores a key left in `settings.local.json`, with a warning; PowerShell errors come
+    as CLIXML under -EncodedCommand, so both scripts print the exception message themselves. (3) The status visible:
+    the account page puts it into Clerk's card as a section of its own between "Профиль" and the email addresses
+    (`src/scripts/account-status.ts`, built from the email section's parts, kept in place by a MutationObserver, with
+    the panel above the card as the fallback after 5 s); the users list shows a status badge and the registration
+    date. (4) ADMIN.md rewritten as a step-by-step guide. (5) Pages of 20 on both lists: `AdminPager.astro` and
+    `src/scripts/admin-pager.ts` (the devices pager of the account card, which is `Pagination.astro` in buttons; the
+    site's rule for the numbers), `site.admin.pageSize`, and `limit` on the status service's list (VERSION
+    2026-10-02.4, default 20, at most 50). (6) **Копировать** on each post: a new post with every field and the text,
+    a free address (`<slug>-copy`, `-copy-2`, ...), " (копия)" after the title, and today's date; on a 409 "exists" at
+    save the panel reloads the list and proposes the next free address. Verified: `check:statuses` 68/68,
+    `check:content-admin` 129/129, `check:video-access` 56/56, `check` 0 errors, `build` green, `check:pages` passed;
+    the DPAPI round trip and five `statuses:key` scenarios on a made-up key in a scratch copy; the pager's numbers and
+    the free addresses on the shipped code, transpiled; screenshots of the navigation row and the pager. Not verified
+    by a run: the status section inside Clerk's card, signed in.
 
 ### Verification
 

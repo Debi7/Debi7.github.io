@@ -5,6 +5,14 @@ dist/
 # Added 2026-09-28: the local map of paid video ids for npm run video-access:dev (PAID-VIDEO.md).
 # Real ids of paid videos never enter the repository.
 workers/video-access/videos.local.json
+# Added 2026-10-02: the local settings of npm run statuses:dev - the Clerk secret key and the ids
+# of the protected admins (ADMIN.md). The secret key never enters the repository.
+workers/statuses/settings.local.json
+# Added later on 2026-10-02: the same secret key, encrypted for one Windows account by
+# npm run statuses:key, and the file it writes first (scripts/statuses-key.mjs). Useless on any
+# other computer or account, and still never committed.
+workers/statuses/clerk-secret.local.dpapi
+workers/statuses/clerk-secret.local.dpapi.new
 
 # Node
 node_modules/

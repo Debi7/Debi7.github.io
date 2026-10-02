@@ -23,6 +23,8 @@ import Base from "../../layouts/Base.astro";
 // Added 2026-09-26: Clerk's components in the site's colours and font (src/styles/clerk.css says
 // how). Imported here, as carousel.css and search.css are by the pages that need them.
 import "../../styles/clerk.css";
+// Added 2026-10-02: the addresses of the two panel pages, linked for a metr or an admin.
+import { site } from "../../config";
 ---
 
 <Base title="Личный кабинет">
@@ -42,6 +44,45 @@ import "../../styles/clerk.css";
         hidden
       >
         Демо: доступ участника клуба подтверждён.
+      </p>
+      {
+        /* Added 2026-10-02 with the owner's status model (src/config.ts, site.admin; ADMIN.md): the
+        member's status, the note a blocked member gets about who closed the materials, and, for a
+        metr or an admin, the two panel pages. All three are filled by the script below from the
+        user's public metadata; presentation only, the services decide. */
+      }
+      {
+        /* Changed later on 2026-10-02 at the owner's request ("the status should show, so it is
+        seen who the member is"): a panel like the demo line above, with the name in bold, instead
+        of a small line that was easy to miss. Every signed-in member gets it, a new account too
+        ("гость"). */
+      }
+      {
+        /* Changed again the same evening: the status is a section of Clerk's card now
+        (src/scripts/account-status.ts), and this panel is only its fallback (the script's note). */
+      }
+      <p
+        id="account-status"
+        class="mb-6 rounded bg-gray-100 p-4 text-sm dark:bg-slate-800"
+        hidden
+      >
+      </p>
+      <p
+        id="account-blocked"
+        class="mb-6 rounded bg-gray-100 p-4 text-sm text-red-600 dark:bg-slate-800 dark:text-red-400"
+        hidden
+      >
+      </p>
+      <p id="account-admin" class="mb-6 flex gap-4 text-sm" hidden>
+        <a
+          href={site.admin.postsPage}
+          class="text-blue-600 hover:underline dark:text-blue-400">Публикации</a
+        >
+        <a
+          href={site.admin.usersPage}
+          class="text-blue-600 hover:underline dark:text-blue-400"
+          >Пользователи</a
+        >
       </p>
       <div id="clerk-profile"></div>
       <button
@@ -187,6 +228,8 @@ import "../../styles/clerk.css";
   import { site } from "../../config";
   // Added 2026-09-28: the card's "Устройства" page.
   import { devicesPage } from "../../scripts/account-devices";
+  // Added later on 2026-10-02: the status as a section of the card's profile page.
+  import { statusInProfile } from "../../scripts/account-status";
 
   const status = document.getElementById("auth-status");
   const member = document.getElementById("account-member");
@@ -203,6 +246,38 @@ import "../../styles/clerk.css";
     } else {
       if (demo !== null) {
         demo.hidden = clerk.user?.publicMetadata.member !== true;
+      }
+      // Added 2026-10-02 (the markup's note): the status, a blocked member's note, the panel links.
+      // No status, or a value outside the list, is a guest, as the services count it.
+      const metadata = clerk.user?.publicMetadata ?? {};
+      const statuses: readonly string[] = site.admin.statuses;
+      const names: Record<string, string> = site.admin.statusNames;
+      const current =
+        typeof metadata.status === "string" &&
+        statuses.includes(metadata.status)
+          ? metadata.status
+          : "guest";
+      const statusLine = document.getElementById("account-status");
+      if (statusLine !== null) {
+        // Changed later on 2026-10-02 (the markup's note): "Ваш статус:" and the name in bold.
+        const name = document.createElement("strong");
+        name.textContent = names[current] ?? current;
+        statusLine.replaceChildren("Ваш статус: ", name);
+        // Changed again later on 2026-10-02 at the owner's request: the status is shown inside
+        // Clerk's card (account-status.ts, below the mount), and this panel only when that has not
+        // happened 5 seconds after the card was mounted - a Clerk update that renamed its class
+        // hooks, or a first load on another tab of the card. It hides again once the section is in.
+      }
+      const blocked = document.getElementById("account-blocked");
+      if (blocked !== null && current === "blocked") {
+        blocked.textContent = `Доступ к материалам сайта закрыт ${
+          metadata.statusBy === "admin" ? "администратором" : "метром"
+        }.`;
+        blocked.hidden = false;
+      }
+      const adminLinks = document.getElementById("account-admin");
+      if (adminLinks !== null) {
+        adminLinks.hidden = current !== "admin" && current !== "metr";
       }
       if (profile instanceof HTMLDivElement) {
         // Changed 2026-09-28 at the colleague's request ("the account is far too tall, halve it at
@@ -231,6 +306,20 @@ import "../../styles/clerk.css";
             devicesPage(clerk),
           ],
         });
+        // Added later on 2026-10-02 (the status line's note above): the status inside the card.
+        let inCard = false;
+        statusInProfile(profile, names[current] ?? current, () => {
+          inCard = true;
+          if (statusLine !== null) statusLine.hidden = true;
+        });
+        setTimeout(() => {
+          if (!inCard && statusLine !== null) {
+            console.warn(
+              "Account: the status section was not placed in Clerk's card; shown above it (src/scripts/account-status.ts).",
+            );
+            statusLine.hidden = false;
+          }
+        }, 5000);
       }
       if (signOutButton instanceof HTMLButtonElement) {
         signOutButton.addEventListener("click", async () => {

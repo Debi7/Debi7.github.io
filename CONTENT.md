@@ -30,6 +30,12 @@ on save. Before committing run `npm run fix` and `npm run check` (see [README.md
 - The search index: generated too, at `/search/data.json`. Nothing to create or update by hand; see "Search".
 - The number of posts on one page of a list: `pagination.pageSize` in `src/config.ts`, 5 today.
 - The fields a post may have, and which are required: the schema in `src/content/config.ts`.
+  Since 2026-10-02 the fields of a post are in `src/content/post-fields.ts`, which `config.ts` uses (ADMIN.md says why).
+- Added 2026-10-02: a metr or an admin can also add, edit and delete posts without git, in the admin panel at
+  `/admin/posts/`; a save there writes the same kind of file in `src/content/posts/` and commits it. Everything below
+  still holds for a post written by hand. [ADMIN.md](ADMIN.md) is the guide to the panel and to the members' statuses.
+  Added later the same day: while the site is on GitHub Pages the panel runs only on the owner's computer, and a post
+  saved there reaches the site through git; [ADMIN-GITHUB-PAGES.md](ADMIN-GITHUB-PAGES.md) has the steps.
 
 ## Posts
 

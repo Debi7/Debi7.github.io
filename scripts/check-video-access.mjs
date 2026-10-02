@@ -8,6 +8,10 @@
 // answer 401, each way the access record can be wrong must answer 403, and only a member with a
 // known slug gets a player address. The last lines time the check itself.
 import worker from "../workers/video-access/worker.mjs";
+// Added later on 2026-10-02: the drift check of VIEWERS against src/config.ts (the status cases).
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const host = "test-instance.clerk.accounts.dev";
 const site = "http://localhost:4321";
@@ -249,6 +253,76 @@ await expect(
   { auth: await bearer({ ...base, sts: "pending" }), body: slug },
   401,
 );
+
+// Added 2026-10-02 with the owner's status model (ADMIN.md): a blocked status closes a paid lecture
+// whatever the paid access says, and says so; any other status leaves the paid access in charge.
+await expect(
+  "a paying member whose status is blocked",
+  { auth: await bearer({ ...base, status: "blocked" }), body: slug },
+  403,
+  (a) => JSON.parse(a.text).error === "blocked",
+);
+await expect(
+  "a paying member whose status is student",
+  { auth: await bearer({ ...base, status: "student" }), body: slug },
+  200,
+);
+await expect(
+  "a blocked status without paid access is still 'blocked'",
+  {
+    auth: await bearer({ ...base, member: false, status: "blocked" }),
+    body: slug,
+  },
+  403,
+  (a) => JSON.parse(a.text).error === "blocked",
+);
+
+// Added later on 2026-10-02, the owner's rule (worker.mjs, VERSION 2026-10-02.2): every status a
+// metr or an admin gives opens a lecture without the paid access; guest, no status, and anything
+// spelled otherwise do not. The note above ("any other status leaves the paid access in charge")
+// held until this change.
+const root = fileURLToPath(new URL("..", import.meta.url));
+const viewersIn = (text, pattern) => {
+  const raw = pattern.exec(text)?.[1];
+  return raw === undefined
+    ? undefined
+    : JSON.stringify(JSON.parse(raw.replace(/,\s*\]/, "]")));
+};
+const configViewers = viewersIn(
+  readFileSync(join(root, "src/config.ts"), "utf8"),
+  /lectureViewers:\s*(\[[^\]]*\])/,
+);
+const workerViewers = viewersIn(
+  readFileSync(join(root, "workers/video-access/worker.mjs"), "utf8"),
+  /const VIEWERS = (\[[^\]]*\]);/,
+);
+const sameViewers =
+  configViewers !== undefined && configViewers === workerViewers;
+results.push(sameViewers);
+console.log(
+  `${sameViewers ? "PASS" : "FAIL"} VIEWERS is site.admin.lectureViewers  [${configViewers} / ${workerViewers}]`,
+);
+const unpaid = { ...without("member"), memberUntil: undefined };
+for (const status of ["student", "expert", "master", "metr", "admin"]) {
+  await expect(
+    `status ${status}, no paid access`,
+    { auth: await bearer({ ...unpaid, status }), body: slug },
+    200,
+  );
+}
+// null is what the token template gives a guest: a shortcode for a key the metadata lacks renders
+// as null (Clerk Core 3, "JWT templates", "Complete example").
+for (const status of [undefined, null, "guest", "Student", "superstar", ""]) {
+  await expect(
+    `status ${status === undefined ? "(none)" : JSON.stringify(status)}, no paid access`,
+    {
+      auth: await bearer(status === undefined ? unpaid : { ...unpaid, status }),
+      body: slug,
+    },
+    403,
+    (a) => JSON.parse(a.text).error === "forbidden",
+  );
+}
 
 // Every way the access record can be wrong: 403.
 await expect(

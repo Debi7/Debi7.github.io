@@ -145,6 +145,60 @@ export const site = {
     signedInEvent: "paid-video:signed-in",
   },
 
+  // Added 2026-10-02 with the admin panel (.specify/consilium/2026-10-02-admin-posts.md, ADMIN.md):
+  // the content service that adds, edits and deletes posts for an editor who has no GitHub account,
+  // workers/content-admin/. As with videoAccess, `endpoint` is the deployed Worker, empty until the
+  // owner creates it, and `devEndpoint` is the same code run on this machine by
+  // `npm run content-admin:dev` (and by `npm run dev:all`); import.meta.env.DEV picks one at build
+  // time. `postsPage` is the panel's address, with its slash (trailingSlash "always").
+  //
+  // The statuses, the owner's model of 2026-10-02: every member has exactly one, kept as the key
+  // `status` of the user's Clerk public metadata and carried into the session token as the claim
+  // `status` (CLERK-DASHBOARD.md 7.2). A new account has none, which counts as "guest"; a metr or an
+  // admin assigns the others, and nobody changes their own. "blocked" is a guest who may open no
+  // material of the site, and is told who closed it. `statusNames` are what the site shows.
+  // `postEditors` may add, edit and delete posts; the content Worker carries a copy of that list,
+  // which scripts/check-content-admin.mjs compares with this one.
+  // Added later on 2026-10-02: the status service, workers/statuses/, which /admin/users/ asks, with
+  // its two addresses on the same pattern; it is a Worker of its own because it holds the Clerk
+  // secret key (its header says why).
+  admin: {
+    endpoint: "",
+    devEndpoint: "http://127.0.0.1:8789",
+    postsPage: "/admin/posts/",
+    statusesEndpoint: "",
+    statusesDevEndpoint: "http://127.0.0.1:8790",
+    usersPage: "/admin/users/",
+    statuses: [
+      "guest",
+      "student",
+      "expert",
+      "master",
+      "metr",
+      "admin",
+      "blocked",
+    ],
+    statusNames: {
+      guest: "гость",
+      student: "студент",
+      expert: "эксперт",
+      master: "мастер",
+      metr: "метр",
+      admin: "администратор",
+      blocked: "заблокирован",
+    },
+    postEditors: ["admin", "metr"],
+    // Added later on 2026-10-02, the owner's rule: any status a metr or an admin gives - every one
+    // but guest and blocked - opens the paid lectures. workers/video-access/worker.mjs carries a
+    // copy (VIEWERS), which scripts/check-video-access.mjs compares with this one. The paid access
+    // of CLERK-DASHBOARD.md 7.3 (member, memberUntil) still opens them too; blocked closes both.
+    lectureViewers: ["student", "expert", "master", "metr", "admin"],
+    // Added later on 2026-10-02, the owner's number: the panel's lists show 20 posts or members to
+    // a page (AdminPager.astro). The status service is asked for that many at a time and accepts
+    // at most 50 (workers/statuses/worker.mjs).
+    pageSize: 20,
+  },
+
   // Changed 2026-09-26 with the move to Clerk (CLERK.md step 2): the pages are three - sign-in,
   // sign-up and the account page. callback, forgot and reset went, because Clerk confirms an email
   // address and resets a password by a code typed into its own form, so no mail lands on the site;

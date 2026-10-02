@@ -33,6 +33,10 @@ interface Props {
   // CLERK.md section 0 orders out of this branch.)
   // Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): the site is open to everyone, nothing is sent to the sign-in page any more, and
   // the prop is gone with the redirect it controlled.
+  // Added 2026-10-02 with the admin panel (ADMIN.md): a page search engines must not index - the
+  // panel's pages, which a guest has no use for. Named so that false, the default, keeps every other
+  // page as it was. The sitemap leaves those pages out by its own filter (astro.config.mjs).
+  noindex?: boolean;
 }
 
 const {
@@ -45,6 +49,8 @@ const {
   updatedDate,
   tags,
   params,
+  // Added 2026-10-02 (the prop's note above).
+  noindex,
 } = Astro.props;
 
 // Named seoSite, not site: under that name it shadowed the import from src/config.ts above,
@@ -183,6 +189,10 @@ const page: PageLike = {
       /* Reopened on 2026-09-25 after the colleague's review (AUTH.md section 11): no page is closed, so the noindex line is gone and the sitemap is back to
       what it was before the gate. */
     }
+    {
+      /* Added 2026-10-02: the admin panel's pages only (the noindex prop above). */
+    }
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <SEO site={seoSite} page={page} />
     <Head title={title} description={description} />
   </head>

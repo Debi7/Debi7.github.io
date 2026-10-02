@@ -20,6 +20,7 @@
 //     400 {"error": "bad_request"}                  the body is not {"slug": "<text>"}
 //     401 {"error": "unauthenticated", "reason"}    no token, or a token failing a check below
 //     403 {"error": "forbidden"}                    a valid session that grants no access
+//     403 {"error": "blocked"}                      added 2026-10-02: the member's status is blocked
 //     404 {"error": "not_connected"}                a member asked for a slug VIDEOS lacks
 //     503 {"error": "unavailable"}                  a setting is missing or broken, or Clerk's
 //                                                   key list could not be fetched
@@ -55,11 +56,19 @@
 // the user's public metadata through the session token template of CLERK-DASHBOARD.md 7.2. Anything
 // else - "true" in quotes, a missing field, 31.12.2026 - refuses: an administrator's typo must
 // close access, never open it.
+//
+// Added later on 2026-10-02 (VERSION 2026-10-02.2), the owner's status model (ADMIN.md): the claim
+// status opens the lectures as well. Any status a metr or an admin gives - student, expert, master,
+// metr, admin (VIEWERS) - is access, with no end date; a missing status (a guest) or a value outside
+// that list is not, so a typo closes here too. The rule above still opens them on its own, and
+// blocked closes both.
 
 // Sent as X-Video-Access-Version, so that a pasted copy that fell behind the repository shows.
 // Raised to 2026-09-28.2 the same day, when the player address moved to youtube-nocookie.com.
 // Raised to 2026-09-30.1 when a slug could point at a file on Yandex Disk (the note above).
-const VERSION = "2026-09-30.1";
+// Raised to 2026-10-02.1 when a blocked status began to close paid lectures (the handler).
+// Raised to 2026-10-02.2 the same day, when the other statuses began to open them (VIEWERS).
+const VERSION = "2026-10-02.2";
 const LEEWAY_SECONDS = 5;
 // A kid not in the cached key list makes the Worker fetch the list again, at most this often, so a
 // stream of made-up kids cannot turn every request into a request to Clerk.
@@ -190,6 +199,10 @@ function isMember(claims, now) {
   return new Date(now * 1000).toISOString().slice(0, 10) <= until;
 }
 
+// Added later on 2026-10-02 (the note at the top): the statuses that open a paid lecture. A copy of
+// site.admin.lectureViewers in src/config.ts, compared by scripts/check-video-access.mjs.
+const VIEWERS = ["student", "expert", "master", "metr", "admin"];
+
 function videoIds(raw) {
   if (videos.raw !== raw) videos = { raw, map: JSON.parse(raw ?? "{}") };
   return videos.map;
@@ -291,7 +304,17 @@ export default {
           cors,
         );
       }
-      if (!isMember(session.claims, now))
+      // Added 2026-10-02 (VERSION 2026-10-02.1), the owner's status model (ADMIN.md): a member
+      // whose status is "blocked" may open no material of the site, whatever their paid access
+      // says. The claim comes from the same session token template as member and memberUntil.
+      if (session.claims.status === "blocked") {
+        return reply(403, { error: "blocked" }, cors);
+      }
+      // Changed later on 2026-10-02 (VERSION 2026-10-02.2): a status in VIEWERS is access too.
+      if (
+        !VIEWERS.includes(session.claims.status) &&
+        !isMember(session.claims, now)
+      )
         return reply(403, { error: "forbidden" }, cors);
 
       let slug;

@@ -337,6 +337,15 @@ This is CLERK-DASHBOARD.md sections 7.3 to 7.5, unchanged. In short:
 - End early: set `member` to `false`.
 - A typo closes access, never opens it: `"true"` in quotes, a date like `31.12.2026`, a date that does not exist,
   or a missing field all mean "no access".
+- Added 2026-10-02 with the members' statuses (ADMIN.md): a member whose `status` is `blocked` is refused every paid
+  lecture, paid access or not, and the box says the account's access to the materials is closed (the service answers
+  403 "blocked", VERSION 2026-10-02.1). A metr or an admin blocks and unblocks at `/admin/users/`. The claim `status`
+  must be in the session token template (CLERK-DASHBOARD.md 7.2) for this to work.
+- Added later on 2026-10-02, the owner's rule (ADMIN.md section 1): a status opens every paid lecture too. A member whose
+  `status` is `student`, `expert`, `master`, `metr` or `admin` (`site.admin.lectureViewers`) gets the video without
+  `member` and `memberUntil`, and with no end date; a guest (no status) does not. So the usual way to grant access is
+  now a status at `/admin/users/`; the record above still works on its own, and `blocked` closes both (VERSION
+  2026-10-02.2).
 
 Access covers every paid video: there is one kind of membership. Separate courses ("sets" of videos) can be added
 later without changing what is already written in anybody's metadata.

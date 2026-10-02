@@ -58,8 +58,16 @@ const start = (args) =>
     detached: !isWindows,
   });
 
+// Changed 2026-10-02 with the admin panel (ADMIN.md): a third child, the content service of
+// workers/content-admin/ on http://127.0.0.1:8789 (scripts/content-admin-dev.mjs), which the panel
+// at /admin/posts/ asks; it accepts the same three ports. Everything said above about two children
+// holds for three: one ending stops the others.
 const children = [
   { name: "video-access", child: start(["scripts/video-access-dev.mjs"]) },
+  { name: "content-admin", child: start(["scripts/content-admin-dev.mjs"]) },
+  // Added later on 2026-10-02: the status service on http://127.0.0.1:8790
+  // (scripts/statuses-dev.mjs), which /admin/users/ asks.
+  { name: "statuses", child: start(["scripts/statuses-dev.mjs"]) },
   { name: "astro dev", child: start([astro, "dev", ...astroArgs]) },
 ];
 
@@ -123,6 +131,16 @@ for (const { name, child } of children) {
     if (!stopping) {
       exitCode = code ?? 1;
       stopAll(`${name} ended (${signal ?? `exit code ${code}`})`, false);
+      // Added 2026-10-02: the same advice for the ports of the two admin services.
+      const adminPorts = { "content-admin": 8789, statuses: 8790 };
+      if (Object.hasOwn(adminPorts, name) && code !== 0) {
+        const taken = adminPorts[name];
+        console.log(
+          `dev:all: if the lines above say EADDRINUSE, port ${taken} is taken, usually by a dev:all or ` +
+            `${name}:dev still running elsewhere. Find it with \`netstat -ano | findstr :${taken}\` ` +
+            `(Windows) or \`lsof -i :${taken}\`, and end it.`,
+        );
+      }
       if (name === "video-access" && code !== 0) {
         console.log(
           "dev:all: if the lines above say EADDRINUSE, port 8787 is taken, usually by a dev:all or " +

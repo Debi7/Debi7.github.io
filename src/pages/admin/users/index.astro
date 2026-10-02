@@ -1,0 +1,121 @@
+---
+// The admin panel for the members' statuses, /admin/users/. Added 2026-10-02 at the owner's request
+// (the status model: guest, student, expert, master, metr, admin, blocked; src/config.ts,
+// site.admin). The design is the consilium verdict .specify/consilium/2026-10-02-admin-posts.md,
+// and ADMIN.md is the how-to.
+//
+// A metr or an admin finds a member and gives them a status. The page is markup only;
+// src/scripts/admin-users.ts loads Clerk, asks the status service (workers/statuses/) and fills it
+// in. Every rule - who may change whom, to what - is decided by the service; the page only shows
+// the choices the service says the visitor has.
+//
+// Decisions that would otherwise look like mistakes:
+// - Base.astro, its theme switch and palettes, and the same field and button classes as
+//   /admin/posts/ (src/pages/admin/posts/index.astro says why bg-[#ffffff] and why no style block).
+// - The list carries ym-hide-content and the search field ym-disable-keys: names and email
+//   addresses are personal data, and Yandex Metrika's Session Replay records the pages
+//   (METRIKA.md 3.1, the classes Yandex documents for this).
+// - noindex, and the sitemap leaves /admin/ out; not in the menu, but linked from the account page
+//   for a metr or an admin.
+import Base from "../../../layouts/Base.astro";
+import { site } from "../../../config";
+// Added 2026-10-02 at the owner's request: the way back to the account page and to /admin/posts/.
+import AdminNav from "../../../components/AdminNav.astro";
+// Added later on 2026-10-02 at the owner's request: the pager under the list.
+import AdminPager from "../../../components/AdminPager.astro";
+
+const field =
+  "w-full rounded border border-gray-300 bg-[#ffffff] p-2.5 text-sm text-gray-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-200 dark:focus:border-blue-500 dark:focus:ring-blue-500";
+// The status list is as wide as its longest name, not the row: the field classes with w-full
+// swapped for w-auto (two width utilities on one element would leave the winner to CSS order).
+const choice = field.replace("w-full", "w-auto");
+const primary =
+  "rounded bg-blue-600 px-4 py-2 text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50";
+const secondary =
+  "rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-opacity hover:opacity-80 disabled:opacity-50 dark:border-slate-600 dark:text-gray-200";
+---
+
+<Base title="Пользователи" noindex>
+  <section class="mx-auto max-w-3xl">
+    <AdminNav current="users" />
+    <h1 class="mb-6 text-2xl font-bold">Пользователи</h1>
+    <p id="users-status" class="mb-4 text-sm" role="status" aria-live="polite">
+      Загрузка...
+    </p>
+    <noscript>
+      <p class="text-sm">
+        Для работы со статусами нужен включённый JavaScript.
+      </p>
+    </noscript>
+
+    <p id="users-forbidden" class="text-sm" hidden>
+      Статусы назначают метр и администратор.
+    </p>
+
+    <div id="users-box" hidden>
+      <form id="users-search" class="mb-4 flex flex-wrap gap-3">
+        <input
+          id="users-query"
+          type="search"
+          class:list={[field, "ym-disable-keys min-w-0 flex-1"]}
+          placeholder="Имя или email"
+          autocomplete="off"
+        />
+        <button type="submit" class={primary}>Найти</button>
+      </form>
+      <p
+        id="users-count"
+        class="mb-2 text-xs text-gray-500 dark:text-slate-400"
+      >
+      </p>
+      <ul
+        id="users-list"
+        class="ym-hide-content divide-y divide-gray-200 border-y border-gray-200 dark:divide-slate-700 dark:border-slate-700"
+      >
+      </ul>
+      {
+        /* Changed later on 2026-10-02 at the owner's request: numbered pages of 20 in place of the
+        "Показать ещё" button, which appended 50 more (AdminPager.astro). */
+      }
+      <AdminPager id="users-pager" label="Страницы списка пользователей" />
+    </div>
+
+    <template id="users-row">
+      <li class="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
+        <div class="min-w-0 flex-1">
+          {
+            /* Changed later on 2026-10-02 at the owner's request: the status as a badge beside the
+            name, readable without opening the list next to it (the badge classes are those of
+            "Это устройство" on the account page), and the date the account was registered. */
+          }
+          <p class="font-medium">
+            <span data-name></span>
+            <span
+              data-status
+              class="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-600 dark:bg-slate-700 dark:text-gray-300"
+            ></span>
+          </p>
+          <p data-email class="text-xs text-gray-500 dark:text-slate-400"></p>
+          <p data-created class="text-xs text-gray-500 dark:text-slate-400"></p>
+          <p data-note class="text-xs text-gray-500 dark:text-slate-400"></p>
+        </div>
+        <select data-choice class={choice}></select>
+        <button data-apply type="button" class={secondary}>Применить</button>
+      </li>
+    </template>
+
+    <p class="mt-6 text-xs text-gray-500 dark:text-slate-400">
+      Новый статус доходит до сессии участника в течение минуты. Публикации:
+      <a
+        href={site.admin.postsPage}
+        class="text-blue-600 hover:underline dark:text-blue-400"
+        >{site.admin.postsPage}</a
+      >.
+    </p>
+  </section>
+</Base>
+
+<script>
+  // The panel's script; its header says what it does and why.
+  import "../../../scripts/admin-users";
+</script>

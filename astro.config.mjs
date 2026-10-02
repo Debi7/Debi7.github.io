@@ -58,7 +58,11 @@ export default defineConfig({
       // it replaced is back.
       // Checked 2026-09-26 with the move to Clerk (CLERK.md step 6): the pages under /auth/ are
       // three now - sign-in, sign-up and the account page - and the rule keeps all three out.
-      filter: (page) => !/\/page\/\d+\/$/.test(page) && !/\/auth\//.test(page),
+      // Extended 2026-10-02 with the admin panel (ADMIN.md): its pages under /admin/ are left out too.
+      filter: (page) =>
+        !/\/page\/\d+\/$/.test(page) &&
+        !/\/auth\//.test(page) &&
+        !/\/admin\//.test(page),
     }),
     // Added 2026-09-28: the Clerk pre-bundling list, for `astro dev` only. It stood under `vite` at
     // the end of this file; the note there says why it moved.
