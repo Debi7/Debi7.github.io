@@ -53,6 +53,13 @@ export function membersOnlyHeadings(video: Video): Set<string> {
 // the thumbnail host. Added 2026-09-28 for the guard below.
 const youtubeAddress = /youtu\.be\/|youtube(?:-nocookie)?\.com\/|ytimg\.com\//i;
 
+// A Yandex Disk address in any of its forms: disk.yandex.<domain> (ru, com, com.tr and the rest,
+// and the download host downloader.disk.yandex.ru), Yandex 360's disk.360.yandex.ru and the old
+// short yadi.sk. Added 2026-10-02 at the owner's request: a lecture stored on Yandex Disk
+// (PAID-VIDEO.md section 10) is reached by the file's public link, which plays and downloads the
+// file for anyone who has it, so it must stay out of a paid entry's text as much as a YouTube id.
+const yandexDiskAddress = /disk\.(?:360\.)?yandex\.[a-z.]+\/|yadi\.sk\//i;
+
 /** The published videos, newest first; the rule is published() in lists.ts. */
 export async function getVideos(): Promise<Video[]> {
   // Changed 2026-09-28 (paid videos; .specify/consilium/2026-09-28-paid-video-access.md): the
@@ -66,6 +73,14 @@ export async function getVideos(): Promise<Video[]> {
     if (video.data.access === "paid" && youtubeAddress.test(video.body)) {
       throw new Error(
         `src/content/video/${video.id}: a paid video must not link to YouTube in its text; its id lives only at the access service`,
+      );
+    }
+    // Added 2026-10-02, the same guard for the lectures on Yandex Disk (yandexDiskAddress above).
+    // Only a paid entry is checked: a post or a public lecture may still link to a file there, and
+    // a paid entry may not even in its members-only block, which is hidden, not locked.
+    if (video.data.access === "paid" && yandexDiskAddress.test(video.body)) {
+      throw new Error(
+        `src/content/video/${video.id}: a paid video must not link to Yandex Disk in its text; its file link lives only at the access service`,
       );
     }
     // Added 2026-09-28 with the members-only blocks (see membersOnlyBlock above). Only a paid

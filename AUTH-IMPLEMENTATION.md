@@ -349,6 +349,14 @@ name in the forms should not be in quotes.
     through `main`, block 2 is not searchable, checklist item 3b. `templates/video.md`: corrections under its stale
     comments and the category value fixed (the old one would have made a second category). Noted, not changed:
     `src/lib/video.ts` refuses YouTube addresses in a paid body but not Yandex Disk links.
+  - 2026-10-02, that gap closed at the owner's request: `src/lib/video.ts` gains `yandexDiskAddress`
+    (`disk.yandex.<domain>` with the download host, `disk.360.yandex.ru`, `yadi.sk`), and `getVideos()` fails the build
+    on it in a paid entry's text, members' block included, with a message naming the file, next to the YouTube guard.
+    Public entries are not checked. Verified: the expression read from the file matched 11 forms of a link and none of
+    6 near misses (plain "Yandex Disk", `mc.yandex.ru`, a YouTube address, the `yandexDisk` key); a temporary paid entry
+    with `https://yadi.sk/i/...` inside its members' block stopped `npm run build` with the new message and was deleted;
+    then `check` 0 errors, `build` green, `check:pages` passed, dev on 4387 answered 200 for `/video/` and
+    `/video/lecture-part-3/`. Docs: `CONTENT.md` step 3 of "A paid lecture", `PAID-VIDEO.md` 2, 4, 10.2, 10.3, 10.5.
 
 ### Verification
 

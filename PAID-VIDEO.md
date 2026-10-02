@@ -55,7 +55,7 @@ Under the player a paid lecture can have two parts of text (added the same night
 ## 2. How it works, in five lines
 
 1. The page holds no id of a paid video: the build refuses an entry that carries one (`videoId`, `videoUrl`,
-   `thumbnail`, or a YouTube link in the text).
+   `thumbnail`, or a YouTube link in the text). Since 2026-10-02 a Yandex Disk link in the text is refused too.
 2. The id lives in one place: a secret of a small service on Cloudflare, `workers/video-access/worker.mjs`, which
    maps the entry's slug to the id.
 3. When a signed-in visitor opens a paid video, the page asks that service with the visitor's Clerk session token.
@@ -133,6 +133,8 @@ read on every request; no restart is needed.
    - delete `videoId`, `videoUrl` and `thumbnail` - the build fails if any of them is there;
    - write no YouTube link in the text below the header, not even one with a timestamp - the build fails on that
      too, because the text is public (it goes into the page, the RSS feed and the search index).
+   - since 2026-10-02 the same holds for a Yandex Disk link (`disk.yandex.<domain>`, `disk.360.yandex.ru`,
+     `yadi.sk`), in the members' block as well: a paid lecture's text may not link to any file on Yandex Disk.
 
    ```markdown
    ---
@@ -425,7 +427,8 @@ visitor sees what section 1 describes; only the player differs - the browser's o
 
 1. Upload the MP4 to Yandex Disk. In the file's menu choose "Поделиться", make sure access is "Доступ по ссылке", and
    copy the link, of the form `https://disk.yandex.ru/i/<key>`.
-2. Create the entry as in section 4: `access: paid`, and no link anywhere in it.
+2. Create the entry as in section 4: `access: paid`, and no link anywhere in it. Since 2026-10-02 the build stops on
+   a Yandex Disk link in the text, with a message naming the file (`yandexDiskAddress` in `src/lib/video.ts`).
 3. Add the slug to `VIDEOS`: locally in `workers/video-access/videos.local.json` (ignored by git), on the live site in
    the Worker's secret (`CLOUDFLARE.md` section 6; the whole list is typed again).
 4. Locally an edit of `videos.local.json` needs no restart; a change to the service's code (`worker.mjs`) needs
@@ -449,7 +452,8 @@ visitor sees what section 1 describes; only the player differs - the browser's o
   downloaded file does not. With YouTube a member could not download, but could pass the id on for good.
 - **The public link is the key to the file.** Whoever has it can watch and download the file on Yandex Disk,
   bypassing the site. Keep it only in `VIDEOS` and its master copy (`CLOUDFLARE.md` 6.8). If it leaks: in Yandex Disk
-  close access to the file, share it again (a new link), and put the new link into `VIDEOS`.
+  close access to the file, share it again (a new link), and put the new link into `VIDEOS`. Since 2026-10-02 the
+  build refuses a Yandex Disk link in a paid lecture's text, so it cannot leak that way by accident.
 - **Captcha.** A plain request for the Disk page from this machine got a captcha; the API and the download host did
   not. Whether Yandex treats requests from Cloudflare's servers the same way shows only once the service is deployed;
   a captcha there would come out as a 503, "Видео сейчас недоступно".
@@ -485,3 +489,5 @@ visitor sees what section 1 describes; only the player differs - the browser's o
 - `src/scripts/paid-video.ts`: `playFile()`, for an answer with `videoUrl`.
 - `scripts/check-video-access.mjs`: a made-up Yandex Disk API and the six new tests.
 - `src/content/video/lecture-part-3.md`: the first lecture on Yandex Disk.
+- `src/lib/video.ts`, `yandexDiskAddress`: the build check on a Yandex Disk link in a paid entry's text (added
+  2026-10-02).

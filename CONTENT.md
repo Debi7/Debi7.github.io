@@ -244,8 +244,8 @@ Added 2026-10-02. The full procedure, with the reasons and what to do when somet
    - add `access: paid`;
    - write no `videoId`, `videoUrl` or `thumbnail`, and no link to the video anywhere in the text: everything in the
      file is public - the page, the feed, the search index and the repository. The build stops on any of those
-     fields and on a YouTube address in the text (`src/lib/video.ts`). It does not recognise a Yandex Disk link, so
-     check by eye that none is in the text.
+     fields and on a YouTube or Yandex Disk address in the text, the members' block included (`src/lib/video.ts`;
+     Yandex Disk since 2026-10-02). Any other link to the video is not recognised, so check by eye.
 
    `src/content/video/lecture-part-3.md` is a complete example.
 
