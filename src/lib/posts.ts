@@ -29,9 +29,11 @@ export async function getPosts(): Promise<Post[]> {
 }
 
 /** A post's own page, /posts/<slug>/. */
-export function postUrl(post: Post): string {
-  return `/posts/${post.slug}/`;
-}
+// Moved 2026-10-02 to src/lib/post-url.ts and re-exported here, so every caller keeps importing it
+// from this file; the admin panel's browser script imports it from there instead, because this file
+// brings astro:content with it (post-url.ts says what that cost). It now takes anything with a slug.
+import { postUrl } from "./post-url";
+export { postUrl };
 
 // What a list shows of a post. Hugo's list.html and tag.html read these off the page object:
 // .RelPermalink, .Title, .Date, `.Summary | plainify | truncate 140` (summary() in

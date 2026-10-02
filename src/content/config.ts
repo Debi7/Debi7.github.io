@@ -1,22 +1,11 @@
 import { defineCollection, z } from "astro:content";
+// Added 2026-10-02 with the admin panel: the fields of a post live in their own file, so that the
+// panel's check can load them under plain Node (post-fields.ts says why). Same rules as before.
+import { postFields } from "./post-fields";
 
 const posts = defineCollection({
   type: "content",
-  schema: z.object({
-    title: z.string(),
-    date: z.coerce.date(),
-    draft: z.boolean().default(false),
-    description: z.string().default(""),
-    tags: z
-      .array(z.string())
-      .default([])
-      .transform((tags) => tags.map((t) => t.toLowerCase())),
-    categories: z.array(z.string()).default([]),
-    lastmod: z.coerce.date().optional(),
-    summary: z.string().optional(),
-    share_title: z.string().optional(),
-    share_description: z.string().optional(),
-  }),
+  schema: postFields,
 });
 
 const pages = defineCollection({
