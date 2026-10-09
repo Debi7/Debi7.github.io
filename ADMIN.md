@@ -30,7 +30,7 @@ from the panel to the live site, and a new member and their status, step by step
 | `student` | студент       | a metr or an admin        | yes           | no    | no                               |
 | `expert`  | эксперт       | a metr or an admin        | yes           | no    | no                               |
 | `master`  | мастер        | a metr or an admin        | yes           | no    | no                               |
-| `metr`    | метр          | an admin only             | yes           | yes   | student, expert, master, blocked |
+| `metr`    | мэтр          | an admin only             | yes           | yes   | student, expert, master, blocked |
 | `admin`   | администратор | an admin only             | yes           | yes   | every status except guest        |
 | `blocked` | заблокирован  | a metr or an admin        | no            | no    | no                               |
 

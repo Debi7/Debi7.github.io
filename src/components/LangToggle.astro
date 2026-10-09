@@ -1,0 +1,107 @@
+---
+import { DEFAULT_LANG, LANG_STORAGE_KEY, t } from "../i18n/strings";
+
+// SSR не знает localStorage. Рендерим кнопку с дефолтной меткой,
+// а клиентский скрипт сразу её поправит по URL.
+const initialLabel = DEFAULT_LANG === "ru" ? "RU" : "EN";
+---
+
+<button
+  id="lang-toggle"
+  type="button"
+  data-storage-key={LANG_STORAGE_KEY}
+  data-default-lang={DEFAULT_LANG}
+  class="rounded-md border border-zinc-200 px-2 py-1 text-xs font-medium text-zinc-600 transition-colors hover:text-emerald-500 dark:border-zinc-800 dark:text-zinc-400 dark:hover:text-emerald-400"
+  title="Сменить язык / Change language"
+  aria-label="Switch language"
+>
+  {initialLabel}
+</button>
+
+<script>
+  // скрипт module-скрипт Astro, выполняется один раз на странице
+  const STORAGE_KEY_FALLBACK = "blog-lang";
+  const DEFAULT_LANG_FALLBACK = "en";
+  const LOCALES = ["en", "ru"];
+
+  // определяем текущий язык по URL (это надёжнее, чем по localStorage)
+  function getLangFromUrl() {
+    const seg = window.location.pathname.split("/")[1];
+    return LOCALES.includes(seg) ? seg : null;
+  }
+
+  // читаем localStorage безопасно (может быть недоступен в private mode)
+  function readStorage(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  // пишем localStorage + cookie (cookie нужна для SSR/middleware)
+  function persistLang(key, lang) {
+    try {
+      localStorage.setItem(key, lang);
+    } catch {}
+    // Cookie на год, доступно на всём сайте
+    document.cookie = `${key}=${lang}; path=/; max-age=31536000; SameSite=Lax`;
+  }
+
+  function applyButtonLabel(btn, lang) {
+    if (btn) btn.textContent = lang === "ru" ? "RU" : "EN";
+  }
+
+  function init() {
+    const btn = document.getElementById("lang-toggle");
+    if (!btn) return;
+
+    const storageKey = btn.dataset.storageKey || STORAGE_KEY_FALLBACK;
+    const defaultLang = btn.dataset.defaultLang || DEFAULT_LANG_FALLBACK;
+
+    // Текущий язык берём из URL — это источник правды при SSR-роутинге
+    const urlLang = getLangFromUrl() || defaultLang;
+
+    // Синхронизируем localStorage и cookie с фактическим URL
+    // (Например, юзер зашёл по прямой ссылке /ru/posts/ — нужно запомнить это)
+    persistLang(storageKey, urlLang);
+    document.documentElement.setAttribute("lang", urlLang);
+    applyButtonLabel(btn, urlLang);
+
+    btn.addEventListener("click", () => {
+      const current = getLangFromUrl() || defaultLang;
+      const next = current === "ru" ? "en" : "ru";
+
+      persistLang(t(storageKey, next));
+
+      // Меняем префикс локали в текущем URL, сохраняя остальной путь.
+      const path = window.location.pathname;
+      const search = window.location.search;
+      const hash = window.location.hash;
+
+      let newPath;
+      if (LOCALES.includes(path.split("/")[1])) {
+        // /ru/posts/ → /en/posts/
+        newPath = path.replace(/^\/[^/]+/, `/${next}`);
+      } else {
+        // На всякий случай (если middleware не сработал)
+        newPath = `/${next}${path}`;
+      }
+
+      window.location.href = newPath + search + hash;
+    });
+
+    // Синхронизация между вкладками
+    window.addEventListener("storage", (e) => {
+      if (e.key === storageKey && e.newValue && e.newValue !== urlLang) {
+        window.location.reload();
+      }
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+</script>

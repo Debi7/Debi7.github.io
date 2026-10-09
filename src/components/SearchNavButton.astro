@@ -1,0 +1,56 @@
+---
+// SearchNavButton
+---
+
+<a
+  href="/search/"
+  aria-label="Search"
+  class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center text-gray-700 no-underline transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-300"
+>
+  <svg
+    class="h-5 w-5"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M20 20l-3.5-3.5"></path>
+  </svg>
+</a>
+
+<button
+  id="menu-toggle"
+  type="button"
+  class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-gray-700 focus:outline-none focus-visible:rounded-md focus-visible:ring-[3px] focus-visible:ring-[rgb(59_130_246/0.45)] sm:hidden dark:text-gray-200"
+  aria-label="Open menu"
+  aria-expanded="false"
+  aria-controls="site-menu"
+>
+  <svg
+    data-menu-icon="open"
+    class="h-6 w-6"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    aria-hidden="true"
+  >
+    <path d="M4 7h16M4 12h16M4 17h16"></path>
+  </svg>
+  <svg
+    data-menu-icon="close"
+    class="hidden h-6 w-6"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    aria-hidden="true"
+  >
+    <path d="M6 6l12 12M18 6L6 18"></path>
+  </svg>
+</button>
