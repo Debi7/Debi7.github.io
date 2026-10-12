@@ -14,7 +14,7 @@ Astro 4 + Tailwind 3 port of the Hugo site in `../klub_biolocation`, which stays
 - Node 20, Astro **4.x**, Tailwind **3.4**. Never upgrade to Astro 5 or Tailwind 4.
 - 99.9% visual parity with the Hugo output, for now. Copy class attributes verbatim from the Hugo templates; do not "improve" markup in a way that changes what a visitor sees. Deviations only from plan §9. Confirmed by the owner on 2026-09-16: visual similarity stays the norm for the time being, but the design is expected to move away from Hugo over time. Each such departure is the owner's decision, never a side effect of a code change.
 - Same URLs as Hugo, trailing slashes everywhere (`reference/hugo-routes.txt` is the contract).
-- Code comments, docs and commit messages in English. Site strings keep the language the Hugo content is written in; never translate them.
+- Code comments, docs and commit messages in English. Site strings keep the language the Hugo content is written in; never translate them. Since 2026-10-12 this holds for the content only: the interface is in English and Russian, every string once in `src/i18n/` (I18N.md; the pitfall entry on the two languages below).
 - Do **not** install `@tailwindcss/typography`: it is not active in the Hugo build; `prose` is a plain hook class.
 - `src/styles/custom.css` stays plain CSS, imported last in `Base.astro`.
 - Do not modify `../klub_biolocation` beyond its README pointer, and never edit `themes/void` there.
