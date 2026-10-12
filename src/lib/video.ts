@@ -16,7 +16,9 @@ import {
 // plainifyMarkdown added 2026-09-28 for membersOnlyHeadings() below: the same inline-Markdown
 // stripping the search index uses, so a heading's text is compared in the form Astro reports it.
 import { summary, plainifyMarkdown } from "./summary";
-import { t } from "../i18n/strings";
+// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t).
+// import { t } from "../i18n/strings";
+import { ui } from "../i18n/strings";
 
 export type Video = CollectionEntry<"video">;
 
@@ -117,7 +119,8 @@ export function videoCard(video: Video): Card {
     // Changed 2026-09-28: publicBody(), so a members-only block never reaches a list card.
     summary: summary(publicBody(video)),
     tags: video.data.tags,
-    action: t.list_watch_video,
+    // Changed 2026-10-12: the Phrase, both languages (was t.list_watch_video).
+    action: ui.list_watch_video,
   };
 }
 

@@ -1,5 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the link to the home page
+// says what the menu item says, in both languages.
+import { site } from "../config";
+import T from "../components/T.astro";
 ---
 
 {
@@ -12,5 +16,6 @@ import Base from "../layouts/Base.astro";
 }
 <Base title="404">
   <h1>404</h1>
-  <p><a href="/">Home</a></p>
+  {/* Changed 2026-10-12: the menu's name of the home page (it read "Home"). */}
+  <p><a href="/"><T s={site.sections.home} /></a></p>
 </Base>

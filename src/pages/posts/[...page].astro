@@ -39,7 +39,10 @@ import CardList from "../../components/CardList.astro";
 import { getPosts, postCard } from "../../lib/posts";
 import { paginateByYear } from "../../lib/lists";
 
-const title = "Posts";
+// Changed 2026-10-12 with the two interface languages: the section's name in both, from
+// site.sections in src/config.ts (it was the literal "Posts").
+import { site } from "../../config";
+const title = site.sections.posts;
 
 export async function getStaticPaths() {
   return paginateByYear((await getPosts()).map(postCard), "/posts/").map(

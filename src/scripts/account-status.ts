@@ -20,6 +20,12 @@
 //   caller's fallback shows the status above the card; recheck these names after a Clerk update,
 //   as AUTH.md 12.6 asks for the sign-in form's.
 
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the section's title in the
+// language the page shows. The account page reloads on a language switch (Clerk's card takes its
+// language once), so the text is written once, as plain text inside Clerk's markup.
+import { ui } from "../i18n/strings";
+import { phrase } from "./lang";
+
 const emailSelector = ".cl-profileSection__emailAddresses";
 const marker = "data-kb-status";
 
@@ -74,7 +80,8 @@ function build(email: HTMLElement, label: string): HTMLElement | undefined {
   }
   const title = ownHeader.querySelector(".cl-profileSectionTitleText");
   if (title === null) return undefined;
-  title.textContent = "Статус";
+  // Changed 2026-10-12: the language shown (the note at the imports); it was "Статус".
+  title.textContent = phrase(ui.account_status_title);
   const value = text.cloneNode(false);
   value.textContent = label;
   const ownRow = row.cloneNode(false);

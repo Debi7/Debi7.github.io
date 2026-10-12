@@ -25,6 +25,10 @@
 // Not the theme bootstrap (localStorage -> `dark` class): that one stays inline in
 // src/components/Head.astro so it runs before the stylesheets load.
 
+// Added 2026-10-12: the interface language helpers (the "Interface language" block below says why).
+import { initLang, setLangAttr } from "./lang";
+import { ui } from "../i18n/strings";
+
 // --- Pressed state on touch screens ---
 // Added 2026-09-29 with postcss.config.cjs, which gives every hover effect an `:active` twin so that
 // a finger on a link or a button shows what the mouse pointer shows. iOS Safari ignores `:active`
@@ -34,6 +38,12 @@
 // passive, so it never delays scrolling, and it sits on the body, which is the element the note
 // names. This file is a deferred module, so the body is there when it runs.
 document.body.addEventListener("touchstart", () => {}, { passive: true });
+
+// --- Interface language ---
+// Added 2026-10-12 at the owner's request: the switch beside the menu, the attributes of the
+// language the page shows, and following a switch made in another tab (src/scripts/lang.ts). The
+// two labels this file sets itself, below, are written with setLangAttr() so they follow too.
+initLang();
 
 // --- Theme (dark / light) ---
 // Ported ahead of §7 because the header's toggle button is useless without it.
@@ -112,9 +122,13 @@ document.addEventListener("DOMContentLoaded", function () {
       // any and the two setAttribute calls below would go unchecked.
       Array.prototype.forEach.call(btns, function (btn: Element) {
         btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
-        btn.setAttribute(
+        // Changed 2026-10-12: both languages through setLangAttr (src/scripts/lang.ts), so a later
+        // language switch updates the label too. It set "Switch to light mode" / "Switch to dark
+        // mode" with setAttribute.
+        setLangAttr(
+          btn,
           "aria-label",
-          theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
+          theme === "dark" ? ui.theme_to_light : ui.theme_to_dark,
         );
       });
     }
@@ -182,7 +196,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const setOpen = (open: boolean) => {
       panel.hidden = !open;
       btn.setAttribute("aria-expanded", open ? "true" : "false");
-      btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+      // Changed 2026-10-12: both languages through setLangAttr, as the theme switch above. It set
+      // "Close menu" / "Open menu" with setAttribute.
+      setLangAttr(btn, "aria-label", open ? ui.menu_close : ui.menu_open);
       // A class, not the `hidden` property: these are SVG elements, and `hidden` is defined
       // on HTMLElement only, so assigning to it would silently do nothing. Verified in a
       // headless browser before this was written.

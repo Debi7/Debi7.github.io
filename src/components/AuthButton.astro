@@ -1,5 +1,12 @@
 ---
 import { site } from "../config";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the two labels below are in
+// both languages. The data-*-label attributes carry every language (langAttrs), the inline block
+// picks the one of the class Head.astro set, and the module script writes the label through
+// phrase() and again after every switch (site.i18n.changeEvent).
+import { ui } from "../i18n/strings";
+import { langAttrs } from "../i18n/lang";
+const def = site.i18n.defaultLanguage;
 
 // Changed 2026-09-30, after the colleague asked whether the icon follows every sign-in and
 // sign-out, and saw it lag on a slow machine. Measured in headless Edge on the built site, with the
@@ -28,11 +35,13 @@ import { site } from "../config";
     href={site.auth.signIn}
     data-signin-href={site.auth.signIn}
     data-account-href={site.auth.account}
-    data-signin-label="Войти на сайт"
-    data-account-label="Личный кабинет"
+    {...langAttrs({
+      "data-signin-label": ui.auth_signin,
+      "data-account-label": ui.auth_account,
+    })}
     class="-mr-2 ml-auto flex items-center justify-center gap-7 self-center p-2 text-gray-600 transition-colors hover:text-blue-600"
-    aria-label="Войти на сайт"
-    title="Войти на сайт"
+    aria-label={ui.auth_signin[def]}
+    title={ui.auth_signin[def]}
   >
     <svg
       id="icon-signin"
@@ -75,8 +84,18 @@ import { site } from "../config";
       var link = document.getElementById("auth-link");
       if (link && document.documentElement.classList.contains("kb-member")) {
         link.setAttribute("href", link.dataset.accountHref);
-        link.setAttribute("aria-label", link.dataset.accountLabel);
-        link.title = link.dataset.accountLabel;
+        // Changed 2026-10-12: the label of the language the page shows - the lang-<language> class
+        // the block in Head.astro set, and the attribute langAttrs wrote for it - or the default
+        // language's (data-account-label) when there is none. It read dataset.accountLabel alone.
+        var lang = /(?:^|\s)lang-([a-z]+)/.exec(
+          document.documentElement.className,
+        );
+        var label =
+          (lang &&
+            link.getAttribute("data-" + lang[1] + "-data-account-label")) ||
+          link.dataset.accountLabel;
+        link.setAttribute("aria-label", label);
+        link.title = label;
       }
     })();
   </script>
@@ -89,6 +108,10 @@ import { site } from "../config";
   import { authFlagEvent, readAuthFlag } from "../scripts/auth-flag";
   // Added later on 2026-09-30: a click on the page the icon leads to loads nothing (same-page.ts).
   import { stayOnPage } from "../scripts/same-page";
+  // Added 2026-10-12: the label in the language the page shows (the note at the top).
+  import { site } from "../config";
+  import { ui } from "../i18n/strings";
+  import { phrase } from "../scripts/lang";
   const link = document.getElementById("auth-link");
   function applyAuthState() {
     if (!(link instanceof HTMLAnchorElement)) return;
@@ -97,9 +120,11 @@ import { site } from "../config";
     // the members-only items by it, and the icons above follow it.
     document.documentElement.classList.toggle("kb-member", signedIn);
     const href = signedIn ? link.dataset.accountHref : link.dataset.signinHref;
-    const label = signedIn
-      ? link.dataset.accountLabel
-      : link.dataset.signinLabel;
+    // Changed 2026-10-12: phrase(), the language the page shows; it read the data-*-label attribute.
+    // const label = signedIn
+    //   ? link.dataset.accountLabel
+    //   : link.dataset.signinLabel;
+    const label = phrase(signedIn ? ui.auth_account : ui.auth_signin);
     if (href) link.href = href;
     if (label) {
       link.setAttribute("aria-label", label);
@@ -116,6 +141,8 @@ import { site } from "../config";
   applyAuthState();
   window.addEventListener(authFlagEvent, applyAuthState);
   window.addEventListener("storage", applyAuthState);
+  // Added 2026-10-12: a language switch rewrites the label.
+  document.addEventListener(site.i18n.changeEvent, applyAuthState);
 
   // Added later on 2026-09-30, at the owner's request: one click on the icon, one trip. A second
   // click on a link makes the browser start the same navigation again, which on a slow connection

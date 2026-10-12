@@ -65,6 +65,11 @@
 // template literal had a second problem as well: prettier-plugin-tailwindcss reads a class
 // template literal as a class list and can eat the space inside it (see CLAUDE.md).
 import type { MarkdownHeading } from "astro";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the title and the label
+// below read the theme's table_of_contents string, in both languages; both were English literals.
+import { ui } from "../i18n/strings";
+import { langAttrs } from "../i18n/lang";
+import T from "./T.astro";
 
 interface Props {
   /** The article's headings, as render() returns them. */
@@ -99,11 +104,12 @@ for (const heading of headings) {
   sidebarEntries.length > 0 && (
     <aside
       class="toc-sidebar absolute inset-y-0 left-full ml-6 w-56"
-      aria-label="Table of Contents"
+      {...langAttrs({ "aria-label": ui.table_of_contents })}
     >
       <div class="toc-sidebar-scroll sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto pr-1">
         <div class="toc-sidebar-title mb-2 text-xs font-semibold uppercase tracking-wide">
-          Table of Contents
+          {/* Changed 2026-10-12: both languages (it read "Table of Contents"). */}
+          <T s={ui.table_of_contents} />
         </div>
         <nav id="TableOfContents-side" class="toc-nav">
           <ul>

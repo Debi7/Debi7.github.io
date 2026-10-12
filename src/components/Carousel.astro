@@ -11,6 +11,10 @@ import { site } from "../config";
 // It has to sit with the other imports, at the top: placed after the const declarations below,
 // esbuild rejects the file with `Unexpected "../styles/carousel.css"` and the build fails.
 import "../styles/carousel.css";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): every label and every
+// photo's description in both languages, as language-dependent attributes.
+import { ui } from "../i18n/strings";
+import { langAttrs, type Phrase } from "../i18n/lang";
 
 const dir = fileURLToPath(
   new URL("../../public/images/carousel", import.meta.url),
@@ -31,13 +35,28 @@ const slides = fs.existsSync(dir)
 
 const interval = site.carousel.interval;
 
-const alts: Record<string, string> = {
-  "01.jpg": "Waterfall in a green forest",
-  "02.jpg": "Granite cliffs and forest above a river",
-  "03.jpg": "Green hills in the mist",
-  "04.jpg": "Rocky coast and turquoise sea",
-  "05.jpg": "Red canyon at sunset",
-  "06.jpg": "Northern lights over a forest",
+// Changed 2026-10-12: each description in both languages; the English ones are the ones that stood
+// here. They stay in this file rather than in src/i18n/strings.ts because they describe these
+// files, by name, and change with them.
+const alts: Record<string, Phrase> = {
+  "01.jpg": {
+    ru: "Водопад в зелёном лесу",
+    en: "Waterfall in a green forest",
+  },
+  "02.jpg": {
+    ru: "Гранитные скалы и лес над рекой",
+    en: "Granite cliffs and forest above a river",
+  },
+  "03.jpg": { ru: "Зелёные холмы в тумане", en: "Green hills in the mist" },
+  "04.jpg": {
+    ru: "Скалистый берег и бирюзовое море",
+    en: "Rocky coast and turquoise sea",
+  },
+  "05.jpg": { ru: "Красный каньон на закате", en: "Red canyon at sunset" },
+  "06.jpg": {
+    ru: "Северное сияние над лесом",
+    en: "Northern lights over a forest",
+  },
 };
 
 // `hidden` is a valid global HTML attribute on an inline SVG element, but Astro's
@@ -53,7 +72,7 @@ const hiddenAttr = { hidden: true };
         id="home-carousel"
         class="void-carousel"
         aria-roledescription="carousel"
-        aria-label="Nature photos"
+        {...langAttrs({ "aria-label": ui.carousel_label })}
         data-interval={interval}
       >
         {slides.map((name, i) => (
@@ -61,12 +80,16 @@ const hiddenAttr = { hidden: true };
             class:list={["void-carousel__slide", i === 0 && "is-active"]}
             role="group"
             aria-roledescription="slide"
-            aria-label={`${i + 1} of ${slides.length}`}
+            {...langAttrs({
+              "aria-label": ui.carousel_slide(i + 1, slides.length),
+            })}
             aria-hidden={i !== 0 ? "true" : undefined}
           >
             <img
               src={`/images/carousel/${name}`}
-              alt={alts[name] ?? `Nature, photo ${i + 1}`}
+              {...langAttrs({
+                alt: alts[name] ?? ui.carousel_photo_alt(i + 1),
+              })}
               width="1600"
               height="700"
               decoding="async"
@@ -79,21 +102,21 @@ const hiddenAttr = { hidden: true };
         <button
           type="button"
           class="void-carousel__btn void-carousel__btn--prev"
-          aria-label="Previous photo"
+          {...langAttrs({ "aria-label": ui.carousel_prev })}
         >
           &#8249;
         </button>
         <button
           type="button"
           class="void-carousel__btn void-carousel__btn--next"
-          aria-label="Next photo"
+          {...langAttrs({ "aria-label": ui.carousel_next })}
         >
           &#8250;
         </button>
         <button
           type="button"
           class="void-carousel__toggle"
-          aria-label="Pause autoplay"
+          {...langAttrs({ "aria-label": ui.carousel_pause })}
           aria-pressed="false"
         >
           <svg
@@ -116,14 +139,14 @@ const hiddenAttr = { hidden: true };
         <div
           class="void-carousel__dots"
           role="tablist"
-          aria-label="Choose a photo"
+          {...langAttrs({ "aria-label": ui.carousel_choose })}
         >
           {slides.map((_, i) => (
             <button
               type="button"
               role="tab"
               class:list={["void-carousel__dot", i === 0 && "is-active"]}
-              aria-label={`Photo ${i + 1}`}
+              {...langAttrs({ "aria-label": ui.carousel_dot(i + 1) })}
               aria-selected={i === 0 ? "true" : "false"}
               data-index={i}
             />

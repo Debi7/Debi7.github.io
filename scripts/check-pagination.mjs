@@ -229,7 +229,9 @@ function linkOf(html, word) {
 }
 
 function yearSwitcherOf(html) {
-  const nav = html.match(/<nav aria-label="Years"[\s\S]*?<\/nav>/);
+  // Changed 2026-10-12: found by data-year-switcher, since the nav's aria-label changes with the
+  // interface language (YearSwitcher.astro). It was matched as <nav aria-label="Years".
+  const nav = html.match(/<nav data-year-switcher[\s\S]*?<\/nav>/);
   if (!nav) return null;
   // Years and, since the rule of 2026-09-19, the ellipsis between hidden years, in order.
   return [
@@ -300,8 +302,11 @@ function checkNumbers(html, n, last, base, where, everyNumberUpTo, fail) {
     return fail(
       `${where}: ${blocks.length} blocks of page numbers, expected 1`,
     );
+  // Changed 2026-10-12: the label is matched in its English copy, data-en-aria-label, because the
+  // aria-label itself carries the interface's default language (Pagination.astro). It was matched
+  // as <a href="..." aria-label="Page n">.
   const re =
-    /<a href="([^"]+)" aria-label="Page (\d+)"[^>]*>\s*(\d+)\s*<\/a>|<span aria-current="page"[^>]*>\s*(\d+)\s*<\/span>|<span aria-hidden="true"[^>]*>\s*(?:&hellip;|\u2026)\s*<\/span>/g;
+    /<a href="([^"]+)"[^>]*? data-en-aria-label="Page (\d+)"[^>]*>\s*(\d+)\s*<\/a>|<span aria-current="page"[^>]*>\s*(\d+)\s*<\/span>|<span aria-hidden="true"[^>]*>\s*(?:&hellip;|\u2026)\s*<\/span>/g;
   const entries = [...blocks[0][1].matchAll(re)].map((m) =>
     m[4]
       ? { n: Number(m[4]), current: true }

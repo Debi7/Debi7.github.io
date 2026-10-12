@@ -10,7 +10,9 @@ import type { APIContext } from "astro";
 import { getVideos, videoUrl, publicBody } from "../../lib/video";
 import { summary } from "../../lib/summary";
 import { site } from "../../config";
-import { t } from "../../i18n/strings";
+// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t).
+// import { t } from "../../i18n/strings";
+import { ui } from "../../i18n/strings";
 
 // The same rolling window as the posts feed, and for the same reasons - see the note next to
 // feedLength in src/pages/rss.xml.ts. The number is repeated rather than shared: the two feeds are
@@ -26,7 +28,9 @@ export async function GET(context: APIContext) {
     // The feed's own title says which half of the site it carries, so the two feeds are told apart
     // in a reader. "Video" is the menu item's label (src/config.ts), kept as it is written there.
     title: `${site.title} - Video`,
-    description: t.list_watch_video,
+    // Changed 2026-10-12: the default language's text (site.i18n.defaultLanguage) - a feed has one
+    // language and no switch. It was t.list_watch_video, the same English string.
+    description: ui.list_watch_video[site.i18n.defaultLanguage],
     site: context.site ?? site.title,
     items: videos.slice(0, feedLength).map((video) => ({
       title: video.data.title,

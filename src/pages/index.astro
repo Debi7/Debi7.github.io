@@ -3,6 +3,8 @@ import Base from "../layouts/Base.astro";
 import Carousel from "../components/Carousel.astro";
 import TagCloud from "../components/TagCloud.astro";
 import { site } from "../config";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the menu names below.
+import T from "../components/T.astro";
 ---
 
 <Base>
@@ -59,7 +61,8 @@ import { site } from "../config";
           >
             <span class="absolute inset-0 h-full w-full bg-blue-50 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:bg-slate-700/50" />
             <span class="relative z-10 transition-colors duration-300">
-              {item.name}
+              {/* Changed 2026-10-12: both languages (item.name is a Phrase). */}
+              <T s={item.name} />
             </span>
           </a>
         ))

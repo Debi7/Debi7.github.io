@@ -25,6 +25,14 @@ import Base from "../../../layouts/Base.astro";
 import AdminNav from "../../../components/AdminNav.astro";
 // Added later on 2026-10-02 at the owner's request: the pager under the list.
 import AdminPager from "../../../components/AdminPager.astro";
+// Added 2026-10-12 at the owner's request (the interface in two languages, src/i18n/lang.ts): the
+// last point above no longer holds - every label is in both languages, through T, and the Russian
+// that stood here is the ru half of the entries in src/i18n/admin.ts. The page does not reload on a
+// language switch: an editor may have unsaved text in the form, so the script writes its own
+// messages in both languages as well (admin-posts.ts).
+import { ui } from "../../../i18n/strings";
+import { adminUi } from "../../../i18n/admin";
+import T from "../../../components/T.astro";
 
 // The class lists the fields share, spelled once. Tailwind reads them here like any other class.
 const field =
@@ -37,28 +45,30 @@ const secondary =
   "rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-opacity hover:opacity-80 disabled:opacity-50 dark:border-slate-600 dark:text-gray-200";
 ---
 
-<Base title="Публикации" noindex>
+{
+  /* Changed 2026-10-12: here and below, every label through T (the frontmatter's note). */
+}
+<Base title={ui.admin_posts_title} noindex>
   <section class="mx-auto max-w-3xl">
     <AdminNav current="posts" />
-    <h1 class="mb-6 text-2xl font-bold">Публикации</h1>
+    <h1 class="mb-6 text-2xl font-bold"><T s={ui.admin_posts_title} /></h1>
     <p id="admin-status" class="mb-4 text-sm" role="status" aria-live="polite">
-      Загрузка...
+      <T s={ui.auth_loading} />
     </p>
     <noscript>
       <p class="text-sm">
-        Для работы с публикациями нужен включённый JavaScript.
+        <T s={adminUi.posts_noscript} />
       </p>
     </noscript>
 
     <p id="admin-forbidden" class="text-sm" hidden>
-      У этой учётной записи нет прав на публикации. Их выдаёт администратор
-      сайта.
+      <T s={adminUi.posts_forbidden} />
     </p>
 
     <div id="admin-list" hidden>
       <div class="mb-4 flex flex-wrap items-center gap-3">
         <button id="admin-new" type="button" class={primary}>
-          Новая публикация
+          <T s={adminUi.posts_new} />
         </button>
       </div>
       <ul
@@ -70,7 +80,7 @@ const secondary =
         /* Added later on 2026-10-02 at the owner's request: 20 posts to a page
         (AdminPager.astro). */
       }
-      <AdminPager id="admin-pager" label="Страницы списка публикаций" />
+      <AdminPager id="admin-pager" label={adminUi.posts_pages} />
     </div>
 
     <template id="admin-post-row">
@@ -85,14 +95,20 @@ const secondary =
             <span data-slug></span>
           </p>
         </div>
-        <button data-edit type="button" class={secondary}>Изменить</button>
+        <button data-edit type="button" class={secondary}>
+          <T s={adminUi.posts_edit} />
+        </button>
         {
           /* Added later on 2026-10-02 at the owner's request: a new post that starts as a copy of
           this one, for editors who would rather change fields than write Markdown from nothing
           (admin-posts.ts, copyPost). */
         }
-        <button data-copy type="button" class={secondary}>Копировать</button>
-        <button data-delete type="button" class={secondary}>Удалить</button>
+        <button data-copy type="button" class={secondary}>
+          <T s={adminUi.posts_copy} />
+        </button>
+        <button data-delete type="button" class={secondary}>
+          <T s={adminUi.posts_delete} />
+        </button>
       </li>
     </template>
 
@@ -100,15 +116,16 @@ const secondary =
       <h2 id="admin-editor-heading" class="text-xl font-bold"></h2>
 
       <div>
-        <label for="admin-title" class={label}>Заголовок</label>
+        <label for="admin-title" class={label}
+          ><T s={adminUi.field_title} /></label
+        >
         <input id="admin-title" name="title" type="text" class={field} />
         <p data-error-for="title" class={error} hidden></p>
       </div>
 
       <div>
         <label for="admin-slug" class={label}>
-          Адрес: латинские буквы, цифры и дефисы, например poisk-vody. После
-          сохранения не меняется.
+          <T s={adminUi.field_slug} />
         </label>
         <input
           id="admin-slug"
@@ -123,8 +140,7 @@ const secondary =
 
       <div>
         <label for="admin-date" class={label}>
-          Дата публикации (время клуба, UTC+3). Запись с будущей датой появится
-          на сайте после первой сборки сайта после этой даты.
+          <T s={adminUi.field_date} />
         </label>
         <input
           id="admin-date"
@@ -137,7 +153,9 @@ const secondary =
       </div>
 
       <div>
-        <label for="admin-description" class={label}>Краткое описание</label>
+        <label for="admin-description" class={label}
+          ><T s={adminUi.field_description} /></label
+        >
         <input
           id="admin-description"
           name="description"
@@ -148,7 +166,9 @@ const secondary =
       </div>
 
       <div>
-        <label for="admin-tags" class={label}>Теги, через запятую</label>
+        <label for="admin-tags" class={label}
+          ><T s={adminUi.field_tags} /></label
+        >
         <input id="admin-tags" name="tags" type="text" class={field} />
         <p data-error-for="tags" class={error} hidden></p>
         <div data-terms-for="admin-tags" class="mt-2 flex flex-wrap gap-2">
@@ -157,7 +177,7 @@ const secondary =
 
       <div>
         <label for="admin-categories" class={label}>
-          Категории, через запятую
+          <T s={adminUi.field_categories} />
         </label>
         <input
           id="admin-categories"
@@ -175,12 +195,12 @@ const secondary =
 
       <label class="flex items-center gap-2 text-sm">
         <input id="admin-draft" name="draft" type="checkbox" />
-        Черновик: сохранить, но не показывать на сайте
+        <T s={adminUi.field_draft} />
       </label>
 
       <div>
         <label for="admin-body" class={label}>
-          Текст в Markdown. HTML-теги не принимаются; код - в обратных кавычках.
+          <T s={adminUi.field_body} />
         </label>
         <textarea id="admin-body" name="body" rows="18" class={field}
         ></textarea>
@@ -196,9 +216,11 @@ const secondary =
       </p>
 
       <div class="flex flex-wrap gap-3">
-        <button id="admin-save" type="submit" class={primary}>Сохранить</button>
+        <button id="admin-save" type="submit" class={primary}>
+          <T s={adminUi.posts_save} />
+        </button>
         <button id="admin-cancel" type="button" class={secondary}>
-          Отмена
+          <T s={adminUi.posts_cancel} />
         </button>
       </div>
     </form>

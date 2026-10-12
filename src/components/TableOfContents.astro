@@ -1,6 +1,9 @@
 ---
 import type { MarkdownHeading } from "astro";
-import { t } from "../i18n/strings";
+// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t), through T.
+// import { t } from "../i18n/strings";
+import { ui } from "../i18n/strings";
+import T from "./T.astro";
 // Changed 2026-09-22: tocHtml() became tocTree(), which returns the headings as data, and
 // TocList.astro renders them. See the note in src/lib/toc.ts for why the markup stopped being
 // built as a string here.
@@ -42,7 +45,7 @@ const toc = tocTree(headings);
     aria-controls="toc-content"
     :aria-expanded="open.toString()"
   >
-    <span>{t.table_of_contents}</span>
+    <span><T s={ui.table_of_contents} /></span>
     <svg
       x-show="!open"
       xmlns="http://www.w3.org/2000/svg"

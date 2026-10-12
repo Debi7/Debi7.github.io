@@ -14,7 +14,11 @@
 import ArticleLayout from "./ArticleLayout.astro";
 import type { MarkdownHeading } from "astro";
 import { postLink, readingTime, type Post } from "../lib/posts";
-import { t } from "../i18n/strings";
+// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t); the reading
+// time is built in both languages below.
+// import { t } from "../i18n/strings";
+import { ui } from "../i18n/strings";
+import type { Phrase } from "../i18n/lang";
 
 interface Props {
   post: Post;
@@ -25,6 +29,12 @@ interface Props {
 
 const { post, headings, prev, next } = Astro.props;
 const { data } = post;
+// Added 2026-10-12: "3 мин чтения" / "3 min read", one string per language.
+const minutes = readingTime(post.body);
+const timeLabel: Phrase = {
+  ru: `${minutes} ${ui.reading_time.ru}`,
+  en: `${minutes} ${ui.reading_time.en}`,
+};
 ---
 
 <ArticleLayout
@@ -34,7 +44,7 @@ const { data } = post;
   updated={data.lastmod}
   categories={data.categories}
   tags={data.tags}
-  timeLabel={`${readingTime(post.body)} ${t.reading_time}`}
+  timeLabel={timeLabel}
   shareTitle={data.share_title ?? data.title}
   shareTexts={[data.share_description, data.description, data.summary]}
   headings={headings}

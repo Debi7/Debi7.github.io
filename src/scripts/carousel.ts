@@ -2,6 +2,11 @@
 // ../klub_biolocation/themes/void/layouts/partials/home/carousel.html (MIGRATION-PLAN.md section 4).
 // Imported by src/components/Carousel.astro, which src/pages/index.astro is the only user of.
 //
+// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): the pause button's label
+// is written with setLangAttr(), in both languages, so it follows a language switch.
+import { setLangAttr } from "./lang";
+import { ui } from "../i18n/strings";
+//
 // Moved here on 2026-09-22. It used to be a JavaScript template literal inside Carousel.astro,
 // rendered with <script is:inline set:html={js} />, which meant three things: a backtick anywhere
 // in the code or its comments ended the literal and made the compiler read the script as CSS or
@@ -124,9 +129,11 @@
   toggle.addEventListener("click", function () {
     paused = !paused;
     toggle.setAttribute("aria-pressed", String(paused));
-    toggle.setAttribute(
+    // Changed 2026-10-12: both languages (it set "Resume autoplay" / "Pause autoplay").
+    setLangAttr(
+      toggle,
       "aria-label",
-      paused ? "Resume autoplay" : "Pause autoplay",
+      paused ? ui.carousel_resume : ui.carousel_pause,
     );
     setHidden(iconPause, paused);
     setHidden(iconPlay, !paused);

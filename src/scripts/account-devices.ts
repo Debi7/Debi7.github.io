@@ -16,6 +16,13 @@
 // not be imported for the rule: that module imports astro:content, which does not run in a browser.
 import type { Clerk } from "@clerk/clerk-js";
 import { site } from "../config";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): every text of the page in
+// the language shown, the dates formatted in it too. The account page reloads on a language switch
+// (Clerk's card takes its language once), so what is written here is written once; the templates'
+// attributes get the language through localize() when they are cloned. The sentence above about
+// ruRU's words holds for the Russian half.
+import { ui } from "../i18n/strings";
+import { currentLang, localize, phrase, setLangAttr, setPhrase } from "./lang";
 
 type Session = Awaited<
   ReturnType<NonNullable<Clerk["user"]>["getSessions"]>
@@ -24,11 +31,12 @@ type Session = Awaited<
 // The owner's number, 2026-09-28: five devices to a page, as five posts to a list page.
 const perPage = 5;
 
-const time = new Intl.DateTimeFormat("ru", {
+// Changed 2026-10-12: the language shown (the note at the imports); both were "ru".
+const time = new Intl.DateTimeFormat(currentLang(), {
   hour: "2-digit",
   minute: "2-digit",
 });
-const day = new Intl.DateTimeFormat("ru", {
+const day = new Intl.DateTimeFormat(currentLang(), {
   day: "numeric",
   month: "long",
   year: "numeric",
@@ -40,9 +48,15 @@ function when(date: Date): string {
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
-  if (same(date, today)) return `Сегодня в ${time.format(date)}`;
-  if (same(date, yesterday)) return `Вчера в ${time.format(date)}`;
-  return `${day.format(date)} в ${time.format(date)}`;
+  // Changed 2026-10-12: the words in the language shown; they were "Сегодня в", "Вчера в" and "в".
+  if (same(date, today))
+    return phrase(ui.devices_today).replace("{time}", time.format(date));
+  if (same(date, yesterday)) {
+    return phrase(ui.devices_yesterday).replace("{time}", time.format(date));
+  }
+  return phrase(ui.devices_on_day)
+    .replace("{day}", day.format(date))
+    .replace("{time}", time.format(date));
 }
 
 function place(session: Session): string {
@@ -76,13 +90,16 @@ function clone(id: string): Element | undefined {
     template instanceof HTMLTemplateElement
       ? template.content.firstElementChild?.cloneNode(true)
       : undefined;
+  // Added 2026-10-12: the clone's attributes in the language shown (the note at the imports).
+  if (node instanceof Element) localize(node);
   return node instanceof Element ? node : undefined;
 }
 
 /** The custom page for mountUserProfile(): label, address, icon and content. */
 export function devicesPage(clerk: Clerk) {
   return {
-    label: "Устройства",
+    // Changed 2026-10-12: the language shown (it was "Устройства").
+    label: phrase(ui.devices_tab),
     url: "devices",
     mountIcon: (el: HTMLDivElement) => {
       const icon = clone("devices-icon-template");
@@ -111,7 +128,8 @@ async function mount(el: HTMLDivElement, clerk: Clerk): Promise<void> {
     sessions = (await clerk.user?.getSessions()) ?? [];
   } catch (error) {
     console.error("Account devices: the sessions could not be loaded.", error);
-    status.textContent = "Не удалось загрузить список. Обновите страницу.";
+    // Changed 2026-10-12: both languages (it was "Не удалось загрузить список. Обновите страницу.").
+    setPhrase(status, ui.devices_failed);
     return;
   }
   const currentId = clerk.session?.id;
@@ -154,7 +172,8 @@ async function mount(el: HTMLDivElement, clerk: Clerk): Promise<void> {
         if (entry !== "gap") {
           node.textContent = String(entry);
           if (entry !== page) {
-            node.setAttribute("aria-label", `Страница ${entry}`);
+            // Changed 2026-10-12: the theme's page label in both languages (it was "Страница n").
+            setLangAttr(node, "aria-label", ui.pagination_page(entry));
             node.addEventListener("click", () => go(entry));
           }
         }
@@ -176,7 +195,11 @@ async function mount(el: HTMLDivElement, clerk: Clerk): Promise<void> {
       const field = item.querySelector(`[data-device-${name}]`);
       if (field) field.textContent = text;
     };
-    set("name", deviceType || (isMobile ? "Телефон" : "Компьютер"));
+    // Changed 2026-10-12: the two fallback names in the language shown ("Телефон", "Компьютер").
+    set(
+      "name",
+      deviceType || phrase(isMobile ? ui.devices_phone : ui.devices_computer),
+    );
     set("browser", [browserName, browserVersion].filter(Boolean).join(" "));
     set("place", place(session));
     set("time", when(session.lastActiveAt));

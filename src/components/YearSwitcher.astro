@@ -18,6 +18,11 @@
 // videos stay apart and share only what is common (VIDEO-PAGE.md, section 4).
 import type { YearLink } from "../lib/lists";
 import { yearSwitcher } from "../lib/lists";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the nav's label in both;
+// data-year-switcher is what scripts/check-pagination.mjs finds the nav by since then, because the
+// label it used to match now changes with the language.
+import { ui } from "../i18n/strings";
+import { langAttrs } from "../i18n/lang";
 
 interface Props {
   /** Every year with posts, newest first, from yearLinks(). */
@@ -33,7 +38,8 @@ const entries = yearSwitcher(years, currentYear);
 {
   years.length > 1 && (
     <nav
-      aria-label="Years"
+      data-year-switcher
+      {...langAttrs({ "aria-label": ui.years_label })}
       class="-mt-4 mb-8 flex flex-wrap justify-center gap-2"
     >
       {entries.map((entry) =>

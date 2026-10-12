@@ -14,6 +14,8 @@ import { formatYear } from "./date";
 import { titleize } from "./titleize";
 import { urlize } from "./urlize";
 import { site } from "../config";
+// Added 2026-10-12 for Card.action (two interface languages).
+import type { Phrase } from "../i18n/lang";
 
 /** What a list needs of an item to split it by year: its date. A Card has one. */
 export type Dated = { date: Date };
@@ -33,7 +35,9 @@ export type Card = {
   /** In front matter order, lower-cased by the collection schema. */
   tags: string[];
   /** The last line of the card: "Read more" on a post, "Watch the video" on a video. */
-  action: string;
+  // Changed 2026-10-12: a Phrase, both languages of the interface (src/i18n/lang.ts); it was a
+  // string. lang.ts imports only the config, so this file stays safe for the browser.
+  action: Phrase;
 };
 
 /** A previous or next link on an article page (PostNav.astro), built by postLink() and videoLink(). */

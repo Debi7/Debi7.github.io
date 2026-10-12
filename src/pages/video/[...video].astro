@@ -22,7 +22,10 @@ import CardList from "../../components/CardList.astro";
 import { getVideos, videoCard } from "../../lib/video";
 import { paginateByYear } from "../../lib/lists";
 
-const title = "Video";
+// Changed 2026-10-12 with the two interface languages: the section's name in both, from
+// site.sections in src/config.ts (it was the literal "Video").
+import { site } from "../../config";
+const title = site.sections.video;
 
 export async function getStaticPaths() {
   return paginateByYear((await getVideos()).map(videoCard), "/video/").map(

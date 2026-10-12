@@ -181,7 +181,10 @@ const check = (name, ok, detail) => {
 };
 const skip = (name) => console.log("SKIP " + name + "  [no publishable key]");
 
-const menuShown = `[...document.querySelectorAll("nav li")].filter(li => li.offsetParent !== null).map(li => li.textContent.trim())`;
+// Changed 2026-10-12 with the two interface languages (I18N.md): innerText, not textContent - an
+// item holds its name in both languages, one span hidden by CSS, and only innerText leaves the
+// hidden one out. The check runs in a fresh profile, so in the default language, English.
+const menuShown = `[...document.querySelectorAll("nav li")].filter(li => li.offsetParent !== null).map(li => li.innerText.trim())`;
 const authChunkLoaded = `performance.getEntriesByType("resource").some(e => /\\/_astro\\/auth\\.[^/]*\\.js$/.test(e.name))`;
 const flag = `localStorage.getItem("kb-auth-expires")`;
 
@@ -366,8 +369,10 @@ if (KEY === "") {
       // The resend countdown ("Отправить снова") shows once the code is out.
       // The countdown, "(25)", starts only once the code is out; a two-second margin on top,
       // because the first run that matched the words alone still typed too early.
+      // Changed 2026-10-12: Clerk's English words too ("Resend"), since the form follows the
+      // interface language and the default is English now (I18N.md).
       await until(
-        String.raw`/Отправить снова\.? *\(\d+\)/.test(document.body.innerText)`,
+        String.raw`/(?:Отправить снова|Resend)\.? *\(\d+\)/.test(document.body.innerText)`,
       );
       await sleep(2000);
       await typeInto(

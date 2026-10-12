@@ -99,10 +99,17 @@ import { urlize, encodeSlug } from "../lib/urlize";
 // Added later on 2026-09-19: the year switcher and the page buttons around the list, through
 // one component shared with the tag route; see its header.
 import ListByYear from "./ListByYear.astro";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the title of a section
+// (Posts, Video) is interface text, the title of a category is content; the date and the card's
+// last line come in both languages.
+import type { Words } from "../i18n/lang";
+import T from "./T.astro";
 
 interface Props {
   /** Hugo's `.Title`: "Posts" for the section, the term title for one category. */
-  title: string;
+  // Changed 2026-10-12: Words (it was string) - the section's name in both languages, a category's
+  // title as it is.
+  title: Words;
   // Changed 2026-09-19: one page of the list instead of the whole list (`posts: Post[]`),
   // for pagination; see the note at the top. Cards since 2026-09-22 (was ListPage<Post>); see
   // CARDS above.
@@ -120,7 +127,10 @@ const groups = groupByYear(page.items);
 ---
 
 <div class="mx-auto max-w-4xl px-4 py-8">
-  <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
+  {/* Changed 2026-10-12: through T (title is Words). */}
+  <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">
+    <T s={title} />
+  </h1>
 
   {
     /* Added 2026-09-19: the year switcher above the list and the page buttons below it; see
@@ -178,7 +188,8 @@ const groups = groupByYear(page.items);
                               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                           </svg>
-                          {formatMonthDay(card.date)}
+                          {/* Changed 2026-10-12: both languages (formatMonthDay returns a Phrase). */}
+                          <T s={formatMonthDay(card.date)} />
                         </time>
                       </div>
 
@@ -216,7 +227,8 @@ const groups = groupByYear(page.items);
                         <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
                           {/* card.action since 2026-09-22: "Read more" on a post, "Watch the
                           video" on a video; see CARDS above. */}
-                          {card.action}
+                          {/* Changed 2026-10-12: both languages (card.action is a Phrase). */}
+                          <T s={card.action} />
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="ml-1 h-4 w-4"

@@ -57,7 +57,12 @@ import Base from "../../layouts/Base.astro";
 // and the video lectures appear beside the articles. REVIEW-VIDEO.md, remarks 2 and 3.
 import { getTerms } from "../../lib/terms";
 import { formatIsoDate } from "../../lib/date";
-import { t } from "../../i18n/strings";
+// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t), the title
+// from site.sections, and every label through T.
+// import { t } from "../../i18n/strings";
+import { ui } from "../../i18n/strings";
+import { site } from "../../config";
+import T from "../../components/T.astro";
 
 // Hugo's `.Data.Terms.Alphabetical`.
 const categories = await getTerms("categories");
@@ -65,23 +70,30 @@ const categories = await getTerms("categories");
 // Hugo titles a taxonomy terms page after the taxonomy itself, so this is a literal rather
 // than something read from config. It fills both the h1 and, through Base, the title tag
 // ("Categories | Radiesthesia Club", as the Hugo page has).
-const title = "Categories";
+// Changed 2026-10-12: the section's name in both languages, from site.sections (it was the literal
+// "Categories"; the reason above for not reading it from the config is gone with Hugo's i18n).
+const title = site.sections.categories;
 
 // The template asks for `categories_help_text` but supplies a fallback:
 //   {{ i18n "categories_help_text" | default "Click any category to..." }}
 // That key does NOT exist in the theme's en.toml, so Hugo renders the fallback. The
 // literal therefore belongs here, and the key must not be invented in src/i18n/strings.ts -
 // that file is a faithful copy of the TOML. See MIGRATION-PLAN.md §4.1, step 3.
-const helpText = "Click any category to expand or collapse articles";
+// Changed 2026-10-12: the paragraph above no longer holds (strings.ts is the home of every interface
+// string now); the literal is ui.categories_help_text, in both languages.
+const helpText = ui.categories_help_text;
 ---
 
 <Base title={title}>
   <div class="mx-auto max-w-4xl px-4 py-8">
-    <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
+    {/* Changed 2026-10-12: title and helpText through T, both languages. */}
+    <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">
+      <T s={title} />
+    </h1>
 
     <!-- Brief description -->
     <div class="mb-8 text-center text-sm text-gray-600">
-      <p>{helpText}</p>
+      <p><T s={helpText} /></p>
     </div>
 
     <!-- Categories accordion -->
@@ -178,7 +190,8 @@ const helpText = "Click any category to expand or collapse articles";
             stroke-width="2"
             d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        {t.back_to_home}
+        {/* Changed 2026-10-12: both languages (was t.back_to_home). */}
+        <T s={ui.back_to_home} />
       </a>
     </div>
   </div>

@@ -168,3 +168,20 @@ html.dark {
 html:not(.kb-member) .members-only {
   display: none !important;
 }
+
+/* === Interface languages (added 2026-10-12, the owner's request) ============
+   Every interface string is in the page in both languages, one span each
+   (src/components/T.astro, setPhrase() in src/scripts/lang.ts). The inline
+   block in Head.astro marks the document lang-ru before the first paint when
+   the visitor chose Russian; without the class the page is English, the
+   default (site.i18n.defaultLanguage in src/config.ts) - which is also what a
+   visitor without JavaScript gets. These two rules hide the spans of the
+   language not shown. Written for that default: if it changes, swap ru and en
+   here. A third language would need a rule of its own.
+   display:none, so the hidden text takes no space and a screen reader skips
+   it; !important for the reason the guest gate above gives.
+   ============================================================================ */
+html:not(.lang-ru) [data-lang="ru"],
+html.lang-ru [data-lang="en"] {
+  display: none !important;
+}

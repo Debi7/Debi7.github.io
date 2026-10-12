@@ -1,5 +1,10 @@
 ---
 import { site } from "../config";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): every item's name is a
+// Phrase now (site.menu), printed through T, and the panel's nav label is in both languages.
+import { ui } from "../i18n/strings";
+import { langAttrs } from "../i18n/lang";
+import T from "./T.astro";
 
 interface Props {
   /**
@@ -100,7 +105,7 @@ const accountMark = (url: string) =>
 
 {
   isPanel ? (
-    <nav class="w-full" aria-label="Site">
+    <nav class="w-full" {...langAttrs({ "aria-label": ui.menu_label })}>
       <ul class="flex list-none flex-col">
         {site.menu.map((item) => (
           <li
@@ -118,7 +123,8 @@ const accountMark = (url: string) =>
               data-menu-account={accountMark(item.url)}
               href={item.url}
             >
-              {item.name}
+              {/* Changed 2026-10-12: both languages (item.name is a Phrase). */}
+              <T s={item.name} />
             </a>
           </li>
         ))}
@@ -211,7 +217,8 @@ const accountMark = (url: string) =>
                 data-menu-account={accountMark(item.url)}
                 href={item.url}
               >
-                {item.name}
+                {/* Changed 2026-10-12: both languages (item.name is a Phrase). */}
+                <T s={item.name} />
               </a>
             </li>
           ))}

@@ -34,6 +34,11 @@ import { Clerk } from "@clerk/clerk-js";
 import { localization } from "./clerk-ru";
 import { ui } from "@clerk/ui";
 import { site } from "../config";
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): Clerk's language follows
+// the interface's, and the failure line below is written in both. The site's dictionary is
+// imported under another name, since `ui` above is Clerk's.
+import { ui as words } from "../i18n/strings";
+import { currentLang, setPhrase } from "./lang";
 // writeAuthContact added 2026-10-01 (syncAuthFlag below).
 import { clearAuthFlag, writeAuthContact, writeAuthFlag } from "./auth-flag";
 
@@ -93,7 +98,10 @@ async function load(): Promise<Clerk> {
   const clerk = new Clerk(key);
   await clerk.load({
     ui,
-    localization,
+    // Changed 2026-10-12: the Russian strings only when the interface is Russian. English is
+    // Clerk's own default (Clerk's "Localization prop", Core 3), so an English page passes none.
+    // It was `localization,` on every page.
+    ...(currentLang() === "ru" ? { localization } : {}),
     signInUrl: site.auth.signIn,
     signUpUrl: site.auth.signUp,
     afterSignOutUrl: "/",
@@ -169,10 +177,12 @@ export function showLoadFailure(
 ): void {
   console.error(error);
   if (status === null) return;
-  status.textContent =
-    configuredKey === ""
-      ? "Вход на сайт ещё не подключён."
-      : "Не удалось загрузить форму. Обновите страницу.";
+  // Changed 2026-10-12: both languages (setPhrase); the Russian lines that stood here are the ru
+  // halves of auth_not_set_up and auth_load_failed in src/i18n/strings.ts.
+  setPhrase(
+    status,
+    configuredKey === "" ? words.auth_not_set_up : words.auth_load_failed,
+  );
   status.classList.add("text-red-600");
 }
 
@@ -190,6 +200,14 @@ export function showLoadFailure(
 // Both were followed by headless Edge to the other host (measured by the security reviewer on a
 // copy of this rule). The address is now resolved the way the browser will resolve it, and only
 // a result on this origin is kept - its path, query and fragment, never the raw string.
+// Added 2026-10-12 with the two interface languages: Clerk's components take their language once,
+// in load() above, and offer no documented way to change it on a loaded instance, so a page that
+// shows them reloads when the visitor switches the language. Called by the three pages under
+// src/pages/auth/; the other callers of getClerk() show no Clerk component and need nothing.
+export function reloadOnLanguageChange(): void {
+  document.addEventListener(site.i18n.changeEvent, () => location.reload());
+}
+
 export function nextPath(raw: string | null): string {
   if (raw === null || !raw.startsWith("/")) return site.auth.account;
   const url = new URL(raw, location.origin);

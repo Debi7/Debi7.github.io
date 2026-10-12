@@ -16,11 +16,20 @@
 // pager. The nav starts with the class `hidden`, which the script lifts only when there is more
 // than one page (a class, not the attribute, because `flex` beats the hidden attribute; the note
 // in account-devices.ts has the measurement).
+// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the label is a Phrase, the
+// two buttons' words come from strings.ts, and the script writes the page labels in both
+// languages (admin-pager.ts).
+import type { Phrase } from "../i18n/lang";
+import { langAttrs } from "../i18n/lang";
+import { ui } from "../i18n/strings";
+import T from "./T.astro";
+
 interface Props {
   // The nav's id, which the page script looks up.
   id: string;
   // What a screen reader announces for the nav.
-  label: string;
+  // Changed 2026-10-12: a Phrase, both languages (it was a string).
+  label: Phrase;
 }
 
 const { id, label } = Astro.props;
@@ -30,7 +39,7 @@ const button =
 
 <nav
   id={id}
-  aria-label={label}
+  {...langAttrs({ "aria-label": label })}
   class="mt-4 flex hidden flex-wrap items-center justify-between gap-y-3"
 >
   <button type="button" data-pager-prev class={button}>
@@ -48,11 +57,12 @@ const button =
         stroke-width="2"
         d="M15 19l-7-7 7-7"></path>
     </svg>
-    Назад
+    {/* Changed 2026-10-12: both languages (it read "Назад"; "Далее" below). */}
+    <T s={ui.pagination_previous} />
   </button>
   <div data-pager-numbers class="flex flex-wrap justify-center gap-1"></div>
   <button type="button" data-pager-next class={button}>
-    Далее
+    <T s={ui.pagination_next} />
     <svg
       xmlns="http://www.w3.org/2000/svg"
       class="ml-1 h-4 w-4"

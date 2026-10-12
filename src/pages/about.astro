@@ -30,14 +30,21 @@
 import { getEntry } from "astro:content";
 import Base from "../layouts/Base.astro";
 import { site } from "../config";
-import { t } from "../i18n/strings";
+// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t), through T.
+// import { t } from "../i18n/strings";
+import { ui } from "../i18n/strings";
+import T from "../components/T.astro";
 
 const about = await getEntry("pages", "about");
 if (!about) throw new Error("src/content/pages/about.md is missing");
 const { Content } = await about.render();
+// Added 2026-10-12: the page's name is the menu item's, in both languages (site.sections.about).
+// The front matter's title, "About", was English on a page whose text is Russian, and a content
+// title cannot follow the language switch; about.md keeps it, and nothing prints it now.
+const title = site.sections.about;
 ---
 
-<Base title={about.data.title}>
+<Base title={title}>
   <article class="mx-auto max-w-4xl">
     <!-- Title only, no meta/date/reading time/PV -->
     <div class="mb-12 text-center">
@@ -60,8 +67,11 @@ const { Content } = await about.render();
           </div>
         )
       }
+      {
+        /* Changed 2026-10-12: title, both languages (was about.data.title; see its note). */
+      }
       <h1 class="mb-4 text-4xl font-bold text-gray-900 dark:text-gray-100">
-        {about.data.title}
+        <T s={title} />
       </h1>
     </div>
 
@@ -93,7 +103,8 @@ const { Content } = await about.render();
             stroke-width="2"
             d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        {t.back_to_home}
+        {/* Changed 2026-10-12: both languages (was t.back_to_home). */}
+        <T s={ui.back_to_home} />
       </a>
     </div>
   </article>
