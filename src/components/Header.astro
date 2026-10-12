@@ -118,8 +118,14 @@ const initials = site.title
           invented for one rule. The anchor carries aria-label, so the accessible name stays the
           full site title at every width no matter which of the two spans is painted. */
         }
-        <span class="min-[400px]:hidden">{initials}</span>
-        <span class="hidden min-[400px]:inline">{site.title}</span>
+        {
+          /* Changed 2026-10-12 from 400px to 440px: the language switch (LangToggle.astro) took
+          another control's width out of the row, and the wordmark was cut short from 400px to
+          434px ("Radiesthesia Clu..."), measured in headless Edge in both languages, signed in and
+          out. From 436px it fits whole; 440px leaves a little room for a wider font. */
+        }
+        <span class="min-[440px]:hidden">{initials}</span>
+        <span class="hidden min-[440px]:inline">{site.title}</span>
       </a>
     </div>
     {

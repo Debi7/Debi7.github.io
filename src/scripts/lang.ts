@@ -139,8 +139,12 @@ function storedLang(): Lang {
 /** Switches the interface to `lang` and remembers it for every page of the site. */
 export function setLang(lang: Lang): void {
   try {
-    if (lang === def) localStorage.removeItem(site.i18n.storageKey);
-    else localStorage.setItem(site.i18n.storageKey, lang);
+    // Changed 2026-10-12 at the owner's word that the visitor's choice is remembered: the default
+    // language is stored too when it is chosen, instead of the key being removed. A removed key
+    // meant "never chose", so a later change of site.i18n.defaultLanguage would have moved a
+    // visitor who had picked English on purpose. The block in Head.astro needs no change: it adds
+    // a class only for a stored language other than the default.
+    localStorage.setItem(site.i18n.storageKey, lang);
   } catch {
     // Storage refused (a private window may do so): the switch still holds for this page.
   }
