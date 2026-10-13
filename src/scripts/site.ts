@@ -114,7 +114,8 @@ document.addEventListener("DOMContentLoaded", function () {
         btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
         btn.setAttribute(
           "aria-label",
-          theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
+          // Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
+          theme === "dark" ? "Включить светлую тему" : "Включить тёмную тему",
         );
       });
     }
@@ -182,7 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const setOpen = (open: boolean) => {
       panel.hidden = !open;
       btn.setAttribute("aria-expanded", open ? "true" : "false");
-      btn.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+      // Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
+      btn.setAttribute("aria-label", open ? "Закрыть меню" : "Открыть меню");
       // A class, not the `hidden` property: these are SVG elements, and `hidden` is defined
       // on HTMLElement only, so assigning to it would silently do nothing. Verified in a
       // headless browser before this was written.

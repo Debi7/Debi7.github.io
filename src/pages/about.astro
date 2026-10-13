@@ -35,9 +35,13 @@ import { t } from "../i18n/strings";
 const about = await getEntry("pages", "about");
 if (!about) throw new Error("src/content/pages/about.md is missing");
 const { Content } = await about.render();
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian. The heading and the title are the
+// menu's Russian name for the page; the front matter's "About" is content and stays as written.
+const title =
+  site.menu.find((item) => item.url === "/about/")?.name ?? about.data.title;
 ---
 
-<Base title={about.data.title}>
+<Base title={title}>
   <article class="mx-auto max-w-4xl">
     <!-- Title only, no meta/date/reading time/PV -->
     <div class="mb-12 text-center">
@@ -61,7 +65,7 @@ const { Content } = await about.render();
         )
       }
       <h1 class="mb-4 text-4xl font-bold text-gray-900 dark:text-gray-100">
-        {about.data.title}
+        {title}
       </h1>
     </div>
 

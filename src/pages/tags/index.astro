@@ -22,7 +22,8 @@ import { getTerms } from "../../lib/terms";
 import { encodeSlug } from "../../lib/urlize";
 import { t } from "../../i18n/strings";
 
-const title = "Tags";
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
+const title = "Теги";
 
 // Hugo's `.Data.Terms.ByCount`: most used first, ties broken by the term name. getTerms()
 // already sorts by name, so a stable sort on the count alone produces Hugo's order - checked

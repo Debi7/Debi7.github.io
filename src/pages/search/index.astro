@@ -33,7 +33,8 @@ import { getTerms } from "../../lib/terms";
 import { t } from "../../i18n/strings";
 import { site } from "../../config";
 
-const title = "Search";
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian. Every label and status line of the page.
+const title = "Поиск";
 
 // Categories in the order the Categories page shows them (alphabetical by the front-matter name);
 // tags by how many entries carry them, which is the order of the Tags page. Both lists already
@@ -44,7 +45,7 @@ const tags = (await getTerms("tags")).sort(
 );
 ---
 
-<Base title={title} description="Search the articles and the video lectures.">
+<Base title={title} description="Поиск по статьям и видеолекциям.">
   <div class="search-page">
     <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
 
@@ -93,8 +94,8 @@ const tags = (await getTerms("tags")).sort(
         id="search-clear"
         type="button"
         class="search-field__clear"
-        aria-label="Clear the search and the filters"
-        title="Clear the search and the filters"
+        aria-label="Очистить поиск и фильтры"
+        title="Очистить поиск и фильтры"
         hidden
       >
         <svg
@@ -118,7 +119,7 @@ const tags = (await getTerms("tags")).sort(
     </form>
 
     <div class="search-layout">
-      <aside class="search-facets" aria-label="Filters">
+      <aside class="search-facets" aria-label="Фильтры">
         {
           /* <details>, so the sections fold with no script at all and a keyboard reaches them the
           way it reaches any disclosure. They are written open; search.ts closes them on a narrow
@@ -134,7 +135,7 @@ const tags = (await getTerms("tags")).sort(
           appears only after the first query is a filter nobody finds. */
         }
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title">Section</summary>
+          <summary class="search-facet__title">Раздел</summary>
           <ul class="search-facet__list">
             {
               Object.values(site.searchSections).map((label) => (
@@ -162,7 +163,7 @@ const tags = (await getTerms("tags")).sort(
         </details>
 
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title">Category</summary>
+          <summary class="search-facet__title">Категория</summary>
           <ul class="search-facet__list">
             {
               categories.map((term) => (
@@ -190,7 +191,7 @@ const tags = (await getTerms("tags")).sort(
         </details>
 
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title">Tag</summary>
+          <summary class="search-facet__title">Тег</summary>
           <ul class="search-facet__list">
             {
               tags.map((term) => (
@@ -228,22 +229,22 @@ const tags = (await getTerms("tags")).sort(
           id="search-status"
           class="search-status"
           aria-live="polite"
-          data-searching="Searching..."
-          data-too-short={`Type at least ${site.search.minQuery} characters to search`}
-          data-found="{n} result(s) for {q}"
-          data-empty="No results for {q}"
-          data-filtered="{n} of {total} result(s) for {q}"
-          data-listing="{n} result(s) with these filters"
-          data-empty-filter="No results with these filters"
-          data-failed="The search index could not be loaded. Please try again."
+          data-searching="Ищем..."
+          data-too-short={`Для поиска введите не меньше ${site.search.minQuery} символов`}
+          data-found="Найдено: {n}. Запрос: {q}"
+          data-empty="По запросу {q} ничего не найдено"
+          data-filtered="Найдено: {n} из {total}. Запрос: {q}"
+          data-listing="Найдено с этими фильтрами: {n}"
+          data-empty-filter="С этими фильтрами ничего не найдено"
+          data-failed="Не удалось загрузить поиск. Попробуйте ещё раз."
         >
         </p>
 
         <noscript>
           <p class="search-status">
-            Search needs JavaScript, because this site is static and there is no
-            server to ask. Everything it finds is reachable without it: Posts,
-            Video, Categories and Tags.
+            Поиску нужен JavaScript: сайт статический, и спросить некого. Всё,
+            что он находит, доступно и без него: статьи, видео, категории и
+            теги.
           </p>
         </noscript>
 
@@ -257,7 +258,7 @@ const tags = (await getTerms("tags")).sort(
         <ul
           id="search-results"
           class="search-results"
-          data-tag-prefix="Found in tags:"
+          data-tag-prefix="Найдено в тегах:"
         >
         </ul>
       </div>

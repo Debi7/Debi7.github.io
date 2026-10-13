@@ -14,24 +14,27 @@ export function formatIsoDate(date: Date): string {
 // English month abbreviations, hard-coded rather than taken from Intl: Hugo renders the
 // English strings here (hugo.toml sets no defaultContentLanguage), and Intl output depends
 // on the build machine's ICU data.
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian. The abbreviations are Russian now,
+// in the genitive a Russian date reads in ("05 мая"), and still hard-coded for the reason above.
 const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
+  "янв",
+  "фев",
+  "мар",
+  "апр",
+  "мая",
+  "июн",
+  "июл",
+  "авг",
+  "сен",
+  "окт",
+  "ноя",
+  "дек",
 ];
 
 export function formatMonthDay(date: Date): string {
   const d = shifted(date);
-  return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}`;
+  // Changed 2026-10-13 with the Russian months: the day comes first, "07 сен".
+  return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]}`;
 }
 
 export function formatYear(date: Date): string {

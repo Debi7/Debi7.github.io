@@ -31,13 +31,15 @@ const slides = fs.existsSync(dir)
 
 const interval = site.carousel.interval;
 
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian. The photo descriptions and every
+// label of the carousel below are Russian.
 const alts: Record<string, string> = {
-  "01.jpg": "Waterfall in a green forest",
-  "02.jpg": "Granite cliffs and forest above a river",
-  "03.jpg": "Green hills in the mist",
-  "04.jpg": "Rocky coast and turquoise sea",
-  "05.jpg": "Red canyon at sunset",
-  "06.jpg": "Northern lights over a forest",
+  "01.jpg": "Водопад в зелёном лесу",
+  "02.jpg": "Гранитные скалы и лес над рекой",
+  "03.jpg": "Зелёные холмы в тумане",
+  "04.jpg": "Скалистый берег и бирюзовое море",
+  "05.jpg": "Красный каньон на закате",
+  "06.jpg": "Северное сияние над лесом",
 };
 
 // `hidden` is a valid global HTML attribute on an inline SVG element, but Astro's
@@ -53,7 +55,7 @@ const hiddenAttr = { hidden: true };
         id="home-carousel"
         class="void-carousel"
         aria-roledescription="carousel"
-        aria-label="Nature photos"
+        aria-label="Фотографии природы"
         data-interval={interval}
       >
         {slides.map((name, i) => (
@@ -61,12 +63,12 @@ const hiddenAttr = { hidden: true };
             class:list={["void-carousel__slide", i === 0 && "is-active"]}
             role="group"
             aria-roledescription="slide"
-            aria-label={`${i + 1} of ${slides.length}`}
+            aria-label={`${i + 1} из ${slides.length}`}
             aria-hidden={i !== 0 ? "true" : undefined}
           >
             <img
               src={`/images/carousel/${name}`}
-              alt={alts[name] ?? `Nature, photo ${i + 1}`}
+              alt={alts[name] ?? `Природа, фото ${i + 1}`}
               width="1600"
               height="700"
               decoding="async"
@@ -79,21 +81,21 @@ const hiddenAttr = { hidden: true };
         <button
           type="button"
           class="void-carousel__btn void-carousel__btn--prev"
-          aria-label="Previous photo"
+          aria-label="Предыдущее фото"
         >
           &#8249;
         </button>
         <button
           type="button"
           class="void-carousel__btn void-carousel__btn--next"
-          aria-label="Next photo"
+          aria-label="Следующее фото"
         >
           &#8250;
         </button>
         <button
           type="button"
           class="void-carousel__toggle"
-          aria-label="Pause autoplay"
+          aria-label="Остановить прокрутку"
           aria-pressed="false"
         >
           <svg
@@ -113,17 +115,13 @@ const hiddenAttr = { hidden: true };
             <path d="M4 2.5v11a1 1 0 0 0 1.5.87l9-5.5a1 1 0 0 0 0-1.74l-9-5.5A1 1 0 0 0 4 2.5z" />
           </svg>
         </button>
-        <div
-          class="void-carousel__dots"
-          role="tablist"
-          aria-label="Choose a photo"
-        >
+        <div class="void-carousel__dots" role="tablist" aria-label="Выбор фото">
           {slides.map((_, i) => (
             <button
               type="button"
               role="tab"
               class:list={["void-carousel__dot", i === 0 && "is-active"]}
-              aria-label={`Photo ${i + 1}`}
+              aria-label={`Фото ${i + 1}`}
               aria-selected={i === 0 ? "true" : "false"}
               data-index={i}
             />

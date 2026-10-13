@@ -39,7 +39,8 @@ import CardList from "../../components/CardList.astro";
 import { getPosts, postCard } from "../../lib/posts";
 import { paginateByYear } from "../../lib/lists";
 
-const title = "Posts";
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
+const title = "Статьи";
 
 export async function getStaticPaths() {
   return paginateByYear((await getPosts()).map(postCard), "/posts/").map(

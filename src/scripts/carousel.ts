@@ -124,9 +124,10 @@
   toggle.addEventListener("click", function () {
     paused = !paused;
     toggle.setAttribute("aria-pressed", String(paused));
+    // Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
     toggle.setAttribute(
       "aria-label",
-      paused ? "Resume autoplay" : "Pause autoplay",
+      paused ? "Продолжить прокрутку" : "Остановить прокрутку",
     );
     setHidden(iconPause, paused);
     setHidden(iconPlay, !paused);

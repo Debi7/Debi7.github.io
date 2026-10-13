@@ -82,7 +82,7 @@ const socialContainerClass =
           <button
             id="open-modal-btn"
             class="transform text-gray-600 transition duration-200 hover:scale-110 hover:text-gray-900"
-            aria-label="Email"
+            aria-label="Почта"
           >
             <svg
               class="h-7 w-7"
@@ -100,15 +100,20 @@ const socialContainerClass =
 
     <!-- Копирайт -->
     <div class="mt-6 text-center text-sm text-gray-500">
+      {
+        /* Changed 2026-10-13 at the owner's word: the interface has one language, Russian; the two
+      labels of this line, "Работает на" and "Всего посещений". */
+      }
       &copy; {new Date().getFullYear()}
-      {site.title} | Powered by <a
+      {site.title} | Работает на <a
         href="https://github.com/Dauaucloud/hugo-theme-void"
         class="text-gray-600 hover:text-gray-900 hover:underline"
         >hugo-theme-void</a
       >
       <span id="busuanzi_container_site_pv" style="display: none;">
-        | Total visits: <span id="busuanzi_value_site_pv" class="text-gray-600"
-        ></span>
+        | Всего посещений: <span
+          id="busuanzi_value_site_pv"
+          class="text-gray-600"></span>
       </span>
     </div>
   </div>

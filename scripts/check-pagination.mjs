@@ -221,15 +221,20 @@ const cardsOf = (html) =>
   ].map((m) => decodeURIComponent(m[1]));
 
 // The Previous or Next link: an anchor whose content contains the word, with or without an icon.
+// Changed 2026-10-13 with the Russian interface (owner): the words are "Назад" and "Далее" now, and
+// \b knows ASCII letters only, so the word's edges are tested as "no letter" under the u flag.
 function linkOf(html, word) {
   const m = html.match(
-    new RegExp(`<a href="([^"]+)"[^>]*>(?:(?!</a>)[\\s\\S])*?\\b${word}\\b`),
+    new RegExp(
+      `<a href="([^"]+)"[^>]*>(?:(?!</a>)[\\s\\S])*?(?<!\\p{L})${word}(?!\\p{L})`,
+      "u",
+    ),
   );
   return m ? m[1] : null;
 }
 
 function yearSwitcherOf(html) {
-  const nav = html.match(/<nav aria-label="Years"[\s\S]*?<\/nav>/);
+  const nav = html.match(/<nav aria-label="Годы"[\s\S]*?<\/nav>/);
   if (!nav) return null;
   // Years and, since the rule of 2026-09-19, the ellipsis between hidden years, in order.
   return [
@@ -301,7 +306,7 @@ function checkNumbers(html, n, last, base, where, everyNumberUpTo, fail) {
       `${where}: ${blocks.length} blocks of page numbers, expected 1`,
     );
   const re =
-    /<a href="([^"]+)" aria-label="Page (\d+)"[^>]*>\s*(\d+)\s*<\/a>|<span aria-current="page"[^>]*>\s*(\d+)\s*<\/span>|<span aria-hidden="true"[^>]*>\s*(?:&hellip;|\u2026)\s*<\/span>/g;
+    /<a href="([^"]+)" aria-label="Страница (\d+)"[^>]*>\s*(\d+)\s*<\/a>|<span aria-current="page"[^>]*>\s*(\d+)\s*<\/span>|<span aria-hidden="true"[^>]*>\s*(?:&hellip;|\u2026)\s*<\/span>/g;
   const entries = [...blocks[0][1].matchAll(re)].map((m) =>
     m[4]
       ? { n: Number(m[4]), current: true }
@@ -368,7 +373,7 @@ function checkList({
     if (onPage.join() !== want.join())
       fail(`${where}: shows ${onPage.join(" ")}, expected ${want.join(" ")}`);
     seen.push(...onPage);
-    const prev = linkOf(html, "Previous");
+    const prev = linkOf(html, "Назад");
     if (prev !== (n === 1 ? null : pageUrl(base, n - 1)))
       fail(`${where}: Previous points at ${prev}`);
     checkNumbers(html, n, last, base, where, everyNumberUpTo, fail);
@@ -399,7 +404,7 @@ function checkList({
       )
         fail(`${where}: the highlighted year is not ${currentYear}`);
     }
-    url = linkOf(html, "Next");
+    url = linkOf(html, "Далее");
   }
   if (n === last && seen.length !== expected.length)
     fail(
@@ -413,7 +418,7 @@ function checkList({
   let steps = 0;
   while (back && steps <= last) {
     steps++;
-    back = linkOf(readPage(dist, back) ?? "", "Previous");
+    back = linkOf(readPage(dist, back) ?? "", "Назад");
   }
   if (steps !== last)
     fail(`${label}: Previous goes back over ${steps} pages, expected ${last}`);

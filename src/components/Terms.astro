@@ -16,7 +16,8 @@ const { tags } = Astro.props;
 {
   tags.length > 0 && (
     <div class="tags-container">
-      <div class="mb-2 font-medium text-gray-700 dark:text-gray-300">Tags:</div>
+      {/* Changed 2026-10-13 at the owner's word: the interface has one language, Russian. */}
+      <div class="mb-2 font-medium text-gray-700 dark:text-gray-300">Теги:</div>
       <div class="flex flex-wrap gap-2">
         {tags.map((tag) => (
           <a

@@ -15,79 +15,102 @@
 // fallback: `{{ i18n "categories_help_text" | default "..." }}`. Hugo then renders the
 // fallback. Do not invent such keys here - keep the literal in the component, the way the
 // theme does, so this file stays a faithful copy of the TOML.
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian. The values below are Russian
+// now and the keys stay those of en.toml, as the note above foresaw. articles_count is the one key
+// added: a Russian count needs its plural forms, which a single word cannot carry.
 export const t = {
   // Footer
-  footer_share_knowledge: "Sharing knowledge, experience, and ideas",
-  footer_navigation: "Navigation",
-  footer_stay_connected: "Stay Connected",
-  footer_subscribe_contact: "Subscribe to my content or contact me",
-  footer_contact_me: "Contact Me",
+  footer_share_knowledge: "Делимся знаниями, опытом и идеями",
+  footer_navigation: "Навигация",
+  footer_stay_connected: "Оставайтесь на связи",
+  footer_subscribe_contact: "Подпишитесь или напишите нам",
+  footer_contact_me: "Написать нам",
   footer_github: "GitHub",
   footer_zhihu: "Zhihu",
-  footer_email: "Email",
-  footer_rights_reserved: "All Rights Reserved",
-  footer_built_with: "Built with",
-  footer_built: "Built",
-  footer_theme: "Theme",
+  footer_email: "Почта",
+  footer_rights_reserved: "Все права защищены",
+  footer_built_with: "Сделано на",
+  footer_built: "Собрано",
+  footer_theme: "Тема",
 
   // Homepage
-  home_recent_posts: "Recent Posts",
-  home_view_all_posts: "View All Posts",
-  home_welcome: "Welcome to my blog",
+  home_recent_posts: "Последние статьи",
+  home_view_all_posts: "Все статьи",
+  home_welcome: "Добро пожаловать",
 
   // List page
-  list_read_more: "Read more",
-  year_indicator: "Year indicator",
-  decorative_halo: "Decorative halo",
-  article_list: "Article list",
-  list_view_by_year: "View by year",
-  list_view_by_category: "View by category",
-  list_article_count: (count: number) => `${count} articles in total`,
+  list_read_more: "Читать далее",
+  year_indicator: "Год",
+  decorative_halo: "Декоративный ореол",
+  article_list: "Список статей",
+  list_view_by_year: "По годам",
+  list_view_by_category: "По категориям",
+  list_article_count: (count: number) => `Всего статей: ${count}`,
 
   // Video page
-  list_watch_video: "Watch the video",
+  list_watch_video: "Смотреть видео",
 
   // About page
-  about_skills: "Skills",
-  about_experience: "Experience",
-  about_education: "Education",
-  about_projects: "Projects",
-  about_interests: "Interests",
-  about_contact: "Contact",
+  about_skills: "Навыки",
+  about_experience: "Опыт",
+  about_education: "Образование",
+  about_projects: "Проекты",
+  about_interests: "Интересы",
+  about_contact: "Контакты",
 
   // Article page
-  reading_time: "min read",
-  page_views: "Page Views",
-  back_to_home: "Back to Home",
+  reading_time: "мин чтения",
+  page_views: "Просмотры",
+  back_to_home: "На главную",
 
   // Article date format. Hugo layout strings; see src/lib/date.ts for the formatter.
-  date_month_day_format: "Jan 02",
+  date_month_day_format: "02 Jan",
   date_year: "",
 
   // Tags
-  tag_icon_title: "Tag",
-  all_tags: "All Tags",
-  tags_help_text: "Click on any tag to view related articles",
-  articles: "articles",
+  tag_icon_title: "Тег",
+  all_tags: "Все теги",
+  tags_help_text: "Нажмите на тег, чтобы увидеть статьи с ним",
+  articles: "статей",
 
   // Common buttons and tips
-  back_to_top: "Back to top",
-  search_placeholder: "Search...",
-  pagination_next: "Next",
-  pagination_previous: "Previous",
-  pagination_page: (pageNumber: number) => `Page ${pageNumber}`,
-  related_posts: "Related Posts",
-  table_of_contents: "Table of Contents",
-  comments: "Comments",
-  share: "Share",
-  share_copy_link: "Copy link",
-  share_copy_summary: "Copy summary",
-  share_copied: "Copied",
-  share_native: "Share...",
-  share_copy_link_success: "Link copied.",
-  share_copy_summary_success: "Share text copied.",
-  share_copy_failed: "Copy failed.",
-  share_native_failed: "Native sharing is unavailable.",
-  last_updated: "Last updated on",
-  load_comments: "Load Comments",
+  back_to_top: "Наверх",
+  search_placeholder: "Поиск...",
+  pagination_next: "Далее",
+  pagination_previous: "Назад",
+  pagination_page: (pageNumber: number) => `Страница ${pageNumber}`,
+  related_posts: "Похожие статьи",
+  table_of_contents: "Содержание",
+  comments: "Комментарии",
+  share: "Поделиться",
+  share_copy_link: "Копировать ссылку",
+  share_copy_summary: "Копировать описание",
+  share_copied: "Скопировано",
+  share_native: "Поделиться...",
+  share_copy_link_success: "Ссылка скопирована.",
+  share_copy_summary_success: "Текст скопирован.",
+  share_copy_failed: "Не удалось скопировать.",
+  share_native_failed: "Системная кнопка «Поделиться» недоступна.",
+  last_updated: "Обновлено",
+  load_comments: "Загрузить комментарии",
+  // Added 2026-10-13 with the Russian values: the count on a tag's page, "1 статья", "2 статьи",
+  // "5 статей". It counts the lectures too (the note on the tag page says why the word stays).
+  articles_count: (count: number) =>
+    `${count} ${ruPlural(count, "статья", "статьи", "статей")}`,
 } as const;
+
+// Added 2026-10-13: the Russian plural form for a count - one (1, 21), few (2-4, 22-24), many (the
+// rest, 11-14 included).
+function ruPlural(
+  count: number,
+  one: string,
+  few: string,
+  many: string,
+): string {
+  const tens = count % 100;
+  const units = count % 10;
+  if (tens >= 11 && tens <= 14) return many;
+  if (units === 1) return one;
+  if (units >= 2 && units <= 4) return few;
+  return many;
+}

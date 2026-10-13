@@ -65,14 +65,16 @@ const categories = await getTerms("categories");
 // Hugo titles a taxonomy terms page after the taxonomy itself, so this is a literal rather
 // than something read from config. It fills both the h1 and, through Base, the title tag
 // ("Categories | Radiesthesia Club", as the Hugo page has).
-const title = "Categories";
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
+const title = "Категории";
 
 // The template asks for `categories_help_text` but supplies a fallback:
 //   {{ i18n "categories_help_text" | default "Click any category to..." }}
 // That key does NOT exist in the theme's en.toml, so Hugo renders the fallback. The
 // literal therefore belongs here, and the key must not be invented in src/i18n/strings.ts -
 // that file is a faithful copy of the TOML. See MIGRATION-PLAN.md §4.1, step 3.
-const helpText = "Click any category to expand or collapse articles";
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
+const helpText = "Нажмите на категорию, чтобы раскрыть или свернуть её статьи";
 ---
 
 <Base title={title}>

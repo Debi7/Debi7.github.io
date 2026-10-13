@@ -121,8 +121,10 @@ const groups = groupByYear(page.items);
       question for the owner rather than something to invent a key for. */
       }
       <div class="text-sm text-gray-600">
-        {term.cards.length}
-        {t.articles}
+        {
+          /* Changed 2026-10-13 at the owner's word: the interface has one language, Russian. The count takes its Russian plural form, "1 статья", "5 статей". */
+        }
+        {t.articles_count(term.cards.length)}
       </div>
     </div>
 

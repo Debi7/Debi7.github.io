@@ -189,6 +189,8 @@ const flag = `localStorage.getItem("kb-auth-expires")`;
 
 // a. a guest on the home page: no kb-member, no Account item, the icon leads to the sign-in page,
 // and the Clerk chunk is not loaded.
+// Changed 2026-10-13: the menu names below are Russian, as the menu is (owner: one interface
+// language); Account is "Кабинет".
 await open("/", 3000);
 const guestHome = await evalJs(
   `JSON.stringify({member: document.documentElement.classList.contains("kb-member"), menu: ${menuShown}, href: document.getElementById("auth-link").getAttribute("href"), clerk: ${authChunkLoaded}})`,
@@ -196,7 +198,7 @@ const guestHome = await evalJs(
 check(
   "guest on /: no kb-member, no Account, icon to sign-in, no Clerk chunk",
   /"member":false/.test(guestHome) &&
-    /"menu":\["Home","Posts","Video","Categories","Tags","About"\]/.test(
+    /"menu":\["Главная","Статьи","Видео","Категории","Теги","О нас"\]/.test(
       guestHome,
     ) &&
     /"href":"\/auth\/signin\/"/.test(guestHome) &&
@@ -215,7 +217,7 @@ const flaggedAbout = await evalJs(
 check(
   "valid flag on /about/: kb-member, Account shown, icon to the account page",
   /"member":true/.test(flaggedAbout) &&
-    /"menu":\["Home","Posts","Video","Categories","Tags","Account","About"\]/.test(
+    /"menu":\["Главная","Статьи","Видео","Категории","Теги","Кабинет","О нас"\]/.test(
       flaggedAbout,
     ) &&
     /"href":"\/auth\/account\/"/.test(flaggedAbout),
@@ -399,7 +401,8 @@ if (KEY === "") {
   check(
     G2[4],
     /"member":true/.test(memberAbout) &&
-      /"Account","About"\]/.test(memberAbout) &&
+      // Changed 2026-10-13: the menu is Russian (owner), Account reads "Кабинет" and About "О нас".
+      /"Кабинет","О нас"\]/.test(memberAbout) &&
       /"href":"\/auth\/account\/"/.test(memberAbout),
     memberAbout,
   );

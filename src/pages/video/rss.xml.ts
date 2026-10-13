@@ -25,7 +25,9 @@ export async function GET(context: APIContext) {
   return rss({
     // The feed's own title says which half of the site it carries, so the two feeds are told apart
     // in a reader. "Video" is the menu item's label (src/config.ts), kept as it is written there.
-    title: `${site.title} - Video`,
+    // Changed 2026-10-13 at the owner's word: the interface has one language, Russian, and the menu
+    // item reads "Видео" now.
+    title: `${site.title} - Видео`,
     description: t.list_watch_video,
     site: context.site ?? site.title,
     items: videos.slice(0, feedLength).map((video) => ({

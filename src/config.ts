@@ -47,7 +47,8 @@ export const site = {
   // this, so the two cannot drift apart and a translated menu is one edit rather than two. The
   // words match the menu items below on purpose - a visitor filtering by "Video" is thinking of
   // the menu item of that name.
-  searchSections: { posts: "Posts", video: "Video" },
+  // Changed 2026-10-13 at the owner's word: the interface has one language, Russian. The labels are the Russian menu names, as the note above asks.
+  searchSections: { posts: "Статьи", video: "Видео" },
 
   // Added 2026-09-22 after the reviewer asked for it: how many characters have to be typed before
   // /search/ looks anything up. One or two letters match almost every entry on the site, so the
@@ -235,12 +236,14 @@ export const site = {
 
   pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },
 
+  // Changed 2026-10-13 at the owner's word: the interface has one language, Russian. The menu still keeps one language, as
+  // the note on Account says - that language is Russian now, the Account item included.
   menu: [
-    { name: "Home", url: "/" },
-    { name: "Posts", url: "/posts/" },
-    { name: "Video", url: "/video/" },
-    { name: "Categories", url: "/categories/" },
-    { name: "Tags", url: "/tags/" },
+    { name: "Главная", url: "/" },
+    { name: "Статьи", url: "/posts/" },
+    { name: "Видео", url: "/video/" },
+    { name: "Категории", url: "/categories/" },
+    { name: "Теги", url: "/tags/" },
     // Added the evening of 2026-09-25 at the owner's word: the member's page as a menu item, which
     // is where a visitor lands after a sign-in or a confirmed registration. English and short, like
     // the other names (the owner corrected a first Russian spelling the same evening: the menu keeps
@@ -249,7 +252,7 @@ export const site = {
     // members-only (AUTH.md section 10), so a guest never sees it.
     // Changed 2026-09-26 (CLERK.md step 2): the item keeps its name and place and opens
     // /auth/account/, the page that replaced the dashboard.
-    { name: "Account", url: accountPath },
-    { name: "About", url: "/about/" },
+    { name: "Кабинет", url: accountPath },
+    { name: "О нас", url: "/about/" },
   ],
 } as const;

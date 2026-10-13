@@ -22,7 +22,8 @@ import CardList from "../../components/CardList.astro";
 import { getVideos, videoCard } from "../../lib/video";
 import { paginateByYear } from "../../lib/lists";
 
-const title = "Video";
+// Changed 2026-10-13 at the owner's word: the interface has one language, Russian.
+const title = "Видео";
 
 export async function getStaticPaths() {
   return paginateByYear((await getVideos()).map(videoCard), "/video/").map(
