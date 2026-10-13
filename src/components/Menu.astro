@@ -329,6 +329,91 @@ const accountMark = (url: string) =>
       },
       true,
     );
+
+    // Added 2026-10-13 at the owner's word, with the site's name that no longer gives way
+    // (Header.astro): the row now overflows across most of the band above (measured: up to 776px
+    // for a guest, 844px for a member), where the spring of a row that fits seldom gets its turn.
+    // So the spring is also at the ends of a row that overflows: a finger scrolls it natively, and
+    // pulling on past either end draws the row a little further with the same resistance and lets
+    // it spring back. Touch events are only listened to (passive), so the browser's own scrolling,
+    // momentum included, is untouched; a mostly vertical move is the page's and is left alone.
+    let pull: { x: number; y: number; by: number; decided: boolean } | null =
+      null;
+    scroller.addEventListener(
+      "touchstart",
+      (e) => {
+        const touch = e.touches[0];
+        if (
+          !overflowing ||
+          stillPlease.matches ||
+          e.touches.length !== 1 ||
+          !touch
+        )
+          return;
+        pull = { x: touch.clientX, y: touch.clientY, by: 0, decided: false };
+        list.style.transition = "none";
+      },
+      { passive: true },
+    );
+    scroller.addEventListener(
+      "touchmove",
+      (e) => {
+        const touch = e.touches[0];
+        if (!pull || !touch) return;
+        const dx = touch.clientX - pull.x;
+        if (!pull.decided) {
+          if (Math.abs(touch.clientY - pull.y) > Math.abs(dx)) {
+            pull = null;
+            return;
+          }
+          pull.decided = true;
+        }
+        pull.x = touch.clientX;
+        const end = scroller.scrollWidth - scroller.clientWidth;
+        if (pull.by > 0 || (scroller.scrollLeft <= 0 && dx > 0))
+          pull.by = Math.max(0, pull.by + dx);
+        else if (pull.by < 0 || (scroller.scrollLeft >= end - 1 && dx < 0))
+          pull.by = Math.min(0, pull.by + dx);
+        list.style.transform = pull.by
+          ? `translateX(${reach * Math.tanh(pull.by / (reach * 4))}px)`
+          : "";
+      },
+      { passive: true },
+    );
+    const springBack = () => {
+      if (pull && pull.by !== 0) {
+        list.style.transition =
+          "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)";
+        list.style.transform = "";
+      }
+      pull = null;
+    };
+    scroller.addEventListener("touchend", springBack);
+    scroller.addEventListener("touchcancel", springBack);
+
+    // Added 2026-10-13 at the owner's word: on the web the row scrolls with the mouse wheel. A wheel
+    // turns up and down, and a row that overflows sideways ignores that without Shift, so the turn
+    // is moved onto the row while the row can still go that way; at either end the wheel scrolls
+    // the page again. A trackpad's own sideways swipe (deltaX) is left to the browser, as is a
+    // pinch (ctrlKey). Firefox may count in lines (deltaMode 1), about 16px each.
+    scroller.addEventListener(
+      "wheel",
+      (e) => {
+        if (
+          !overflowing ||
+          e.ctrlKey ||
+          Math.abs(e.deltaX) >= Math.abs(e.deltaY)
+        )
+          return;
+        const step = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+        const end = scroller.scrollWidth - scroller.clientWidth;
+        const next = Math.min(end, Math.max(0, scroller.scrollLeft + step));
+        if (next === scroller.scrollLeft) return;
+        e.preventDefault();
+        scroller.scrollLeft = next;
+      },
+      { passive: false },
+    );
   }
 
   // Added later on 2026-09-30, at the owner's request: on the account page the Account item, in the
