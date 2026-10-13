@@ -190,7 +190,11 @@ const accountMark = (url: string) =>
     // under a finger, the colleague's original idea; the script below explains how. The band was
     // hers, 640px to 708px, and the owner widened it to 793px inclusive; the list's band classes
     // (w-max and the side padding) moved with it.
-    <nav class="relative hidden w-full min-w-0 justify-end whitespace-nowrap sm:flex">
+    //
+    // Changed 2026-10-13 at the owner's word: ml-4, a gap between the site's name and the menu. The
+    // name no longer gives way (Header.astro), so a scrolled row was cut right at the name's last
+    // letter and looked as if it ran into it; the row is cut 16px after the name now.
+    <nav class="relative ml-4 hidden w-full min-w-0 justify-end whitespace-nowrap sm:flex">
       <div
         data-menu-scroller
         class="relative flex min-w-0 items-center justify-between overflow-x-auto scrollbar-none"
@@ -260,9 +264,30 @@ const accountMark = (url: string) =>
     const reach = 15; // px the row can be pulled at most
     let overflowing = false;
     const springs = () => band.matches && !overflowing && !stillPlease.matches;
+    // Added 2026-10-13 at the owner's word: while the row overflows, the item of the page that is
+    // open (aria-current, the highlighted one) is brought into view, with a little room on its side,
+    // so a page whose item sits in the hidden part still shows where the visitor is. Only until the
+    // visitor moves the row: after a wheel turn, a press or a touch the row stays where it was put,
+    // even when the window is resized or the web font arrives.
+    let moved = false;
+    const reveal = () => {
+      const current = list.querySelector("[aria-current]")?.closest("li");
+      if (!(current instanceof HTMLElement) || current.offsetParent === null)
+        return;
+      const room = 12;
+      const start = current.offsetLeft - room;
+      const end = current.offsetLeft + current.offsetWidth + room;
+      if (end > scroller.scrollLeft + scroller.clientWidth)
+        scroller.scrollLeft = end - scroller.clientWidth;
+      else if (start < scroller.scrollLeft) scroller.scrollLeft = start;
+    };
+    for (const type of ["wheel", "pointerdown", "touchstart", "keydown"])
+      scroller.addEventListener(type, () => (moved = true), { passive: true });
     const update = () => {
       // A pixel of slack, so that a fractional width rounded up never shows the line on its own.
       overflowing = scroller.scrollWidth - scroller.clientWidth > 1;
+      // Added 2026-10-13: see reveal() above.
+      if (overflowing && !moved) reveal();
       line.classList.toggle("hidden", !overflowing && !band.matches);
       // The nav is a few pixels wider than the row when the row fits (5px to 11px, measured), so
       // the line starts where the row starts, as it did in the colleague's version; 0 when the row
@@ -414,6 +439,67 @@ const accountMark = (url: string) =>
       },
       { passive: false },
     );
+
+    // Added 2026-10-13, after the owner reported "I cannot scroll on my desktop": a mouse drags the
+    // row too, as a finger does - press, move sideways, let go - with the same spring past either
+    // end. A press that moves less than `grab` stays a click; a drag drops the click that follows
+    // it (swallowUntil, as the touch spring does), and the browser's own dragging of a link and
+    // selecting of its text are held off while the row is being moved.
+    let held: {
+      id: number;
+      x: number;
+      from: number;
+      moved: boolean;
+    } | null = null;
+    scroller.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0 || !overflowing) return;
+      held = {
+        id: e.pointerId,
+        x: e.clientX,
+        from: scroller.scrollLeft,
+        moved: false,
+      };
+    });
+    scroller.addEventListener("pointermove", (e) => {
+      if (!held || e.pointerId !== held.id) return;
+      const dx = e.clientX - held.x;
+      if (!held.moved) {
+        if (Math.abs(dx) <= grab) return;
+        held.moved = true;
+        scroller.setPointerCapture(e.pointerId);
+        scroller.style.cursor = "grabbing";
+        scroller.style.userSelect = "none";
+        list.style.transition = "none";
+      }
+      const end = scroller.scrollWidth - scroller.clientWidth;
+      const want = held.from - dx;
+      scroller.scrollLeft = Math.min(end, Math.max(0, want));
+      // Past the start the row is pulled right (positive), past the end left (negative).
+      const past = want < 0 ? -want : want > end ? end - want : 0;
+      list.style.transform =
+        past && !stillPlease.matches
+          ? `translateX(${reach * Math.tanh(past / (reach * 4))}px)`
+          : "";
+    });
+    const release = (e: PointerEvent) => {
+      if (!held || e.pointerId !== held.id) return;
+      if (held.moved) {
+        swallowUntil = performance.now() + 400;
+        scroller.style.cursor = "";
+        scroller.style.userSelect = "";
+        if (list.style.transform) {
+          list.style.transition =
+            "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)";
+          list.style.transform = "";
+        }
+      }
+      held = null;
+    };
+    scroller.addEventListener("pointerup", release);
+    scroller.addEventListener("pointercancel", release);
+    scroller.addEventListener("dragstart", (e) => {
+      if (overflowing) e.preventDefault();
+    });
   }
 
   // Added later on 2026-09-30, at the owner's request: on the account page the Account item, in the
