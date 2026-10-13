@@ -46,13 +46,7 @@
 // lib/lists.ts since 2026-09-22, when the list helpers left lib/posts.ts so that posts and
 // videos stay apart and share only what is common (VIDEO-PAGE.md, section 4).
 import type { PageNumber } from "../lib/lists";
-// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t); the button
-// texts through T and the page labels as language-dependent attributes. scripts/check-pagination.mjs
-// finds the numbered links by their English label (data-en-aria-label) since then.
-// import { t } from "../i18n/strings";
-import { ui } from "../i18n/strings";
-import { langAttrs } from "../i18n/lang";
-import T from "./T.astro";
+import { t } from "../i18n/strings";
 
 interface Props {
   /** The addresses of the neighbouring pages; undefined on the first and on the last page. */
@@ -94,8 +88,7 @@ const { prevUrl, nextUrl, numbers, class: className } = Astro.props;
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          {/* Changed 2026-10-12: both languages (was t.pagination_previous). */}
-          <T s={ui.pagination_previous} />
+          {t.pagination_previous}
         </a>
       ) : (
         <div />
@@ -119,7 +112,7 @@ const { prevUrl, nextUrl, numbers, class: className } = Astro.props;
           ) : (
             <a
               href={entry.url}
-              {...langAttrs({ "aria-label": ui.pagination_page(entry.number) })}
+              aria-label={t.pagination_page(entry.number)}
               class="rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
             >
               {entry.number}
@@ -132,8 +125,7 @@ const { prevUrl, nextUrl, numbers, class: className } = Astro.props;
           href={nextUrl}
           class="flex items-center rounded-md bg-white px-4 py-2 text-gray-700 shadow-sm transition-colors hover:bg-gray-50 sm:justify-self-end dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
         >
-          {/* Changed 2026-10-12: both languages (was t.pagination_next). */}
-          <T s={ui.pagination_next} />
+          {t.pagination_next}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             class="ml-1 h-4 w-4"

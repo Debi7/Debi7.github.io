@@ -21,10 +21,6 @@
 // and site.ts still binds every [data-theme-toggle], which costs nothing with one button and
 // keeps working if a second one ever returns.
 
-// Added 2026-10-12 (the note above the button).
-import { ui } from "../i18n/strings";
-import { langAttrs } from "../i18n/lang";
-
 interface Props {
   /** Extra classes, used to hide one instance at a breakpoint. */
   class?: string;
@@ -33,12 +29,6 @@ interface Props {
 const { class: className } = Astro.props;
 ---
 
-{
-  /* Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): the label below is in
-  both languages (it read "Toggle dark mode"); site.ts replaces it on load with the one that names
-  the theme a press leads to, in both languages as well. */
-}
-
 <button
   data-theme-toggle
   type="button"
@@ -46,7 +36,7 @@ const { class: className } = Astro.props;
     "theme-toggle theme-toggle-btn relative inline-flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-gray-700 focus:outline-none dark:text-gray-200",
     className,
   ]}
-  {...langAttrs({ "aria-label": ui.theme_toggle })}
+  aria-label="Toggle dark mode"
   aria-pressed="false"
 >
   <!-- Light icon (provided) -->

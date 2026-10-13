@@ -3,11 +3,6 @@ import Menu from "./Menu.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 import AuthButton from "./AuthButton.astro";
 import { site } from "../config";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the language switch beside
-// the menu, and the labels of the magnifier and the menu button in both languages.
-import LangToggle from "./LangToggle.astro";
-import { ui } from "../i18n/strings";
-import { langAttrs } from "../i18n/lang";
 
 const initials = site.title
   .split(/\s+/u)
@@ -118,14 +113,8 @@ const initials = site.title
           invented for one rule. The anchor carries aria-label, so the accessible name stays the
           full site title at every width no matter which of the two spans is painted. */
         }
-        {
-          /* Changed 2026-10-12 from 400px to 440px: the language switch (LangToggle.astro) took
-          another control's width out of the row, and the wordmark was cut short from 400px to
-          434px ("Radiesthesia Clu..."), measured in headless Edge in both languages, signed in and
-          out. From 436px it fits whole; 440px leaves a little room for a wider font. */
-        }
-        <span class="min-[440px]:hidden">{initials}</span>
-        <span class="hidden min-[440px]:inline">{site.title}</span>
+        <span class="min-[400px]:hidden">{initials}</span>
+        <span class="hidden min-[400px]:inline">{site.title}</span>
       </a>
     </div>
     {
@@ -134,12 +123,6 @@ const initials = site.title
     }
     <div class="flex min-w-0 items-center gap-2">
       <Menu />
-      {
-        /* Added 2026-10-12 at the owner's request: the interface language switch, beside the menu
-        at every width - right after the row of items from 640px up, first of the controls below
-        it, where the menu is the hamburger. */
-      }
-      <LangToggle />
       {
         /* Changed 2026-09-22 at the owner's request: the switch stays in the bar at every width
         and no longer moves into the drop-down panel when the menu opens. It used to carry
@@ -168,7 +151,7 @@ const initials = site.title
       }
       <a
         href="/search/"
-        {...langAttrs({ "aria-label": ui.search_label })}
+        aria-label="Search"
         class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center text-gray-700 no-underline transition-colors hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-300"
       >
         <svg
@@ -207,7 +190,7 @@ const initials = site.title
         id="menu-toggle"
         type="button"
         class="relative inline-flex h-7 w-7 cursor-pointer items-center justify-center border-0 bg-transparent p-0 text-gray-700 focus:outline-none focus-visible:rounded-md focus-visible:ring-[3px] focus-visible:ring-[rgb(59_130_246/0.45)] sm:hidden dark:text-gray-200"
-        {...langAttrs({ "aria-label": ui.menu_open })}
+        aria-label="Open menu"
         aria-expanded="false"
         aria-controls="site-menu"
       >

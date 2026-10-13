@@ -13,17 +13,12 @@
 // right hit an invisible button, and Tab could land on it too. invisible is visibility: hidden,
 // which takes it out of both; transition-all keeps it visible for the whole fade-out, so the
 // animation looks as before. The script below toggles it with the other classes.
-//
-// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): the label is the theme's
-// back_to_top string in both languages (it read "Наверх").
-import { ui } from "../i18n/strings";
-import { langAttrs } from "../i18n/lang";
 ---
 
 <button
   id="scroll-to-top"
   class="pointer-events-none invisible fixed bottom-6 right-6 z-50 flex h-12 w-12 translate-y-12 items-center justify-center rounded-full bg-[#11213b] text-white opacity-0 shadow-lg transition-all duration-300 hover:bg-[#233358] active:scale-95"
-  {...langAttrs({ "aria-label": ui.back_to_top })}
+  aria-label="Наверх"
 >
   <svg
     xmlns="http://w3.org"

@@ -1,6 +1,3 @@
-// Added 2026-10-12 for formatMonthDay() (two interface languages). Type-only, so nothing is loaded.
-import type { Phrase } from "../i18n/lang";
-
 const FRONT_MATTER_OFFSET_MINUTES = 180;
 
 function shifted(date: Date): Date {
@@ -32,34 +29,9 @@ const MONTHS = [
   "Dec",
 ];
 
-// Added 2026-10-12 with the two interface languages: the Russian abbreviations, hard-coded for the
-// same reason as the English ones above. Genitive, as a Russian date reads ("05 мая").
-// camelCase, the house rule for new names (CLAUDE.md, open question 1 about the older ones).
-const monthsRu = [
-  "янв",
-  "фев",
-  "мар",
-  "апр",
-  "мая",
-  "июн",
-  "июл",
-  "авг",
-  "сен",
-  "окт",
-  "ноя",
-  "дек",
-];
-
-// Changed 2026-10-12: the date of a list card in both languages, the day first in Russian ("05
-// мая") and second in English ("May 05", Hugo's "Jan 02" layout as before). It returned the English
-// string: return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}`;
-export function formatMonthDay(date: Date): Phrase {
+export function formatMonthDay(date: Date): string {
   const d = shifted(date);
-  const day = String(d.getUTCDate()).padStart(2, "0");
-  return {
-    ru: `${day} ${monthsRu[d.getUTCMonth()]}`,
-    en: `${MONTHS[d.getUTCMonth()]} ${day}`,
-  };
+  return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 export function formatYear(date: Date): string {

@@ -32,14 +32,6 @@ import { postUrl } from "../lib/post-url";
 import { formatDateTime } from "../lib/date";
 // Added later on 2026-10-02 at the owner's request: 20 posts to a page (AdminPager.astro).
 import { bindPager, pageCount } from "./admin-pager";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): every message of the panel
-// in both languages, from src/i18n/admin.ts, written with setPhrase() and setLangAttr() so that a
-// language switch shows them in the new language at once - the page does not reload, because the
-// form may hold unsaved text. A confirm() dialog takes plain text, so it gets the language shown.
-// What goes into a post (the " (копия)" mark of a copy's title) stays Russian: it is content.
-import { adminUi } from "../i18n/admin";
-import { format, type Phrase, type Words } from "../i18n/lang";
-import { phrase, setLangAttr, setPhrase } from "./lang";
 
 type Fields = {
   title: string;
@@ -91,20 +83,18 @@ const input = {
 };
 
 // What the service's problem codes mean, in the site's language.
-// Changed 2026-10-12: in both languages, from src/i18n/admin.ts, where the Russian texts that stood
-// here are the ru halves (problem_*).
-const problemText: Record<string, Phrase> = {
-  required: adminUi.problem_required,
-  too_long: adminUi.problem_too_long,
-  too_many: adminUi.problem_too_many,
-  format: adminUi.problem_format,
-  reserved: adminUi.problem_reserved,
-  line_break: adminUi.problem_line_break,
-  duplicate: adminUi.problem_duplicate,
-  html: adminUi.problem_html,
-  link: adminUi.problem_link,
-  type: adminUi.problem_type,
-  unknown: adminUi.problem_unknown,
+const problemText: Record<string, string> = {
+  required: "Заполните это поле.",
+  too_long: "Слишком длинно.",
+  too_many: "Слишком много.",
+  format: "Не подходит по форме: смотрите подсказку над полем.",
+  reserved: "Такой адрес занят страницами сайта: выберите другой.",
+  line_break: "Здесь не может быть переносов строк.",
+  duplicate: "Есть повторы.",
+  html: "В тексте есть HTML-тег. Уберите его или поставьте в обратные кавычки как код.",
+  link: "Ссылка ведёт не на страницу и не на почту. Разрешены адреса http(s), mailto и пути на сайте.",
+  type: "Неверное значение.",
+  unknown: "Неизвестное поле.",
 };
 
 let opened: Opened;
@@ -114,10 +104,9 @@ let posts: Listed[] = [];
 // reload the list.
 let page = 1;
 
-// Changed 2026-10-12: Words, and written with setPhrase (both languages); it took a string.
-function say(text: Words, isError = false): void {
+function say(text: string, isError = false): void {
   if (status === null) return;
-  setPhrase(status, text);
+  status.textContent = text;
   status.classList.toggle("text-red-600", isError);
 }
 
@@ -184,8 +173,10 @@ async function start(clerk: Clerk): Promise<void> {
     return;
   }
   if (endpoint === "") {
-    // Changed 2026-10-12: the message from src/i18n/admin.ts, here and in every say() below.
-    say(adminUi.posts_not_connected, true);
+    say(
+      "Сервис публикаций ещё не подключён (site.admin.endpoint, ADMIN.md).",
+      true,
+    );
     return;
   }
 
@@ -212,8 +203,7 @@ async function start(clerk: Clerk): Promise<void> {
 
   // A failure the editor can act on gets a sentence; anything else is "unavailable", with the
   // service's answer in the console for whoever is testing.
-  // Changed 2026-10-12: answers a Phrase (both languages); it answered a string.
-  const explain = async (response: Response): Promise<Phrase> => {
+  const explain = async (response: Response): Promise<string> => {
     const answer: unknown = await response.json().catch(() => undefined);
     const code =
       typeof answer === "object" && answer !== null && "error" in answer
@@ -224,23 +214,23 @@ async function start(clerk: Clerk): Promise<void> {
     // the session token does not carry that status - the line is missing from Clerk's token
     // template (ADMIN.md 4.1, step 1). The same sentence is in admin-users.ts.
     if (response.status === 403 && code === "forbidden") {
-      const names: Record<string, Phrase> = site.admin.statusNames;
-      return format(adminUi.token_hint, { status: names[status] ?? status });
+      const names: Record<string, string> = site.admin.statusNames;
+      return `Статус учётной записи «${names[status] ?? status}» есть, но сессия его не передаёт: в шаблоне сессионного токена Clerk нет строки status (ADMIN.md, раздел 3, шаг 1).`;
     }
     if (response.status === 403) {
-      return adminUi.posts_no_rights;
+      return "У этой учётной записи нет прав на публикации.";
     }
-    if (code === "exists") return adminUi.post_exists;
+    if (code === "exists") return "Публикация с таким адресом уже есть.";
     if (code === "conflict") {
-      return adminUi.post_conflict;
+      return "Публикацию изменили или удалили с тех пор, как вы её открыли. Обновите страницу.";
     }
-    if (code === "not_found") return adminUi.post_not_found;
-    if (code === "too_large") return adminUi.post_too_large;
+    if (code === "not_found") return "Такой публикации нет: её удалили?";
+    if (code === "too_large") return "Текст слишком большой.";
     if (code === "unsupported") {
-      return adminUi.post_unsupported;
+      return "Эту публикацию нельзя изменить здесь: её заголовок записан в форме, которую панель не разбирает.";
     }
     console.error("Admin: the service answered", response.status, answer);
-    return adminUi.posts_unavailable;
+    return "Сервис публикаций недоступен. Попробуйте позже.";
   };
 
   // Added later on 2026-10-02: the pager; a click draws that page and brings the list into view.
@@ -260,11 +250,11 @@ async function start(clerk: Clerk): Promise<void> {
       const answer = (await response.json()) as { posts: Listed[] };
       posts = answer.posts;
       render();
-      say(format(adminUi.posts_count, { n: posts.length }));
+      say(`Публикаций: ${posts.length}.`);
       if (listBox !== null) listBox.hidden = false;
     } catch (error) {
       console.error("Admin: the service could not be asked.", error);
-      say(adminUi.posts_unavailable, true);
+      say("Сервис публикаций недоступен. Попробуйте позже.", true);
     }
   }
 
@@ -292,27 +282,18 @@ async function start(clerk: Clerk): Promise<void> {
         "[data-date]",
         toLocalInput(post.date).replace("T", " ").slice(0, 16),
       );
-      // Changed 2026-10-12: both languages (setPhrase); it set "черновик", "на сайте" or
-      // "запланирована" as text.
-      const state = row.querySelector("[data-state]");
-      if (state !== null) {
-        setPhrase(
-          state,
-          post.draft
-            ? adminUi.state_draft
-            : isLive(post)
-              ? adminUi.state_live
-              : adminUi.state_scheduled,
-        );
-      }
+      set(
+        "[data-state]",
+        post.draft ? "черновик" : isLive(post) ? "на сайте" : "запланирована",
+      );
       set("[data-slug]", post.slug);
       const edit = row.querySelector<HTMLButtonElement>("[data-edit]");
       if (edit !== null) {
         if (!post.editable) {
           edit.dataset.locked = "true";
           edit.disabled = true;
-          // Changed 2026-10-12: both languages (setLangAttr); it was the Russian sentence.
-          setLangAttr(edit, "title", adminUi.post_unreadable);
+          edit.title =
+            "Заголовок этой публикации записан в форме, которую панель не разбирает.";
         }
         edit.addEventListener("click", () => void openPost(post));
       }
@@ -323,8 +304,8 @@ async function start(clerk: Clerk): Promise<void> {
         if (!post.editable) {
           copy.dataset.locked = "true";
           copy.disabled = true;
-          // Changed 2026-10-12: as for the edit button above.
-          setLangAttr(copy, "title", adminUi.post_unreadable);
+          copy.title =
+            "Заголовок этой публикации записан в форме, которую панель не разбирает.";
         }
         copy.addEventListener("click", () => void copyPost(post));
       }
@@ -382,15 +363,14 @@ async function start(clerk: Clerk): Promise<void> {
     if (formError !== null) formError.hidden = true;
   }
 
-  // Changed 2026-10-12: the title is a Phrase, written with setPhrase (it was a string).
   function showForm(
-    title: Phrase,
+    title: string,
     values: Fields & { body: string },
     slug?: string,
   ): void {
     if (form === null || heading === null) return;
     clearErrors();
-    setPhrase(heading, title);
+    heading.textContent = title;
     if (input.title) input.title.value = values.title;
     if (input.slug) {
       input.slug.value = slug ?? "";
@@ -416,7 +396,7 @@ async function start(clerk: Clerk): Promise<void> {
   async function openPost(post: Listed): Promise<void> {
     if (busy) return;
     setBusy(true);
-    say(adminUi.post_loading);
+    say("Загрузка публикации...");
     try {
       const response = await call("get", { slug: post.slug });
       if (!response.ok) {
@@ -429,13 +409,13 @@ async function start(clerk: Clerk): Promise<void> {
       opened = { slug: full.slug, sha: full.sha };
       say("");
       showForm(
-        adminUi.form_edit,
+        "Изменить публикацию",
         { ...full.fields, body: full.body },
         full.slug,
       );
     } catch (error) {
       console.error("Admin: the post could not be loaded.", error);
-      say(adminUi.posts_unavailable, true);
+      say("Сервис публикаций недоступен. Попробуйте позже.", true);
     } finally {
       setBusy(false);
     }
@@ -456,7 +436,7 @@ async function start(clerk: Clerk): Promise<void> {
   async function copyPost(post: Listed): Promise<void> {
     if (busy) return;
     setBusy(true);
-    say(adminUi.post_loading);
+    say("Загрузка публикации...");
     try {
       const response = await call("get", { slug: post.slug });
       if (!response.ok) {
@@ -472,19 +452,16 @@ async function start(clerk: Clerk): Promise<void> {
       // marked as well, within the service's 200 characters: two equal titles in this list would
       // invite editing or deleting the wrong post.
       const suffix = " (копия)";
-      showForm(
-        format(adminUi.form_copy, { title: full.fields.title || full.slug }),
-        {
-          ...full.fields,
-          title: full.fields.title.slice(0, 200 - suffix.length) + suffix,
-          date: new Date().toISOString(),
-          body: full.body,
-        },
-      );
+      showForm(`Новая публикация: копия «${full.fields.title || full.slug}»`, {
+        ...full.fields,
+        title: full.fields.title.slice(0, 200 - suffix.length) + suffix,
+        date: new Date().toISOString(),
+        body: full.body,
+      });
       if (input.slug) input.slug.value = freeSlug(full.slug, "-copy");
     } catch (error) {
       console.error("Admin: the post could not be loaded.", error);
-      say(adminUi.posts_unavailable, true);
+      say("Сервис публикаций недоступен. Попробуйте позже.", true);
     } finally {
       setBusy(false);
     }
@@ -535,7 +512,7 @@ async function start(clerk: Clerk): Promise<void> {
     expectation: "created" | "edited" | "deleted",
     lastmod?: string,
   ): Promise<void> {
-    say(adminUi.saved_rebuilding);
+    say("Сохранено. Сайт пересобирается, обычно это занимает пару минут...");
     const live = await waitUntil(slug, (response, html) =>
       expectation === "created"
         ? response.status === 200
@@ -544,10 +521,17 @@ async function start(clerk: Clerk): Promise<void> {
           : Date.parse(modifiedTime(html) ?? "") === Date.parse(lastmod ?? ""),
     );
     if (!live) {
-      say(adminUi.saved_not_live, true);
+      say(
+        "Изменение сохранено, но за 8 минут так и не появилось на сайте. Сообщите владельцу сайта: сборка могла не пройти.",
+        true,
+      );
       return;
     }
-    say(expectation === "deleted" ? adminUi.deleted_live : adminUi.published);
+    say(
+      expectation === "deleted"
+        ? "Публикация удалена с сайта."
+        : "Готово: публикация на сайте.",
+    );
   }
 
   async function save(event: SubmitEvent): Promise<void> {
@@ -565,7 +549,7 @@ async function start(clerk: Clerk): Promise<void> {
     const slug = opened?.slug ?? input.slug?.value.trim() ?? "";
     const editing = opened;
     setBusy(true);
-    say(adminUi.saving);
+    say("Сохранение...");
     try {
       const response = await call("save", {
         slug,
@@ -582,16 +566,15 @@ async function start(clerk: Clerk): Promise<void> {
             `[data-error-for="${problem.field}"]`,
           );
           const text = problemText[problem.code] ?? problemText.type;
-          // Changed 2026-10-12: setPhrase, both languages (it set textContent).
           if (target !== null) {
-            setPhrase(target, text);
+            target.textContent = text;
             target.hidden = false;
           } else if (formError !== null) {
-            setPhrase(formError, text);
+            formError.textContent = text;
             formError.hidden = false;
           }
         }
-        say(adminUi.fix_marked, true);
+        say("Исправьте отмеченные поля.", true);
         return;
       }
       // Added later on 2026-10-02, the owner's "by default, no conflicts": a new post whose address
@@ -619,13 +602,12 @@ async function start(clerk: Clerk): Promise<void> {
               ? freeSlug(slug, "")
               : freeSlug(copyOf[1] ?? slug, "-copy");
           if (input.slug) input.slug.value = next;
-          // Changed 2026-10-12: a Phrase (adminUi.slug_taken), written with setPhrase.
-          const text = format(adminUi.slug_taken, { slug, next });
+          const text = `Адрес «${slug}» уже занят другой публикацией. Предложен свободный «${next}»: проверьте его и сохраните ещё раз.`;
           const target = document.querySelector<HTMLElement>(
             '[data-error-for="slug"]',
           );
           if (target !== null) {
-            setPhrase(target, text);
+            target.textContent = text;
             target.hidden = false;
           }
           say(text, true);
@@ -635,8 +617,7 @@ async function start(clerk: Clerk): Promise<void> {
       if (!response.ok) {
         const text = await explain(response);
         if (formError !== null) {
-          // Changed 2026-10-12: setPhrase, both languages (it set textContent).
-          setPhrase(formError, text);
+          formError.textContent = text;
           formError.hidden = false;
         }
         say(text, true);
@@ -649,11 +630,13 @@ async function start(clerk: Clerk): Promise<void> {
       closeForm();
       await load();
       if (answer.unchanged === true) {
-        say(adminUi.unchanged);
+        say("Изменений нет: сохранять было нечего.");
       } else if (fields.draft) {
-        say(adminUi.saved_draft);
+        say("Сохранено как черновик: на сайте не показывается.");
       } else if (!isLive(fields)) {
-        say(adminUi.saved_future);
+        say(
+          "Сохранено. Публикация появится на сайте после первой сборки сайта после её даты.",
+        );
       } else {
         await publishWait(
           slug,
@@ -663,7 +646,7 @@ async function start(clerk: Clerk): Promise<void> {
       }
     } catch (error) {
       console.error("Admin: the post could not be saved.", error);
-      say(adminUi.posts_unavailable, true);
+      say("Сервис публикаций недоступен. Попробуйте позже.", true);
     } finally {
       setBusy(false);
     }
@@ -671,15 +654,12 @@ async function start(clerk: Clerk): Promise<void> {
 
   async function remove(post: Listed): Promise<void> {
     if (busy) return;
-    // Changed 2026-10-12: in the language shown (a dialog holds plain text; the note at the top).
     const ok = confirm(
-      phrase(
-        format(adminUi.confirm_delete, { title: post.title || post.slug }),
-      ),
+      `Удалить публикацию «${post.title || post.slug}»? Вернуть её можно будет только из истории репозитория.`,
     );
     if (!ok) return;
     setBusy(true);
-    say(adminUi.deleting);
+    say("Удаление...");
     try {
       const response = await call("delete", { slug: post.slug, sha: post.sha });
       if (!response.ok) {
@@ -688,10 +668,10 @@ async function start(clerk: Clerk): Promise<void> {
       }
       await load();
       if (isLive(post)) await publishWait(post.slug, "deleted");
-      else say(adminUi.deleted);
+      else say("Публикация удалена.");
     } catch (error) {
       console.error("Admin: the post could not be deleted.", error);
-      say(adminUi.posts_unavailable, true);
+      say("Сервис публикаций недоступен. Попробуйте позже.", true);
     } finally {
       setBusy(false);
     }
@@ -700,7 +680,7 @@ async function start(clerk: Clerk): Promise<void> {
   newButton?.addEventListener("click", () => {
     if (busy) return;
     opened = undefined;
-    showForm(adminUi.posts_new, {
+    showForm("Новая публикация", {
       title: "",
       description: "",
       date: new Date().toISOString(),
@@ -712,7 +692,7 @@ async function start(clerk: Clerk): Promise<void> {
   });
   cancelButton?.addEventListener("click", () => {
     closeForm();
-    say(format(adminUi.posts_count, { n: posts.length }));
+    say(`Публикаций: ${posts.length}.`);
   });
   form?.addEventListener("submit", (event) => void save(event));
 

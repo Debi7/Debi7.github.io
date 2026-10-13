@@ -17,12 +17,7 @@
 // faithful copy of the theme's en.toml and its header forbids inventing keys in it; the theme has
 // no comment widget, so there is no key to port. This is the same rule the other ported
 // components follow for a Hugo `| default "literal"`.
-// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): the paragraph above no
-// longer holds - strings.ts is the home of every interface string now, and the labels moved there
-// (comments_show, comments_hide, comments_noscript).
 import { site } from "../config";
-import { ui } from "../i18n/strings";
-import T from "./T.astro";
 
 export interface Props {
   /** The canonical address of the page being commented on; Disqus keys a thread by it. */
@@ -73,8 +68,7 @@ const { shortname } = site.disqus;
     id="toggle-disqus-btn"
     class="rounded-lg border border-gray-200 px-2 py-1 text-base text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 md:px-3 md:py-2 md:text-lg dark:text-gray-200 dark:hover:bg-slate-800 dark:hover:text-white"
   >
-    {/* Changed 2026-10-12: both languages (it read "Показать комментарии"). */}
-    <T s={ui.comments_show} />
+    Показать комментарии
   </button>
 </div>
 
@@ -90,9 +84,6 @@ const { shortname } = site.disqus;
 <script>
   // Added 2026-09-28: the name of the event a paid video's page sends (see the locked prop).
   import { site } from "../config";
-  // Added 2026-10-12: the button's two labels in both languages (the note in the frontmatter).
-  import { ui } from "../i18n/strings";
-  import { setPhrase } from "../scripts/lang";
 
   const thread = document.getElementById("disqus_thread");
   const toggleBtn = document.getElementById("toggle-disqus-btn");
@@ -152,13 +143,11 @@ const { shortname } = site.disqus;
 
       if (isHidden) {
         thread.classList.remove("hidden");
-        // Changed 2026-10-12: setPhrase, both languages (was textContent = "Скрыть комментарии").
-        setPhrase(toggleBtn, ui.comments_hide);
+        toggleBtn.textContent = "Скрыть комментарии";
         loadDisqus();
       } else {
         thread.classList.add("hidden");
-        // Changed 2026-10-12: as above (was textContent = "Показать комментарии").
-        setPhrase(toggleBtn, ui.comments_show);
+        toggleBtn.textContent = "Показать комментарии";
       }
     });
   }
@@ -173,15 +162,9 @@ const { shortname } = site.disqus;
   @astrojs/compiler on this file and in dist/. */
 }
 <noscript>
-  {
-    /* Changed 2026-10-12: both languages. Without JavaScript the language block in Head.astro does
-  not run either, so the default language shows (site.i18n.defaultLanguage); the other half is there
-  for the day it does.
-  It read: "Please enable JavaScript to view the" and the link "comments powered by Disqus." */
-  }
   <p>
-    <T s={ui.comments_noscript} />
-    <a href="https://disqus.com/?ref_noscript">Disqus</a>
+    Please enable JavaScript to view the
+    <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
   </p>
 </noscript>
 

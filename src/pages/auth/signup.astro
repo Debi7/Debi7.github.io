@@ -31,29 +31,17 @@ import Base from "../../layouts/Base.astro";
 // Added 2026-09-26: Clerk's components in the site's colours and font (src/styles/clerk.css says
 // how). Imported here, as carousel.css and search.css are by the pages that need them.
 import "../../styles/clerk.css";
-// (2026-10-12: the paragraph above about the strings no longer holds - they are in both languages
-// now and live in src/i18n/strings.ts, with every other interface string; Clerk's own strings are
-// Russian or English after the interface language, set in src/scripts/auth.ts.)
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the page's own words in
-// both languages through T. Clerk's form takes its language once, when it loads (Clerk's
-// "Localization prop", Core 3: the localization goes to load(); English is Clerk's default), so a
-// language switch on this page reloads it - reloadOnLanguageChange() in src/scripts/auth.ts.
-import { ui } from "../../i18n/strings";
-import T from "../../components/T.astro";
 ---
 
-{
-  /* Changed 2026-10-12: the title and the texts below in both languages (they were Russian). */
-}
-<Base title={ui.auth_title_signup}>
+<Base title="Регистрация">
   <section class="mx-auto max-w-md">
-    <h1 class="mb-6 text-2xl font-bold"><T s={ui.auth_title_signup} /></h1>
+    <h1 class="mb-6 text-2xl font-bold">Регистрация</h1>
     <div id="clerk-signup"></div>
     <p id="auth-status" class="mt-4 text-sm" role="status" aria-live="polite">
-      <T s={ui.auth_loading} />
+      Загрузка...
     </p>
     <noscript>
-      <p class="text-sm"><T s={ui.auth_noscript_signup} /></p>
+      <p class="text-sm">Для регистрации нужен включённый JavaScript.</p>
     </noscript>
   </section>
 </Base>
@@ -61,15 +49,8 @@ import T from "../../components/T.astro";
 <script>
   // Top level of the template, never inside an expression: a bundled script there is not hoisted
   // at all (CLAUDE.md, measured 2026-09-22).
-  // reloadOnLanguageChange added 2026-10-12 (the note in the frontmatter).
-  import {
-    getClerk,
-    reloadOnLanguageChange,
-    showLoadFailure,
-  } from "../../scripts/auth";
+  import { getClerk, showLoadFailure } from "../../scripts/auth";
   import { site } from "../../config";
-
-  reloadOnLanguageChange();
 
   const root = document.getElementById("clerk-signup");
   const status = document.getElementById("auth-status");

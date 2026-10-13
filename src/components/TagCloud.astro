@@ -92,9 +92,6 @@
 import { site } from "../config";
 import { getTerms } from "../lib/terms";
 import { encodeSlug } from "../lib/urlize";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the cloud's label is the
-// Tags section's name in both languages (it read "Tags").
-import { langAttrs } from "../i18n/lang";
 
 // The same source as /tags/ and the tag pages, so a word here cannot point at a page that does
 // not exist: getTerms() has already dropped drafts and future dates. It runs at build time, in
@@ -201,7 +198,7 @@ const motionOf = (name: string, step: number): Motion => {
 {
   tags.length > 0 && (
     <nav
-      {...langAttrs({ "aria-label": site.sections.tags })}
+      aria-label="Tags"
       class="tag-cloud mx-auto block max-w-3xl px-4 pt-10 sm:hidden"
     >
       <div class="tag-cloud__sky flex flex-wrap items-center justify-center gap-x-5 gap-y-3">

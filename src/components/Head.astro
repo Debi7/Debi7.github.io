@@ -1,36 +1,17 @@
 ---
 import { site } from "../config";
-// Added 2026-10-12 with the two interface languages (site.i18n in src/config.ts).
-import { inLang, type Lang, type Words } from "../i18n/lang";
 
 interface Props {
-  // Changed 2026-10-12: Words, so a page whose title is interface text (Posts, Tags, Вход) passes
-  // it in both languages; a title that is content (an article, a tag) is still a string.
-  title?: Words;
+  title?: string;
   description?: string;
 }
 
 const { title } = Astro.props;
-// Changed 2026-10-12: the title in one language, for the language-dependent version below.
-// const pageTitle = title ? `${title} | ${site.title}` : site.title;
-const titleIn = (lang: Lang) => {
-  const words = title === undefined ? "" : inLang(title, lang);
-  return words ? `${words} | ${site.title}` : site.title;
-};
-const pageTitle = titleIn(site.i18n.defaultLanguage);
-// Added 2026-10-12: the title of every language on the element, which src/scripts/lang.ts copies
-// into document.title after a switch; a title element can hold no span. Only for a Phrase - a
-// string reads the same in every language.
-const titleAttrs =
-  typeof title === "object"
-    ? Object.fromEntries(
-        site.i18n.languages.map((lang) => [`data-${lang}-text`, titleIn(lang)]),
-      )
-    : {};
+const pageTitle = title ? `${title} | ${site.title}` : site.title;
 ---
 
 <meta name="viewport" content="width=device-width" />
-<title {...titleAttrs}>{pageTitle}</title>
+<title>{pageTitle}</title>
 
 <meta name="color-scheme" content="light dark" />
 <meta
@@ -49,29 +30,6 @@ const titleAttrs =
       if (dark) document.documentElement.classList.add("dark");
     } catch (_) {}
   })();
-</script>
-{
-  /* Added 2026-10-12 with the two interface languages (site.i18n in src/config.ts): the language
-  the visitor chose, as a class on <html>, before the first paint - the same reason and the same
-  place as the theme above. custom.css hides the spans of the other language under it, so a page
-  never shows the default language first and then switches. Only a language other than the default
-  gets a class; a stored value that is not one of the site's languages is ignored. define:vars
-  implies is:inline (the note on the guest gate in Base.astro). */
-}
-<script
-  is:inline
-  define:vars={{
-    langKey: site.i18n.storageKey,
-    langs: site.i18n.languages,
-    langDefault: site.i18n.defaultLanguage,
-  }}
->
-  try {
-    var lang = localStorage.getItem(langKey);
-    if (lang !== langDefault && langs.indexOf(lang) !== -1) {
-      document.documentElement.classList.add("lang-" + lang);
-    }
-  } catch (_) {}
 </script>
 <style is:inline>
   html.dark,

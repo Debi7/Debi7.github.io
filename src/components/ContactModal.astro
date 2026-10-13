@@ -40,12 +40,6 @@
 // this form is on every page and must not load Clerk. The three fields carry ym-disable-keys, so
 // that Yandex Metrika's Session Replay does not record what is in them.
 import { site } from "../config";
-// Added 2026-10-12 at the owner's request (the interface in two languages, src/i18n/lang.ts): every
-// label of the form in both languages through T, and the two toasts as templates the inline script
-// clones, since an inline script cannot import the dictionary. The subject the sign-in page sends
-// stays Russian: it is read by whoever receives the letter, not by the visitor.
-import { ui } from "../i18n/strings";
-import T from "./T.astro";
 ---
 
 <div
@@ -75,10 +69,7 @@ import T from "./T.astro";
     <h3
       class="mb-4 font-bilingual text-xl font-semibold text-gray-800 dark:text-gray-200"
     >
-      {
-        /* Changed 2026-10-12: both languages (it read "Обратная связь"); so are the labels below. */
-      }
-      <T s={ui.contact_title} />
+      Обратная связь
     </h3>
 
     <form
@@ -117,7 +108,7 @@ import T from "./T.astro";
 
       <div>
         <label class="mb-1 block text-sm text-gray-500 dark:text-slate-400"
-          ><T s={ui.contact_name} /></label
+          >Ваше имя</label
         >
         <input
           type="text"
@@ -129,7 +120,7 @@ import T from "./T.astro";
 
       <div>
         <label class="mb-1 block text-sm text-gray-500 dark:text-slate-400"
-          ><T s={ui.contact_email} /></label
+          >Email для связи</label
         >
         <input
           type="email"
@@ -141,7 +132,7 @@ import T from "./T.astro";
 
       <div>
         <label class="mb-1 block text-sm text-gray-500 dark:text-slate-400"
-          ><T s={ui.contact_message} /></label
+          >Сообщение</label
         >
         <textarea
           name="message"
@@ -155,18 +146,11 @@ import T from "./T.astro";
         type="submit"
         class="w-full rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90"
       >
-        <T s={ui.contact_send} />
+        Отправить письмо
       </button>
     </form>
   </div>
 </div>
-
-{
-  /* Added 2026-10-12: the two toasts' texts in both languages (the note at the top); showToast()
-  below clones one into the toast, and custom.css shows the language of the page. */
-}
-<template id="contact-toast-sent"><T s={ui.contact_sent} /></template>
-<template id="contact-toast-failed"><T s={ui.contact_failed} /></template>
 
 <!-- Контейнер для toast-уведомлений -->
 <div
@@ -201,18 +185,10 @@ import T from "./T.astro";
       transition-all duration-300 ease-out
       ${colors[type]}
     `;
-    // Changed 2026-10-12: the message is a template's id now (contact-toast-sent or -failed), whose
-    // content holds the text in both languages; it was a string put into the second span with
-    // innerHTML: <span>${message}</span>.
     toast.innerHTML = `
       <span>${type === "success" ? "✓" : "✕"}</span>
+      <span>${message}</span>
     `;
-    const text = document.createElement("span");
-    const template = document.getElementById(message);
-    if (template instanceof HTMLTemplateElement) {
-      text.append(template.content.cloneNode(true));
-    }
-    toast.append(text);
 
     toastContainer.appendChild(toast);
 
@@ -324,15 +300,13 @@ import T from "./T.astro";
           form.reset(); // очистить форму
           modal.classList.add("hidden");
           modal.classList.remove("flex");
-          // Changed 2026-10-12 here and in the two calls below: the template's id (showToast's note);
-          // the texts were "Сообщение отправлено!" and "Ошибка отправки. Попробуйте ещё раз.".
-          showToast("contact-toast-sent", "success");
+          showToast("Сообщение отправлено!", "success");
         } else {
-          showToast("contact-toast-failed", "error");
+          showToast("Ошибка отправки. Попробуйте ещё раз.", "error");
         }
       } catch (error) {
         console.error(error);
-        showToast("contact-toast-failed", "error");
+        showToast("Ошибка отправки. Попробуйте ещё раз.", "error");
       }
     });
   }

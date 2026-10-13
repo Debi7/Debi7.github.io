@@ -42,11 +42,7 @@ import TableOfContents from "../components/TableOfContents.astro";
 import PostNav from "../components/PostNav.astro";
 import Terms from "../components/Terms.astro";
 import { site } from "../config";
-// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t), through T.
-// import { t } from "../i18n/strings";
-import { ui } from "../i18n/strings";
-import type { Phrase, Words } from "../i18n/lang";
-import T from "../components/T.astro";
+import { t } from "../i18n/strings";
 import { formatDateTime, formatIsoDate } from "../lib/date";
 import type { NavLink } from "../lib/lists";
 import { encodeSlug, urlize } from "../lib/urlize";
@@ -63,9 +59,7 @@ interface Props {
   categories: string[];
   tags: string[];
   /** The text of the clock item under the title: "3 min read" for a post, the duration for a video. The item is left out when undefined. */
-  // Changed 2026-10-12: Words - a post's reading time is interface text in both languages, a
-  // video's duration is content.
-  timeLabel: Words | undefined;
+  timeLabel: string | undefined;
   shareTitle: string;
   /** Candidates for the Share button's text, in order; the first one with any text left after cleaning wins, else the site title. */
   shareTexts: (string | undefined)[];
@@ -100,12 +94,6 @@ const {
 const dateMachine = formatDateTime(date);
 const dateHuman = formatIsoDate(date);
 const updatedHuman = formatIsoDate(updated ?? date);
-// Added 2026-10-12: the "last updated" line in both languages, as one string per language - the
-// note above the line in the markup says why it has to be one text node.
-const updatedLine: Phrase = {
-  ru: `${ui.last_updated.ru} ${updatedHuman}`,
-  en: `${ui.last_updated.en} ${updatedHuman}`,
-};
 
 // Changed 2026-09-19, asked for by the owner: the Share button got an empty text for every
 // post without a description. The fallback chain used `??`, which only skips null and
@@ -245,8 +233,7 @@ const shareDescription = shareTexts.map(cleanShareText).find(Boolean);
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  {/* Changed 2026-10-12: through T (timeLabel is Words now). */}
-                  <T s={timeLabel} />
+                  {timeLabel}
                 </span>
               )
             }
@@ -274,8 +261,7 @@ const shareDescription = shareTexts.map(cleanShareText).find(Boolean);
                 ></path>
               </svg>
               <span class="whitespace-nowrap">
-                {/* Changed 2026-10-12: both languages (was t.page_views). */}
-                <T s={ui.page_views} />
+                {t.page_views}
                 <span id="busuanzi_value_page_pv"></span>
               </span>
             </span>
@@ -337,11 +323,7 @@ const shareDescription = shareTexts.map(cleanShareText).find(Boolean);
           became two anonymous flex items and the whitespace between them was dropped. One
           expression is one text node, with the space inside it. */
         }
-        {
-          /* Changed 2026-10-12: both languages, still one text node per language (updatedLine). It was
-        the template literal of t.last_updated and updatedHuman. */
-        }
-        <T s={updatedLine} />
+        {`${t.last_updated} ${updatedHuman}`}
       </div>
 
       <footer class="border-t border-gray-100 bg-gray-50 py-6">
@@ -368,8 +350,7 @@ const shareDescription = shareTexts.map(cleanShareText).find(Boolean);
                   stroke-width="2"
                   d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
               </svg>
-              {/* Changed 2026-10-12: both languages (was t.back_to_home). */}
-              <T s={ui.back_to_home} />
+              {t.back_to_home}
             </a>
           </div>
         </div>

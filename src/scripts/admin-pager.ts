@@ -10,9 +10,6 @@
 // imports astro:content (CLAUDE.md, the browser-script pitfall). Change the three together, and
 // scripts/check-pagination.mjs, which mirrors the rule for the built lists.
 import { site } from "../config";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the page labels in both.
-import { ui } from "../i18n/strings";
-import { setLangAttr } from "./lang";
 
 /** The numbers to show for page `current` of `last`, with "gap" for each run of skipped pages. */
 export function pageEntries(current: number, last: number): (number | "gap")[] {
@@ -86,8 +83,7 @@ export function bindPager(
         if (entry !== "gap") {
           node.textContent = String(entry);
           if (entry !== page) {
-            // Changed 2026-10-12: both languages (it was "Страница n").
-            setLangAttr(node, "aria-label", ui.pagination_page(entry));
+            node.setAttribute("aria-label", `Страница ${entry}`);
             node.addEventListener("click", () => go(entry));
           }
         }

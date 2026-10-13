@@ -6,12 +6,6 @@
 // Существуют сторонние комьюнити-компоненты, такие как astro-yandex-metrika,
 // позволяющие вынести ID счетчика в переменные окружения (import.meta.env)
 import { site } from "../config";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the email button's label
-// and the two words of the copyright line, in both languages. GitHub and Telegram are names and
-// read the same in both.
-import { ui } from "../i18n/strings";
-import { langAttrs } from "../i18n/lang";
-import T from "./T.astro";
 
 // Получаем социальные ссылки из конфигурации
 const social = site.social;
@@ -88,7 +82,7 @@ const socialContainerClass =
           <button
             id="open-modal-btn"
             class="transform text-gray-600 transition duration-200 hover:scale-110 hover:text-gray-900"
-            {...langAttrs({ "aria-label": ui.footer_email })}
+            aria-label="Email"
           >
             <svg
               class="h-7 w-7"
@@ -105,20 +99,16 @@ const socialContainerClass =
     </div>
 
     <!-- Копирайт -->
-    {
-      /* Changed 2026-10-12: "Powered by" and "Total visits:" below through T, both languages. */
-    }
     <div class="mt-6 text-center text-sm text-gray-500">
       &copy; {new Date().getFullYear()}
-      {site.title} | <T s={ui.footer_powered_by} />
-      <a
+      {site.title} | Powered by <a
         href="https://github.com/Dauaucloud/hugo-theme-void"
         class="text-gray-600 hover:text-gray-900 hover:underline"
         >hugo-theme-void</a
       >
       <span id="busuanzi_container_site_pv" style="display: none;">
-        | <T s={ui.footer_total_visits} />
-        <span id="busuanzi_value_site_pv" class="text-gray-600"></span>
+        | Total visits: <span id="busuanzi_value_site_pv" class="text-gray-600"
+        ></span>
       </span>
     </div>
   </div>

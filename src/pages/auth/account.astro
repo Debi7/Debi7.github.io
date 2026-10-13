@@ -25,28 +25,16 @@ import Base from "../../layouts/Base.astro";
 import "../../styles/clerk.css";
 // Added 2026-10-02: the addresses of the two panel pages, linked for a metr or an admin.
 import { site } from "../../config";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the page's own words in
-// both languages, through T in the markup and the templates and through phrase() in the script.
-// Clerk's card takes its language once, when it loads (Clerk's "Localization prop", Core 3), so a
-// language switch on this page reloads it (reloadOnLanguageChange() in src/scripts/auth.ts), and
-// the script writes its texts in the language the page loaded in.
-import { ui } from "../../i18n/strings";
-import { langAttrs } from "../../i18n/lang";
-import T from "../../components/T.astro";
 ---
 
-{
-  /* Changed 2026-10-12: here and below, every Russian text of the page in both languages (the note
-in the frontmatter); the Russian texts that stood here are the ru halves in src/i18n/strings.ts. */
-}
-<Base title={ui.auth_account}>
+<Base title="Личный кабинет">
   <section class="mx-auto max-w-3xl">
-    <h1 class="mb-6 text-2xl font-bold"><T s={ui.auth_account} /></h1>
+    <h1 class="mb-6 text-2xl font-bold">Личный кабинет</h1>
     <p id="auth-status" class="text-sm" role="status" aria-live="polite">
-      <T s={ui.auth_loading} />
+      Загрузка...
     </p>
     <noscript>
-      <p class="text-sm"><T s={ui.account_noscript} /></p>
+      <p class="text-sm">Для личного кабинета нужен включённый JavaScript.</p>
     </noscript>
 
     <div id="account-member" hidden>
@@ -55,7 +43,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
         class="mb-6 rounded bg-gray-100 p-4 dark:bg-slate-800"
         hidden
       >
-        <T s={ui.account_demo} />
+        Демо: доступ участника клуба подтверждён.
       </p>
       {
         /* Added 2026-10-02 with the owner's status model (src/config.ts, site.admin; ADMIN.md): the
@@ -88,13 +76,12 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
       <p id="account-admin" class="mb-6 flex gap-4 text-sm" hidden>
         <a
           href={site.admin.postsPage}
-          class="text-blue-600 hover:underline dark:text-blue-400"
-          ><T s={ui.admin_posts_title} /></a
+          class="text-blue-600 hover:underline dark:text-blue-400">Публикации</a
         >
         <a
           href={site.admin.usersPage}
           class="text-blue-600 hover:underline dark:text-blue-400"
-          ><T s={ui.admin_users_title} /></a
+          >Пользователи</a
         >
       </p>
       <div id="clerk-profile"></div>
@@ -103,7 +90,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
         type="button"
         class="mt-6 rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        <T s={ui.account_sign_out} />
+        Выйти
       </button>
     </div>
 
@@ -115,10 +102,8 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
     }
     <template id="devices-template">
       <div>
-        <h2 class="mb-4 text-base font-semibold">
-          <T s={ui.devices_title} />
-        </h2>
-        <p data-devices-status class="text-sm"><T s={ui.auth_loading} /></p>
+        <h2 class="mb-4 text-base font-semibold">Активные устройства</h2>
+        <p data-devices-status class="text-sm">Загрузка...</p>
         <ul
           data-devices-list
           class="divide-y divide-gray-200 dark:divide-slate-700"
@@ -126,7 +111,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
         </ul>
         <nav
           data-devices-pager
-          {...langAttrs({ "aria-label": ui.devices_pages })}
+          aria-label="Страницы списка устройств"
           class="mt-4 flex flex-wrap items-center justify-between gap-y-3"
         >
           <button
@@ -148,7 +133,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
                 stroke-width="2"
                 d="M15 19l-7-7 7-7"></path>
             </svg>
-            <T s={ui.pagination_previous} />
+            Назад
           </button>
           <div data-devices-numbers class="flex flex-wrap justify-center gap-1">
           </div>
@@ -157,7 +142,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
             data-devices-next
             class="flex items-center rounded-md bg-white px-3 py-1 text-sm text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:opacity-40 dark:bg-slate-900 dark:text-gray-300 dark:hover:bg-slate-800"
           >
-            <T s={ui.pagination_next} />
+            Далее
             <svg
               xmlns="http://www.w3.org/2000/svg"
               class="ml-1 h-4 w-4"
@@ -184,7 +169,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
             <span
               data-device-current
               class="ml-2 rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-slate-700 dark:text-gray-300"
-              hidden><T s={ui.devices_this} /></span
+              hidden>Это устройство</span
             >
           </p>
           <p data-device-browser class="text-gray-500 dark:text-gray-400"></p>
@@ -196,7 +181,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
           data-device-revoke
           class="shrink-0 text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
         >
-          <T s={ui.devices_revoke} />
+          Выйти из устройства
         </button>
       </li>
     </template>
@@ -238,23 +223,13 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
 
 <script>
   // Top level of the template, never inside an expression (CLAUDE.md, measured 2026-09-22).
-  // reloadOnLanguageChange added 2026-10-12, and the helpers below it (the frontmatter's note).
-  import {
-    getClerk,
-    reloadOnLanguageChange,
-    showLoadFailure,
-  } from "../../scripts/auth";
-  import { ui } from "../../i18n/strings";
-  import type { Phrase } from "../../i18n/lang";
-  import { phrase, setPhrase } from "../../scripts/lang";
+  import { getClerk, showLoadFailure } from "../../scripts/auth";
   import { clearAuthFlag } from "../../scripts/auth-flag";
   import { site } from "../../config";
   // Added 2026-09-28: the card's "Устройства" page.
   import { devicesPage } from "../../scripts/account-devices";
   // Added later on 2026-10-02: the status as a section of the card's profile page.
   import { statusInProfile } from "../../scripts/account-status";
-
-  reloadOnLanguageChange();
 
   const status = document.getElementById("auth-status");
   const member = document.getElementById("account-member");
@@ -276,8 +251,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
       // No status, or a value outside the list, is a guest, as the services count it.
       const metadata = clerk.user?.publicMetadata ?? {};
       const statuses: readonly string[] = site.admin.statuses;
-      // Changed 2026-10-12: Phrase, each name in both languages (was Record<string, string>).
-      const names: Record<string, Phrase> = site.admin.statusNames;
+      const names: Record<string, string> = site.admin.statusNames;
       const current =
         typeof metadata.status === "string" &&
         statuses.includes(metadata.status)
@@ -287,10 +261,8 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
       if (statusLine !== null) {
         // Changed later on 2026-10-02 (the markup's note): "Ваш статус:" and the name in bold.
         const name = document.createElement("strong");
-        // Changed 2026-10-12: in the language shown (the frontmatter's note); it was the Russian
-        // name and "Ваш статус: ".
-        name.textContent = phrase(names[current] ?? current);
-        statusLine.replaceChildren(phrase(ui.account_your_status) + " ", name);
+        name.textContent = names[current] ?? current;
+        statusLine.replaceChildren("Ваш статус: ", name);
         // Changed again later on 2026-10-02 at the owner's request: the status is shown inside
         // Clerk's card (account-status.ts, below the mount), and this panel only when that has not
         // happened 5 seconds after the card was mounted - a Clerk update that renamed its class
@@ -298,14 +270,9 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
       }
       const blocked = document.getElementById("account-blocked");
       if (blocked !== null && current === "blocked") {
-        // Changed 2026-10-12: both languages; it was the Russian sentence "Доступ к материалам сайта
-        // закрыт" with "администратором" or "метром".
-        setPhrase(
-          blocked,
-          metadata.statusBy === "admin"
-            ? ui.account_blocked_by_admin
-            : ui.account_blocked_by_metr,
-        );
+        blocked.textContent = `Доступ к материалам сайта закрыт ${
+          metadata.statusBy === "admin" ? "администратором" : "метром"
+        }.`;
         blocked.hidden = false;
       }
       const adminLinks = document.getElementById("account-admin");
@@ -341,8 +308,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
         });
         // Added later on 2026-10-02 (the status line's note above): the status inside the card.
         let inCard = false;
-        // Changed 2026-10-12: the name in the language shown (phrase).
-        statusInProfile(profile, phrase(names[current] ?? current), () => {
+        statusInProfile(profile, names[current] ?? current, () => {
           inCard = true;
           if (statusLine !== null) statusLine.hidden = true;
         });
@@ -358,8 +324,7 @@ in the frontmatter); the Russian texts that stood here are the ru halves in src/
       if (signOutButton instanceof HTMLButtonElement) {
         signOutButton.addEventListener("click", async () => {
           signOutButton.disabled = true;
-          // Changed 2026-10-12: both languages (it was "Выходим...").
-          setPhrase(signOutButton, ui.account_signing_out);
+          signOutButton.textContent = "Выходим...";
           // Clerk clears the session; the listener in auth.ts clears the header's flag, and
           // afterSignOutUrl (set in auth.ts) sends the visitor to the home page.
           // Added 2026-09-26: the flag is cleared here, before Clerk is asked, because the first

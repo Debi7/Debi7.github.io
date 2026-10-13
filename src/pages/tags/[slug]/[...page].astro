@@ -68,11 +68,7 @@ import { getTerms } from "../../../lib/terms";
 import { groupByYear, paginateByYear, termLabel } from "../../../lib/lists";
 import { formatMonthDay } from "../../../lib/date";
 import { urlize, encodeSlug } from "../../../lib/urlize";
-// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t), every label
-// through T.
-// import { t } from "../../../i18n/strings";
-import { ui } from "../../../i18n/strings";
-import T from "../../../components/T.astro";
+import { t } from "../../../i18n/strings";
 // Added later on 2026-09-19: the year switcher and the page buttons around the list, through
 // one component shared with CardList.astro; see its header.
 import ListByYear from "../../../components/ListByYear.astro";
@@ -124,12 +120,9 @@ const groups = groupByYear(page.items);
       still t.articles, the theme's own string - with lectures counted in it, the wording is a
       question for the owner rather than something to invent a key for. */
       }
-      {
-        /* Changed 2026-10-12: the count and its word in both languages, with the Russian plural
-      (articles_count); it was the number followed by t.articles. */
-      }
       <div class="text-sm text-gray-600">
-        <T s={ui.articles_count(term.cards.length)} />
+        {term.cards.length}
+        {t.articles}
       </div>
     </div>
 
@@ -175,9 +168,8 @@ const groups = groupByYear(page.items);
                           <h3 class="text-xl font-medium text-gray-800 transition-colors group-hover:text-blue-600 dark:text-gray-100">
                             {card.title}
                           </h3>
-                          {/* Changed 2026-10-12: both languages (formatMonthDay returns a Phrase). */}
                           <time class="mt-1 text-sm text-gray-500 sm:ml-4 sm:mt-0 dark:text-gray-400">
-                            <T s={formatMonthDay(card.date)} />
+                            {formatMonthDay(card.date)}
                           </time>
                         </div>
 
@@ -218,8 +210,7 @@ const groups = groupByYear(page.items);
 
                         <div class="mt-4">
                           <span class="inline-flex items-center text-sm text-blue-600 transition-transform duration-300 group-hover:translate-x-1">
-                            {/* Changed 2026-10-12: both languages (card.action is a Phrase). */}
-                            <T s={card.action} />
+                            {card.action}
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               class="ml-1 h-4 w-4"
@@ -253,12 +244,10 @@ const groups = groupByYear(page.items);
         href="/tags/"
         class="text-gray-600 transition-colors hover:text-blue-600"
       >
-        {/* Changed 2026-10-12: both languages (was t.all_tags). */}
-        <T s={ui.all_tags} />
+        {t.all_tags}
       </a>
       <a href="/" class="text-gray-600 transition-colors hover:text-blue-600">
-        {/* Changed 2026-10-12: both languages (was t.back_to_home). */}
-        <T s={ui.back_to_home} />
+        {t.back_to_home}
       </a>
     </div>
   </div>

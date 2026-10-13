@@ -15,30 +15,12 @@
 // number in the hint on screen and the number the code obeys cannot drift apart. Added 2026-09-22
 // with the rule itself.
 import { site } from "../config";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): the page's words are in its
-// attributes in both languages (langText below), the section of a result is printed in both, and a
-// language switch draws the status line and the results again.
-import { currentLang, setPhrase } from "./lang";
-import type { Phrase } from "../i18n/lang";
-
-// The value of a language-dependent attribute of the page in the language shown: langAttrs() in
-// src/i18n/lang.ts writes data-<language>-<name> beside it. Read directly rather than through the
-// attribute itself, so the answer does not depend on whether src/scripts/lang.ts has already
-// copied the language in. `name` is the attribute's own name, e.g. "data-too-short".
-function langText(element: HTMLElement, name: string): string {
-  return (
-    element.getAttribute(`data-${currentLang()}-${name}`) ??
-    element.getAttribute(name) ??
-    ""
-  );
-}
 
 /** One entry of /search/data.json; the shape is written out in the endpoint that builds it. */
 type IndexEntry = {
   url: string;
   title: string;
   date: string;
-  // A key of site.searchSections since 2026-10-12 ("posts", "video"); it was the label.
   section: string;
   tags: string[];
   categories: string[];
@@ -315,10 +297,7 @@ function formatDate(iso: string): string {
       meta.className = "search-result__meta";
       const section = document.createElement("span");
       section.className = "search-result__section";
-      // Changed 2026-10-12: the section's name in both languages, found by the key the index
-      // carries (it was textContent = hit.entry.section, the label itself).
-      const names: Record<string, Phrase> = site.searchSections;
-      setPhrase(section, names[hit.entry.section] ?? hit.entry.section);
+      section.textContent = hit.entry.section;
       meta.append(section, " ", formatDate(hit.entry.date));
       item.append(meta);
 
@@ -337,8 +316,7 @@ function formatDate(iso: string): string {
       if (hit.tags.length > 0) {
         const why = document.createElement("p");
         why.className = "search-result__why";
-        // Changed 2026-10-12: in the language shown (langText); it read results.dataset.tagPrefix.
-        const prefix = langText(results, "data-tag-prefix");
+        const prefix = results.dataset.tagPrefix;
         if (prefix) why.append(prefix + " ");
         hit.tags.forEach((tag, index) => {
           if (index > 0) why.append(", ");
@@ -352,12 +330,7 @@ function formatDate(iso: string): string {
   };
 
   const message = (name: string, values: Record<string, string>): string => {
-    // Changed 2026-10-12: the template in the language shown (langText), the camelCase name turned
-    // back into the attribute's; it read status.dataset[name].
-    const template = langText(
-      status,
-      "data-" + name.replace(/[A-Z]/g, (letter) => "-" + letter.toLowerCase()),
-    );
+    const template = status.dataset[name] ?? "";
     return Object.entries(values).reduce(
       (text, [key, value]) => text.split("{" + key + "}").join(value),
       template,
@@ -516,8 +489,4 @@ function formatDate(iso: string): string {
   }
   run(false);
   input.focus();
-
-  // Added 2026-10-12: after a language switch the status line and the results are written again,
-  // in the new language; the query and the ticks stay as they are.
-  document.addEventListener(site.i18n.changeEvent, () => run(false));
 })();

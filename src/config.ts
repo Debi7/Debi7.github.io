@@ -8,20 +8,6 @@
 // note above still applies; read "site.auth.account" for "site.auth.dashboard".
 const accountPath = "/auth/account/";
 
-// Added 2026-10-12 with the two interface languages (site.i18n below): the name of every section of
-// the site in both languages, written once. The menu, the search filters and the titles of the
-// list pages read it (site.sections), so a renamed section is one edit. A constant for the reason
-// given above for accountPath: the object cannot read its own fields while it is being built.
-const sectionNames = {
-  home: { ru: "Главная", en: "Home" },
-  posts: { ru: "Статьи", en: "Posts" },
-  video: { ru: "Видео", en: "Video" },
-  categories: { ru: "Категории", en: "Categories" },
-  tags: { ru: "Теги", en: "Tags" },
-  account: { ru: "Кабинет", en: "Account" },
-  about: { ru: "О нас", en: "About" },
-};
-
 export const site = {
   title: "Radiesthesia Club",
   language: "ru",
@@ -61,12 +47,7 @@ export const site = {
   // this, so the two cannot drift apart and a translated menu is one edit rather than two. The
   // words match the menu items below on purpose - a visitor filtering by "Video" is thinking of
   // the menu item of that name.
-  // Changed 2026-10-12 (site.i18n): both languages, the menu items' own names (sectionNames at the
-  // top of this file), as the note says.
-  searchSections: { posts: sectionNames.posts, video: sectionNames.video },
-
-  // Added 2026-10-12: the section names (sectionNames at the top of this file).
-  sections: sectionNames,
+  searchSections: { posts: "Posts", video: "Video" },
 
   // Added 2026-09-22 after the reviewer asked for it: how many characters have to be typed before
   // /search/ looks anything up. One or two letters match almost every entry on the site, so the
@@ -197,15 +178,14 @@ export const site = {
       "admin",
       "blocked",
     ],
-    // Changed 2026-10-12 (site.i18n): each name in both languages of the interface.
     statusNames: {
-      guest: { ru: "гость", en: "guest" },
-      student: { ru: "студент", en: "student" },
-      expert: { ru: "эксперт", en: "expert" },
-      master: { ru: "мастер", en: "master" },
-      metr: { ru: "метр", en: "metr" },
-      admin: { ru: "администратор", en: "administrator" },
-      blocked: { ru: "заблокирован", en: "blocked" },
+      guest: "гость",
+      student: "студент",
+      expert: "эксперт",
+      master: "мастер",
+      metr: "метр",
+      admin: "администратор",
+      blocked: "заблокирован",
     },
     postEditors: ["admin", "metr"],
     // Added later on 2026-10-02, the owner's rule: any status a metr or an admin gives - every one
@@ -255,37 +235,12 @@ export const site = {
 
   pagination: { pageSize: 5, everyNumberUpTo: 5, everyYearUpTo: 5 },
 
-  // Added 2026-10-12 at the owner's request: the interface in two languages, English by default and
-  // Russian on the visitor's choice, switched by the button beside the menu (LangToggle.astro). (The
-  // owner first asked for Russian by default and corrected it to English the same day; with
-  // defaultLanguage the only setting, the rest of the code follows whichever it names, and
-  // custom.css holds the one rule written for it.) Only
-  // the interface: the articles and the video descriptions stay in Russian and are not translated,
-  // so there are no /en/ addresses - a second address for the same Russian article would only be a
-  // duplicate to a search engine - and the choice is the visitor's setting, kept in localStorage
-  // under storageKey, like the theme. The page carries every interface string in both languages and
-  // the inline block in Head.astro marks the document `lang-<language>` before the first paint for
-  // any language but the default; custom.css hides the other language's spans. How the strings are
-  // written and switched is in src/i18n/lang.ts. changeEvent is sent on the document after a switch,
-  // for the scripts that build text themselves.
-  i18n: {
-    languages: ["ru", "en"],
-    defaultLanguage: "en",
-    storageKey: "kb-lang",
-    changeEvent: "lang:change",
-  },
-
-  // Changed 2026-10-12 (the i18n block above): every name is a pair of languages now, from
-  // sectionNames at the top of this file; Menu.astro and
-  // the footer print both and the page shows one. The owner's decision of 2026-09-25 that the menu
-  // keeps one language (the note at Account below) holds per language: English by default, Russian
-  // after the switch.
   menu: [
-    { name: sectionNames.home, url: "/" },
-    { name: sectionNames.posts, url: "/posts/" },
-    { name: sectionNames.video, url: "/video/" },
-    { name: sectionNames.categories, url: "/categories/" },
-    { name: sectionNames.tags, url: "/tags/" },
+    { name: "Home", url: "/" },
+    { name: "Posts", url: "/posts/" },
+    { name: "Video", url: "/video/" },
+    { name: "Categories", url: "/categories/" },
+    { name: "Tags", url: "/tags/" },
     // Added the evening of 2026-09-25 at the owner's word: the member's page as a menu item, which
     // is where a visitor lands after a sign-in or a confirmed registration. English and short, like
     // the other names (the owner corrected a first Russian spelling the same evening: the menu keeps
@@ -294,7 +249,7 @@ export const site = {
     // members-only (AUTH.md section 10), so a guest never sees it.
     // Changed 2026-09-26 (CLERK.md step 2): the item keeps its name and place and opens
     // /auth/account/, the page that replaced the dashboard.
-    { name: sectionNames.account, url: accountPath },
-    { name: sectionNames.about, url: "/about/" },
+    { name: "Account", url: accountPath },
+    { name: "About", url: "/about/" },
   ],
 } as const;

@@ -11,14 +11,9 @@ import ContactModal from "../components/ContactModal.astro";
 
 import type { SiteConfig, PageLike } from "../lib/seo";
 import { site } from "../config";
-// Added 2026-10-12 with the two interface languages (site.i18n in src/config.ts).
-import { inLang, type Words } from "../i18n/lang";
 
 interface Props {
-  // Changed 2026-10-12: Words - interface text in both languages, or content as a string. Head.astro
-  // writes the title of every language; the share and search-engine tags below take the default
-  // language (site.i18n.defaultLanguage), the one the page is served in.
-  title?: Words;
+  title?: string;
   description?: string;
   content?: string;
   isArticle?: boolean;
@@ -74,8 +69,7 @@ const seoSite: SiteConfig = {
 };
 
 const page: PageLike = {
-  // Changed 2026-10-12: the default language's title (the title prop's note).
-  title: title === undefined ? undefined : inLang(title, site.i18n.defaultLanguage),
+  title,
   description,
   content,
   permalink: new URL(Astro.url.pathname, Astro.site).toString(),

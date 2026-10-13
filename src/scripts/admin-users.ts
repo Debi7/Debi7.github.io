@@ -17,14 +17,6 @@ import { site } from "../config";
 // Added later on 2026-10-02 at the owner's request: pages of 20 (AdminPager.astro). The
 // "Показать ещё" button and its element lookup went with it.
 import { bindPager, pageCount } from "./admin-pager";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): every message in both
-// languages, from src/i18n/admin.ts, written with setPhrase() so that a language switch shows it in
-// the new language at once, as on /admin/posts/ (admin-posts.ts says why the panel does not reload).
-// What cannot hold a span - the options of a status list, a confirm() dialog - gets the language
-// shown, and the options are written again after a switch.
-import { adminUi } from "../i18n/admin";
-import { format, type Phrase, type Words } from "../i18n/lang";
-import { phrase, setPhrase } from "./lang";
 
 type Status = (typeof site.admin.statuses)[number];
 type User = {
@@ -73,13 +65,11 @@ const count = byId("users-count", HTMLParagraphElement);
 const list = byId("users-list", HTMLUListElement);
 const rowTemplate = byId("users-row", HTMLTemplateElement);
 
-// Changed 2026-10-12: Phrase, each name in both languages (it was Record<string, string>).
-const names: Record<string, Phrase> = site.admin.statusNames;
+const names: Record<string, string> = site.admin.statusNames;
 
-// Changed 2026-10-12: Words, written with setPhrase (both languages); it took a string.
-function say(text: Words, isError = false): void {
+function say(text: string, isError = false): void {
   if (status === null) return;
-  setPhrase(status, text);
+  status.textContent = text;
   status.classList.toggle("text-red-600", isError);
 }
 
@@ -99,8 +89,10 @@ async function start(clerk: Clerk): Promise<void> {
     return;
   }
   if (endpoint === "") {
-    // Changed 2026-10-12: the message from src/i18n/admin.ts, here and in every say() below.
-    say(adminUi.users_not_connected, true);
+    say(
+      "Сервис статусов ещё не подключён (site.admin.statusesEndpoint, ADMIN.md).",
+      true,
+    );
     return;
   }
 
@@ -125,15 +117,15 @@ async function start(clerk: Clerk): Promise<void> {
     return first.status === 401 || first.status === 403 ? send(true) : first;
   };
 
-  // Changed 2026-10-12: both languages, from src/i18n/admin.ts (refusal_*), where the Russian
-  // sentences that stood here are the ru halves.
-  const refusals: Record<string, Phrase> = {
-    self: adminUi.refusal_self,
-    protected: adminUi.refusal_protected,
-    rank: adminUi.refusal_rank,
-    not_found: adminUi.refusal_not_found,
+  const refusals: Record<string, string> = {
+    self: "Свой статус менять нельзя.",
+    protected:
+      "Этот администратор защищён: его статус меняется только в настройках сервиса.",
+    rank: "Метр не может менять статус метра или администратора и снимать блокировку, поставленную администратором.",
+    not_found: "Такого пользователя нет.",
     // Added later on 2026-10-02: the service's 403 "guest" (the owner's rule).
-    guest: adminUi.refusal_guest,
+    guest:
+      "Статус «гость» не назначается: его получает только новая учётная запись.",
   };
 
   // Added later on 2026-10-02 at the owner's request: say what to fix instead of "unavailable".
@@ -144,14 +136,12 @@ async function start(clerk: Clerk): Promise<void> {
   const own = clerk.user?.publicMetadata.status;
   const panelStatus =
     own === "admin" || own === "metr" ? (names[own] ?? own) : undefined;
-  // Changed 2026-10-12: the shared sentence of src/i18n/admin.ts, in both languages.
-  const tokenHint = format(adminUi.token_hint, { status: panelStatus ?? "" });
+  const tokenHint = `Статус учётной записи «${panelStatus}» есть, но сессия его не передаёт: в шаблоне сессионного токена Clerk нет строки status (ADMIN.md, раздел 3, шаг 1).`;
   // Changed again the same evening: locally the secret key is saved encrypted by
   // `npm run statuses:key` and no longer read from settings.local.json, which holds ADMIN_IDS only.
-  // Changed 2026-10-12: both languages, from src/i18n/admin.ts.
   const settingsHint = import.meta.env.DEV
-    ? adminUi.settings_hint_dev
-    : adminUi.settings_hint_live;
+    ? "Сервис статусов не настроен: секретный ключ Clerk не сохранён (npm run statuses:key) или в workers/statuses/settings.local.json нет ADMIN_IDS (ADMIN.md, раздел 3, шаг 4)."
+    : "Сервис статусов не настроен: в настройках воркера нет CLERK_SECRET_KEY или ADMIN_IDS (ADMIN.md, раздел 7).";
 
   let query = "";
   let offset = 0;
@@ -169,7 +159,7 @@ async function start(clerk: Clerk): Promise<void> {
   async function load(target: number): Promise<void> {
     page = Math.max(1, target);
     offset = (page - 1) * size;
-    say(adminUi.users_loading);
+    say("Загрузка...");
     try {
       const response = await call("list", { query, offset, limit: size });
       // Changed later on 2026-10-02: the token hint for an account that has a panel status.
@@ -204,7 +194,7 @@ async function start(clerk: Clerk): Promise<void> {
           response.status,
           await response.text(),
         );
-        say(adminUi.users_unavailable, true);
+        say("Сервис статусов недоступен. Попробуйте позже.", true);
         return;
       }
       const answer = (await response.json()) as ListAnswer;
@@ -218,24 +208,17 @@ async function start(clerk: Clerk): Promise<void> {
       }
       list?.replaceChildren(...answer.users.map(row));
       if (count !== null) {
-        // Changed 2026-10-12: both languages (setPhrase); it set the Russian line as text.
-        setPhrase(
-          count,
+        count.textContent =
           answer.total === 0
-            ? adminUi.users_none
-            : format(adminUi.users_shown, {
-                from: offset + 1,
-                to: offset + answer.users.length,
-                total: answer.total,
-              }),
-        );
+            ? "Никого не найдено."
+            : `Показаны ${offset + 1}-${offset + answer.users.length} из ${answer.total}.`;
       }
       drawPager?.(page, last);
       if (box !== null) box.hidden = false;
       say("");
     } catch (error) {
       console.error("Admin: the status service could not be asked.", error);
-      say(adminUi.users_unavailable, true);
+      say("Сервис статусов недоступен. Попробуйте позже.", true);
     }
   }
 
@@ -249,15 +232,11 @@ async function start(clerk: Clerk): Promise<void> {
     );
   }
 
-  // Changed 2026-10-12: answers Words in both languages (src/i18n/admin.ts); it answered the
-  // Russian sentences.
-  function note(user: User): Words {
-    if (user.self) return adminUi.note_self;
-    if (user.protected) return adminUi.note_protected;
+  function note(user: User): string {
+    if (user.self) return "Это вы.";
+    if (user.protected) return "Защищённый администратор.";
     if (user.status === "blocked") {
-      return user.statusBy === "admin"
-        ? adminUi.note_blocked_by_admin
-        : adminUi.note_blocked_by_metr;
+      return `Заблокирован ${user.statusBy === "admin" ? "администратором" : "метром"}.`;
     }
     return "";
   }
@@ -265,12 +244,11 @@ async function start(clerk: Clerk): Promise<void> {
   function row(user: User): HTMLLIElement {
     const item = rowTemplate?.content.firstElementChild?.cloneNode(true);
     if (!(item instanceof HTMLLIElement)) return document.createElement("li");
-    // Changed 2026-10-12: Words, written with setPhrase (both languages); it set a string as text.
-    const set = (selector: string, text: Words) => {
+    const set = (selector: string, text: string) => {
       const element = item.querySelector(selector);
-      if (element !== null) setPhrase(element, text);
+      if (element !== null) element.textContent = text;
     };
-    set("[data-name]", user.name || adminUi.no_name);
+    set("[data-name]", user.name || "Без имени");
     set("[data-email]", user.email);
     // Added later on 2026-10-02 (the template's note): the status badge and the registration date.
     set("[data-status]", names[user.status] ?? user.status);
@@ -279,13 +257,9 @@ async function start(clerk: Clerk): Promise<void> {
       user.createdAt > 0
         ? // Clerk's Backend API counts milliseconds; a value below 10^12 would be seconds (before
           // 2001 in milliseconds), so it is read as such rather than shown as January 1970.
-          // Changed 2026-10-12: the line in both languages, the date in each language's form; it
-          // was "Регистрация:" and the date in "ru-RU".
-          registered(
-            new Date(
-              user.createdAt < 1e12 ? user.createdAt * 1000 : user.createdAt,
-            ),
-          )
+          `Регистрация: ${new Date(
+            user.createdAt < 1e12 ? user.createdAt * 1000 : user.createdAt,
+          ).toLocaleDateString("ru-RU")}`
         : "",
     );
     set("[data-note]", note(user));
@@ -298,11 +272,7 @@ async function start(clerk: Clerk): Promise<void> {
     for (const value of site.admin.statuses) {
       const option = document.createElement("option");
       option.value = value;
-      // Changed 2026-10-12: the name in the language shown - an option holds text only (MDN,
-      // "<option>": only text content in a traditional select) - and written again after a
-      // language switch by the listener at the end of start(). It was names[value] ?? value.
-      option.textContent = phrase(names[value] ?? value);
-      option.dataset.status = value;
+      option.textContent = names[value] ?? value;
       option.selected = value === user.status;
       option.disabled = value !== user.status && !allowed.includes(value);
       choice.append(option);
@@ -327,19 +297,16 @@ async function start(clerk: Clerk): Promise<void> {
   ): Promise<void> {
     const wanted = choice.value;
     const who = user.email || user.name || user.id;
-    // Changed 2026-10-12: the question in the language shown (a dialog holds plain text); it was
-    // one of three Russian sentences, now confirm_block, confirm_panel and confirm_status.
-    const status = names[wanted] ?? wanted;
     const question =
       wanted === "blocked"
-        ? format(adminUi.confirm_block, { who })
+        ? `Закрыть ${who} доступ к материалам сайта?`
         : wanted === "admin" || wanted === "metr"
-          ? format(adminUi.confirm_panel, { who, status })
-          : format(adminUi.confirm_status, { who, status });
-    if (!confirm(phrase(question))) return;
+          ? `Дать ${who} статус «${names[wanted]}»? Он сможет менять публикации и статусы других.`
+          : `Дать ${who} статус «${names[wanted] ?? wanted}»?`;
+    if (!confirm(question)) return;
     apply.disabled = true;
     choice.disabled = true;
-    say(adminUi.saving);
+    say("Сохранение...");
     try {
       const response = await call("set", { userId: user.id, status: wanted });
       const answer: unknown = await response.json().catch(() => undefined);
@@ -351,13 +318,7 @@ async function start(clerk: Clerk): Promise<void> {
       ) {
         const updated = answer.user as User;
         item.replaceWith(row(updated));
-        // Changed 2026-10-12: both languages (it was the Russian line "Статус who: ...").
-        say(
-          format(adminUi.status_set, {
-            who,
-            status: names[updated.status] ?? updated.status,
-          }),
-        );
+        say(`Статус ${who}: «${names[updated.status] ?? updated.status}».`);
         return;
       }
       const code =
@@ -372,13 +333,13 @@ async function start(clerk: Clerk): Promise<void> {
           response.status,
           answer,
         );
-        say(adminUi.users_unavailable, true);
+        say("Сервис статусов недоступен. Попробуйте позже.", true);
       }
       choice.disabled = false;
       apply.disabled = false;
     } catch (error) {
       console.error("Admin: the status could not be changed.", error);
-      say(adminUi.users_unavailable, true);
+      say("Сервис статусов недоступен. Попробуйте позже.", true);
       choice.disabled = false;
       apply.disabled = false;
     }
@@ -391,30 +352,5 @@ async function start(clerk: Clerk): Promise<void> {
     void load(1);
   });
 
-  // Added 2026-10-12: the status lists' options hold plain text, so a language switch writes them
-  // again in the new language; everything else on the page carries both languages already.
-  document.addEventListener(site.i18n.changeEvent, () => {
-    for (const option of document.querySelectorAll<HTMLOptionElement>(
-      "#users-list option[data-status]",
-    )) {
-      const value = option.dataset.status ?? "";
-      option.textContent = phrase(names[value] ?? value);
-    }
-  });
-
   await load(1);
-}
-
-// Added 2026-10-12: "Регистрация: 12.10.2026" / "Registered: 10/12/2026", each date in its own
-// language's form. Intl's own data decides the form, which can differ between browsers; this is a
-// line for the panel's users, not something compared or stored.
-function registered(date: Date): Phrase {
-  return {
-    ru: format(adminUi.registered, {
-      date: date.toLocaleDateString("ru-RU"),
-    }).ru,
-    en: format(adminUi.registered, {
-      date: date.toLocaleDateString("en-GB"),
-    }).en,
-  };
 }

@@ -18,11 +18,6 @@
 // the script returns at once when there is no stub, and loads Clerk only through a dynamic import
 // on a paid page with a signed-in visitor.
 import { site } from "../config";
-// Added 2026-10-12 with the two interface languages (src/i18n/lang.ts): every state's text in both
-// languages, through T; the script only shows a state, so it needs no change. The sentence above
-// about the site's language now means both of them.
-import { ui } from "../i18n/strings";
-import T from "./T.astro";
 
 interface Props {
   // The entry's slug: the key the access service knows the video by.
@@ -41,44 +36,41 @@ const signIn = site.auth.signIn + "?next=" + encodeURIComponent(href);
   class="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-xl bg-gray-100 p-6 text-center shadow-lg dark:bg-slate-800"
 >
   <noscript>
-    {
-      /* Changed 2026-10-12: here and in every state below, both languages through T; the Russian
-    texts that stood here are the ru halves in src/i18n/strings.ts (paid_*). */
-    }
-    <p><T s={ui.paid_noscript} /></p>
+    <p>Для просмотра лекции нужен включённый JavaScript.</p>
   </noscript>
-  <p data-state="loading" hidden><T s={ui.paid_loading} /></p>
+  <p data-state="loading" hidden>Проверяем доступ...</p>
   <div data-state="guest" hidden>
-    <p class="mb-3"><T s={ui.paid_guest} /></p>
+    <p class="mb-3">Эта лекция доступна участникам клуба.</p>
     <a
       href={signIn}
       class="inline-block rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90"
-      ><T s={ui.paid_sign_in} /></a
+      >Войти</a
     >
   </div>
   <div data-state="denied" hidden>
     <p class="mb-3">
-      <T s={ui.paid_denied} />
+      Лекция откроется после оплаты участия в клубе. Написать нам можно через
+      значок письма внизу страницы.
     </p>
     <button
       type="button"
       data-recheck
       class="rounded bg-blue-600 px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
     >
-      <T s={ui.paid_recheck} />
+      Проверить ещё раз
     </button>
   </div>
-  <p data-state="missing" hidden><T s={ui.paid_missing} /></p>
+  <p data-state="missing" hidden>Лекция ещё не подключена. Загляните позже.</p>
   {
     /* Added 2026-10-02 with the owner's status model (ADMIN.md): a member with the status "blocked"
     may open no material of the site, paid or not; the access service answers 403 "blocked", and
     the account page says who closed it. */
   }
   <p data-state="blocked" hidden>
-    <T s={ui.paid_blocked} />
+    Доступ к материалам сайта для этой учётной записи закрыт.
   </p>
   <p data-state="failed" hidden>
-    <T s={ui.paid_failed} />
+    Видео сейчас недоступно. Обновите страницу позже.
   </p>
 </div>
 <template data-paid-player>

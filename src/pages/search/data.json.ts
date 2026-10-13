@@ -44,10 +44,7 @@ type IndexEntry = {
   /** ISO date, so the client can sort without parsing the site's display format. */
   date: string;
   /** The label of the section the entry lives in, matching the menu in src/config.ts. */
-  // Changed 2026-10-12 with the two interface languages: the section's key in site.searchSections
-  // ("posts", "video"), not its label - the label is in two languages now, and the page prints the
-  // one shown; the key is what the checkboxes and the address (?section=) carry.
-  section: SectionKey;
+  section: string;
   tags: string[];
   /** The categories the entry declares; the facet list on /search/ filters on them. */
   categories: string[];
@@ -64,10 +61,7 @@ type IndexEntry = {
 //
 // The section labels come from src/config.ts, not from a literal here: the search page prints a
 // checkbox per label, so one spelling in two files would drift the day either is translated.
-// Added 2026-10-12: the keys of site.searchSections (the note on IndexEntry.section).
-type SectionKey = keyof typeof site.searchSections;
-
-function entry(source: SearchSource, section: SectionKey): IndexEntry {
+function entry(source: SearchSource, section: string): IndexEntry {
   return {
     url: source.card.url,
     title: source.card.title,
@@ -84,9 +78,10 @@ export const GET: APIRoute = async () => {
   const [posts, videos] = await Promise.all([getPosts(), getVideos()]);
 
   const entries: IndexEntry[] = [
-    // Changed 2026-10-12: the keys, not the labels (the note on IndexEntry.section).
-    ...posts.map((post) => entry(postSearch(post), "posts")),
-    ...videos.map((video) => entry(videoSearch(video), "video")),
+    ...posts.map((post) => entry(postSearch(post), site.searchSections.posts)),
+    ...videos.map((video) =>
+      entry(videoSearch(video), site.searchSections.video),
+    ),
   ];
 
   // Newest first, so an empty query - or two entries scoring the same - falls back to the order

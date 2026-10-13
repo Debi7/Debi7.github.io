@@ -30,19 +30,10 @@
 import "../../styles/search.css";
 import Base from "../../layouts/Base.astro";
 import { getTerms } from "../../lib/terms";
-// Changed 2026-10-12 with the two interface languages (src/i18n/lang.ts): ui (was t). Every word
-// of the page is in both languages - the visible ones through T, the attributes through langAttrs,
-// and the status line's templates as language-dependent data attributes that search.ts reads in
-// the language shown. The section checkboxes carry the section's key (site.searchSections) as their
-// value, as the index does, and print its name.
-// import { t } from "../../i18n/strings";
-import { ui } from "../../i18n/strings";
+import { t } from "../../i18n/strings";
 import { site } from "../../config";
-import { langAttrs } from "../../i18n/lang";
-import T from "../../components/T.astro";
 
-// Changed 2026-10-12: both languages (it was the literal "Search").
-const title = ui.search_label;
+const title = "Search";
 
 // Categories in the order the Categories page shows them (alphabetical by the front-matter name);
 // tags by how many entries carry them, which is the order of the Tags page. Both lists already
@@ -53,18 +44,9 @@ const tags = (await getTerms("tags")).sort(
 );
 ---
 
-{
-  /* Changed 2026-10-12: the description in the default language, the one the page is served in
-  (site.i18n; it read "Search the articles and the video lectures."). */
-}
-<Base
-  title={title}
-  description={ui.search_description[site.i18n.defaultLanguage]}
->
+<Base title={title} description="Search the articles and the video lectures.">
   <div class="search-page">
-    <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">
-      <T s={title} />
-    </h1>
+    <h1 class="mb-8 text-center text-3xl font-bold text-gray-800">{title}</h1>
 
     {
       /* A form and not a bare input, so Enter submits and a phone shows a search key on its
@@ -74,7 +56,7 @@ const tags = (await getTerms("tags")).sort(
       in plain words. */
     }
     <form id="search-form" class="search-field" role="search">
-      <label class="sr-only" for="search-input"><T s={title} /></label>
+      <label class="sr-only" for="search-input">{title}</label>
       <svg
         class="search-field__icon"
         viewBox="0 0 24 24"
@@ -92,7 +74,7 @@ const tags = (await getTerms("tags")).sort(
         name="q"
         type="search"
         autocomplete="off"
-        {...langAttrs({ placeholder: ui.search_placeholder })}
+        placeholder={t.search_placeholder}
         class="search-field__input"
       />
       {
@@ -111,10 +93,8 @@ const tags = (await getTerms("tags")).sort(
         id="search-clear"
         type="button"
         class="search-field__clear"
-        {...langAttrs({
-          "aria-label": ui.search_clear,
-          title: ui.search_clear,
-        })}
+        aria-label="Clear the search and the filters"
+        title="Clear the search and the filters"
         hidden
       >
         <svg
@@ -138,10 +118,7 @@ const tags = (await getTerms("tags")).sort(
     </form>
 
     <div class="search-layout">
-      <aside
-        class="search-facets"
-        {...langAttrs({ "aria-label": ui.search_filters })}
-      >
+      <aside class="search-facets" aria-label="Filters">
         {
           /* <details>, so the sections fold with no script at all and a keyboard reaches them the
           way it reaches any disclosure. They are written open; search.ts closes them on a narrow
@@ -157,28 +134,22 @@ const tags = (await getTerms("tags")).sort(
           appears only after the first query is a filter nobody finds. */
         }
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title"
-            ><T s={ui.search_section} /></summary
-          >
+          <summary class="search-facet__title">Section</summary>
           <ul class="search-facet__list">
             {
-              /* Changed 2026-10-12: the key is the value, the name is printed in both languages
-              (the note at the top); both were the label. */
-              Object.entries(site.searchSections).map(([key, label]) => (
+              Object.values(site.searchSections).map((label) => (
                 <li>
                   <label class="search-facet__item">
                     <input
                       type="checkbox"
                       class="search-facet__check"
                       data-facet="section"
-                      value={key}
+                      value={label}
                     />
-                    <span class="search-facet__name">
-                      <T s={label} />
-                    </span>
+                    <span class="search-facet__name">{label}</span>
                     <span
                       class="search-facet__count"
-                      data-count-for={key}
+                      data-count-for={label}
                       data-facet="section"
                     >
                       (0)
@@ -191,9 +162,7 @@ const tags = (await getTerms("tags")).sort(
         </details>
 
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title"
-            ><T s={ui.search_category} /></summary
-          >
+          <summary class="search-facet__title">Category</summary>
           <ul class="search-facet__list">
             {
               categories.map((term) => (
@@ -221,7 +190,7 @@ const tags = (await getTerms("tags")).sort(
         </details>
 
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title"><T s={ui.search_tag} /></summary>
+          <summary class="search-facet__title">Tag</summary>
           <ul class="search-facet__list">
             {
               tags.map((term) => (
@@ -259,25 +228,22 @@ const tags = (await getTerms("tags")).sort(
           id="search-status"
           class="search-status"
           aria-live="polite"
-          {...langAttrs({
-            "data-searching": ui.search_searching,
-            "data-too-short": ui.search_too_short(site.search.minQuery),
-            "data-found": ui.search_found,
-            "data-empty": ui.search_empty,
-            "data-filtered": ui.search_filtered,
-            "data-listing": ui.search_listing,
-            "data-empty-filter": ui.search_empty_filter,
-            "data-failed": ui.search_failed,
-          })}
+          data-searching="Searching..."
+          data-too-short={`Type at least ${site.search.minQuery} characters to search`}
+          data-found="{n} result(s) for {q}"
+          data-empty="No results for {q}"
+          data-filtered="{n} of {total} result(s) for {q}"
+          data-listing="{n} result(s) with these filters"
+          data-empty-filter="No results with these filters"
+          data-failed="The search index could not be loaded. Please try again."
         >
         </p>
 
         <noscript>
-          {
-            /* Changed 2026-10-12: both languages; the English text is the one that stood here. */
-          }
           <p class="search-status">
-            <T s={ui.search_noscript} />
+            Search needs JavaScript, because this site is static and there is no
+            server to ask. Everything it finds is reachable without it: Posts,
+            Video, Categories and Tags.
           </p>
         </noscript>
 
@@ -291,7 +257,7 @@ const tags = (await getTerms("tags")).sort(
         <ul
           id="search-results"
           class="search-results"
-          {...langAttrs({ "data-tag-prefix": ui.search_tag_prefix })}
+          data-tag-prefix="Found in tags:"
         >
         </ul>
       </div>
