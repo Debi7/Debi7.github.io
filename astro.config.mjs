@@ -38,18 +38,6 @@ export default defineConfig({
   trailingSlash: "always",
   build: { format: "directory" },
 
-  // Added 2026-10-20: keep every module under the path the project was opened by. Vite resolves a
-  // file to its real location by default, and Astro 4 names an entry's collection by the path of
-  // that file relative to src/content/. Opened through another drive letter (subst, a link to the
-  // folder), the two paths have different roots, the collection name came out as the drive, the
-  // entry matched no collection in src/content/config.ts, and Astro handed its front matter over
-  // without the schema: every quoted date stayed a string, and the colleague's dev server failed
-  // in lists.ts with "b.data.date.getTime is not a function" while the same commit worked here.
-  // Reproduced from a subst drive and cured by this line (README, "Opening the project through
-  // another path"). Nothing in node_modules is a link (npm ci, no workspaces), so no package is
-  // affected.
-  vite: { resolve: { preserveSymlinks: true } },
-
   // applyBaseStyles: false - the Tailwind base layer is imported by src/styles/main.css so
   // that the order (base, theme rules, custom.css) stays under our control.
   // sitemap() goes last; the order of integrations does not matter here, and putting it at the end
