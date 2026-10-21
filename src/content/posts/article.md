@@ -10,10 +10,10 @@
 #   {{</* /callout */>}}
 # See POST-SIDEBAR.md, section 2.9.
 title: "Hello!"
-description: "Первая запись в блоге на теме Void"
+description: "Первая запись в блоге"
 date: 2026-09-04T12:00:00+03:00
 tags: ["hugo", "void"]
-categories: ["blog"]
+categories: ["блог"]
 draft: false
 ---
 
