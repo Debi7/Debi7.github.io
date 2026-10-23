@@ -21,7 +21,7 @@ title: "Article title"
 description: "One sentence about the article, for search engines and link previews."
 date: "2026-09-18T12:00:00+03:00"
 tags: ["first tag", "second tag", "third tag"]
-categories: ["education"]
+categories: ["обучение"]
 draft: true
 ---
 

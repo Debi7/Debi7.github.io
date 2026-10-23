@@ -44,8 +44,8 @@ on save. Before committing run `npm run fix` and `npm run check` (see [README.md
 Pick the template closest to the post:
 
 - `templates/post.md` - the general one. Its comments hold the full rules for every field and for headings.
-- `templates/article.md` - a note in the `blog` category, showing the formatting a post can use.
-- `templates/radiesthesia-and-energy-fields.md` - a long article in the `education` category, with sections,
+- `templates/article.md` - a note in the `блог` category, showing the formatting a post can use.
+- `templates/radiesthesia-and-energy-fields.md` - a long article in the `обучение` category, with sections,
   subsections and a glossary.
 - `templates/draft.md` - a draft with only the fields a post needs.
 
@@ -101,7 +101,7 @@ published.
 - `tags` - a list, e.g. `["pendulum", "practice"]`. Written in lower case on the site. Each tag gets a page at
   `/tags/<tag>/`, and the tags are shown on the post's card in the lists.
 - `categories` - a list, usually one entry, e.g. `["education"]`. The first category is shown above the post's title,
-  and each gets a page at `/categories/<category>/`. The site has two today, `blog` for notes and `education` for
+  and each gets a page at `/categories/<category>/`. The site has two today, `блог` for notes and `обучение` for
   articles; any other name starts a new category.
 - `lastmod` - when the post was last changed, shown as "Last updated on". It does not change the order of the lists.
 - `share_title`, `share_description` - the title and the text the Share button on the post uses, if they should

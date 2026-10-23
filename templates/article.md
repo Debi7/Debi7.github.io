@@ -1,5 +1,5 @@
 ---
-# Template modelled on src/content/posts/article.md: a note in the "blog" category, with
+# Template modelled on src/content/posts/article.md: a note in the "блог" category, with
 # sections, subsections and the formatting a post can use - lists, a quote, a code block and a
 # table. Added 2026-09-18.
 #
@@ -20,7 +20,7 @@ title: "Post title"
 description: "One sentence about the post."
 date: "2026-09-18T12:00:00+03:00"
 tags: ["first tag", "second tag"]
-categories: ["blog"]
+categories: ["блог"]
 draft: true
 ---
 
