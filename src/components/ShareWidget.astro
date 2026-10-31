@@ -48,3 +48,12 @@ const { url, title, text } = Astro.props;
     <span data-share-label>{t.share}</span>
   </button>
 </div>
+
+{
+  /* Added 2026-10-31: the script that makes the button work, ported from the Hugo theme's
+  main.js. Until then nothing read the data attributes above and a click did nothing.
+  src/scripts/share-widget.ts says what was ported and how. */
+}
+<script>
+  import "../scripts/share-widget";
+</script>

@@ -24,6 +24,9 @@
 //   ../klub_biolocation/themes/void/assets/js/main.js
 // Not the theme bootstrap (localStorage -> `dark` class): that one stays inline in
 // src/components/Head.astro so it runs before the stylesheets load.
+// (2026-10-31: the share button part of main.js - initShareWidgets(), copyToClipboard(),
+// fallbackCopyText() - is ported, into src/scripts/share-widget.ts, which ShareWidget.astro
+// loads; the rest of the list above is still to do.)
 
 // --- Pressed state on touch screens ---
 // Added 2026-09-29 with postcss.config.cjs, which gives every hover effect an `:active` twin so that
