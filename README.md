@@ -314,6 +314,8 @@ Rewritten on 2026-09-28: the branch `clerk-auth` replaced the previous sign-in p
 
 **The content config is back (2026-10-20, branch `refactor-app`).** Commit 9a767c3 deleted `src/content/config.ts`. Astro 4 then applies no collection schema and gives no warning, so the quoted dates in the posts stay strings, and the dev server and the build both failed in `src/lib/lists.ts` with `getTime is not a function` (measured: `npm run build` without the file exits with that error); a fresh `npm ci` cannot help, because the file is missing from the branch. The file is restored as it was at 624b001. If that error comes back, look for this file first.
 
+**`npm run check:pages` reads lists written over several lines (2026-10-31).** After the colleague's tags of that week, sixteen entries carry their `tags` as a list on the lines below the key (`tags:`, then `[`, the items, `]`), which is how Prettier wraps a long one. The site reads them fine; `scripts/check-pagination.mjs`, which reads front matter with regular expressions, took each of them for an entry with no tags, so its expected tag pages lacked those entries and it failed on `/tags/геопатогенные-зоны/` for showing a 2026 post it could not see. It now joins those lines up to the closing bracket, and the check passes.
+
 ## Deployment
 
 Live at **https://debi7.github.io/**, built and published by GitHub Actions on every push to `main`.

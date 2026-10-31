@@ -133,6 +133,31 @@ function parseFrontMatter(text, file, problems) {
       problems.push(`${file}: ${key} is not a list`);
       return [];
     }
+    // Added 2026-10-31: the same ["a", "b"] list written over several lines below the key, which
+    // is how Prettier wraps a long one (`tags:`, then `  [`, the items, `  ]`). Sixteen entries
+    // were in that shape after the colleague's tags of that week, and the loop below, which knows
+    // only "- a" lines, read each of them as no tags at all, without a word: the expected tag
+    // pages lost those entries, and /tags/геопатогенные-зоны/ failed for showing the 2026 post
+    // the script could not see. The lines are joined up to the closing bracket and read like the
+    // one-line form.
+    const next = lines[index + 1]?.trim() ?? "";
+    if (next.startsWith("[")) {
+      let joined = "";
+      for (const line of lines.slice(index + 1)) {
+        joined += ` ${line.trim()}`;
+        if (line.trim().endsWith("]")) break;
+      }
+      joined = joined.trim();
+      if (!joined.endsWith("]")) {
+        problems.push(`${file}: ${key} has no closing bracket`);
+        return [];
+      }
+      return joined
+        .slice(1, -1)
+        .split(",")
+        .map((s) => s.trim().replace(/^["']|["']$/g, ""))
+        .filter(Boolean);
+    }
     const items = [];
     for (const line of lines.slice(index + 1)) {
       const item = line.match(/^\s+-\s+(.*)$/);
