@@ -127,6 +127,9 @@ const helpText = "Нажмите на категорию, чтобы раскр�
               {/* Changed 2026-10-31, same report: shrink-0. Measured on a card 178px wide, the
               row squeezed the chevron to a width of 0 - it vanished - once the title and the badge
               filled it; an svg is not a replaced element, so flex lets it shrink below w-5. */}
+              {/* Merged 2026-10-31 with main: the colleague's ml-0.5 on this svg (e1eb9f7, "svg
+              ml") is left out at the owner's word, as gap-2 on the row already spaces the count
+              from the chevron and the extra 2px would overfill the row at a 320px viewport. */}
               <svg
                 class="category-icon h-5 w-5 shrink-0 transform text-gray-500 transition-transform duration-200"
                 fill="none"
