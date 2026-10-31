@@ -66,7 +66,7 @@ Fill in the form:
 - **Дата публикации** - club time (UTC+3). A post dated in the future appears on the live site only with the first
   build after that date (section 6).
 - **Краткое описание** - one or two sentences; shown in lists, in search results and when the link is shared.
-- **Теги** and **Категории** - comma-separated. The buttons under each field are the tags and categories the site
+- **Теги** and **Разделы** - comma-separated. The buttons under each field are the tags and categories the site
   already uses; click one to add it, so that the post joins the existing tag page instead of starting a near-duplicate.
 - **Черновик** - ticked: the post is saved but not shown on the live site. Untick it when the post is ready.
 - **Текст** - the post itself, in Markdown. The short version is below; [CONTENT.md](CONTENT.md), "Writing", has more.

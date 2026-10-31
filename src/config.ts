@@ -9,12 +9,13 @@
 const accountPath = "/auth/account/";
 
 export const site = {
-  title: "Radiesthesia Club",
+  // title: "Radiesthesia Club",
+  title: "Клуб Биолокации",
   language: "ru",
   social: {
-    github: "https://debi7.github.io/",
+    github: "https://github.com/Debi7",
     email: " ",
-    telegram: "@name",
+    telegram: "https://t.me/+9V8l5AmTLso4MzAy",
   },
 
   avatar: "/images/avatar.png",
@@ -242,7 +243,7 @@ export const site = {
     { name: "Главная", url: "/" },
     { name: "Статьи", url: "/posts/" },
     { name: "Видео", url: "/video/" },
-    { name: "Категории", url: "/categories/" },
+    { name: "Разделы", url: "/categories/" },
     { name: "Теги", url: "/tags/" },
     // Added the evening of 2026-09-25 at the owner's word: the member's page as a menu item, which
     // is where a visitor lands after a sign-in or a confirmed registration. English and short, like

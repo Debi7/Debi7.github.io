@@ -9,7 +9,7 @@ date: "2026-03-05"
 videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
-tags: ["video", "биолокация", "ориентирование", "практика"]
+tags: ["видео", "практика"]
 categories: ["обучающие видео"]
 duration: "19:26"
 videoPlatform: "youtube"

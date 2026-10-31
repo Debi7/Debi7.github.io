@@ -9,7 +9,7 @@ date: "2024-07-08"
 videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
-tags: ["video", "маятник", "новичкам", "самопроверка"]
+tags: ["видео", "маятник", "новичкам", "самопроверка"]
 categories: ["обучающие видео"]
 duration: "11:20"
 videoPlatform: "youtube"

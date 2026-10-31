@@ -9,7 +9,7 @@ date: "2026-05-11"
 videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
-tags: ["video", "энергетика человека", "энергополе"]
+tags: ["видео", "энергополе"]
 categories: ["обучающие видео"]
 duration: "16:44"
 videoPlatform: "youtube"

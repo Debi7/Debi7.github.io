@@ -9,7 +9,7 @@ date: "2026-01-20"
 videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
-tags: ["video", "самопроверка", "исследования"]
+tags: ["видео", "самопроверка", "исследования"]
 categories: ["обучающие видео"]
 duration: "13:02"
 videoPlatform: "youtube"

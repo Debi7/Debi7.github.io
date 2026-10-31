@@ -9,7 +9,7 @@ date: "2025-08-14"
 videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
-tags: ["video", "геопатогенные зоны", "практика"]
+tags: ["видео", "геопатогенные зоны", "практика"]
 categories: ["обучающие видео"]
 duration: "21:10"
 videoPlatform: "youtube"

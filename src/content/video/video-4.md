@@ -8,7 +8,20 @@ date: "2025-06-11"
 videoUrl: "https://youtube.com"
 videoId: "dQww4w9Q"
 heroImage: "/blog-placeholder-about.jpg"
-tags: ["video", "биолокация", "маятник", "новичкам"]
+tags:
+  [
+    "видео",
+    "биолокация",
+    "маятник",
+    "новичкам",
+    "эгрегоры",
+    "карма",
+    "денежная энергия",
+    "чакры и меридианы",
+    "чистки помещений",
+    "полтергейст",
+    "метод Меркулова",
+  ]
 # Category renamed 2026-09-22 at the owner's request, from "education video". The Categories
 # page prints the term itself, and the site's terms are written in the language of the content,
 # as every tag on this file already is. The address becomes /categories/обучающие-видео/.

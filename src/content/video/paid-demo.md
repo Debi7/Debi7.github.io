@@ -11,7 +11,7 @@ description: "Пример лекции, которую видят только 
 date: "2026-09-28"
 draft: true
 access: paid
-tags: ["video"]
+tags: ["видео"]
 categories: ["обучающие видео"]
 ---
 

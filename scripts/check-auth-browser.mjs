@@ -198,7 +198,7 @@ const guestHome = await evalJs(
 check(
   "guest on /: no kb-member, no Account, icon to sign-in, no Clerk chunk",
   /"member":false/.test(guestHome) &&
-    /"menu":\["Главная","Статьи","Видео","Категории","Теги","О нас"\]/.test(
+    /"menu":\["Главная","Статьи","Видео","Разделы","Теги","О нас"\]/.test(
       guestHome,
     ) &&
     /"href":"\/auth\/signin\/"/.test(guestHome) &&
@@ -217,7 +217,7 @@ const flaggedAbout = await evalJs(
 check(
   "valid flag on /about/: kb-member, Account shown, icon to the account page",
   /"member":true/.test(flaggedAbout) &&
-    /"menu":\["Главная","Статьи","Видео","Категории","Теги","Кабинет","О нас"\]/.test(
+    /"menu":\["Главная","Статьи","Видео","Разделы","Теги","Кабинет","О нас"\]/.test(
       flaggedAbout,
     ) &&
     /"href":"\/auth\/account\/"/.test(flaggedAbout),

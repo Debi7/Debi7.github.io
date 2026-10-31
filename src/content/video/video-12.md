@@ -9,7 +9,20 @@ date: "2024-09-16"
 videoUrl: "https://youtube.com"
 videoId: "dQw4whhngXcQw1w"
 heroImage: "/blog-placeholder-about.jpg"
-tags: ["video", "биолокация", "маятник", "ориентирование"]
+tags:
+  [
+    "видео",
+    "биолокация",
+    "маятник",
+    "новичкам",
+    "эгрегоры",
+    "карма",
+    "денежная энергия",
+    "чакры и меридианы",
+    "чистки помещений",
+    "полтергейст",
+    "метод Меркулова",
+  ]
 categories: ["обучающие видео"]
 duration: "17:48"
 videoPlatform: "youtube"
