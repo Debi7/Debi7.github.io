@@ -121,6 +121,14 @@ if (cloud && sky && words.length > 0) {
   // Added 2026-09-28: how much every word is shrunk so that the sphere fits a screen too narrow
   // for its smallest size; 1 everywhere else (see the end of measure()).
   let fit = 1;
+  // Added 2026-10-31: how far the globe reaches up and down, measured apart from `radius`, which
+  // now reaches left and right only. The colleague's tags of that week are long and large (up to
+  // 345px of "Чистки Помещений" at text-4xl on a 269px block), so the width-bound radius came out
+  // at some 33px with every word shrunk to 0.56: all seventeen words sat in one band 95px tall and
+  // 96% of their area lay under another word. The block is taller since that day (TagCloud.astro,
+  // the globe's height), and this reach uses its height, so the globe is an upright ellipsoid
+  // whose words spread out vertically even where the width leaves them no room sideways.
+  let radiusY = 0;
 
   const measure = () => {
     const box = cloud.getBoundingClientRect();
@@ -161,6 +169,17 @@ if (cloud && sky && words.length > 0) {
       fit = Math.min(1, box.width / 2 / (1.15 * floor + widest / 2));
       radius = floor * fit;
     }
+
+    // Added 2026-10-31 (see radiusY above). The same 1.15 for the depth factor, and half of the
+    // tallest word at its largest depth scale (0.78 + 0.34 in draw()) kept inside the block, top
+    // and bottom. Never less than the sideways reach, so a wide block still gets a round globe.
+    let tallest = 0;
+    for (const word of placed)
+      tallest = Math.max(tallest, word.node.offsetHeight);
+    radiusY = Math.max(
+      radius,
+      (box.height / 2 - (tallest * 1.12 * fit) / 2) / 1.15,
+    );
   };
 
   // The two angles of the sphere and the speed each is turning at. The idle speed is what the
@@ -250,7 +269,8 @@ if (cloud && sky && words.length > 0) {
 
       word.node.style.transform =
         "translate(-50%, -50%)" +
-        ` translate3d(${(x1 * radius * near).toFixed(1)}px, ${(y1 * radius * near + bob).toFixed(1)}px, 0)` +
+        // Changed 2026-10-31: the vertical offset uses radiusY, the sideways one still radius.
+        ` translate3d(${(x1 * radius * near).toFixed(1)}px, ${(y1 * radiusY * near + bob).toFixed(1)}px, 0)` +
         // The floor was 0.62 until 2026-09-22, when the owner asked for the small words to be
         // easier to hit: a one-entry tag is the smallest step to begin with, and 0.62 of that on
         // the far side of the sphere was a target of a few pixels. 0.78 keeps the depth readable
@@ -330,7 +350,8 @@ if (cloud && sky && words.length > 0) {
     // Right moves the front to the right and down moves it down: see the rotation in draw(),
     // where a larger angle carries the front point left and up.
     const turnY = -dx / (radius * 2);
-    const turnX = -dy / (radius * 2);
+    // Changed 2026-10-31: over the vertical reach, which a word moving up or down is drawn with.
+    const turnX = -dy / (radiusY * 2);
     angleY += turnY;
     angleX += turnX;
     // Per frame at 60Hz, like the speeds, and smoothed over the last few moves.

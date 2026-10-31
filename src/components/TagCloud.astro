@@ -114,14 +114,13 @@ const tags = (await getTerms("tags")).filter(
 // still, which left the rarest tags as a target too small to put a pointer on. The floor of that
 // depth scale was raised in src/scripts/tag-cloud.ts at the same time, and the anchors carry a
 // little padding, so the area that answers a click is larger than the letters in it.
-const sizes = [
-  "text-base",
-  "text-lg",
-  "text-xl",
-  "text-2xl",
-  "text-3xl",
-  "text-4xl",
-];
+// Changed 2026-10-31: text-3xl and text-4xl are gone, so the scale ends at text-2xl. The cloud is
+// shown on phones only, and at 36px the colleague's new tags were wider than the block ("Чистки
+// Помещений" 345px on 269px): the script then shrank every word, the rarest to some 7px, and still
+// had no room to spread them. Measured on the built home page in headless Edge, the share of the
+// words' area lying under another word: 333px wide 96% before, 20% with the taller globe alone,
+// 17% with this as well; 600px 56%, 25%, 9%.
+const sizes = ["text-base", "text-lg", "text-xl", "text-2xl"];
 
 const counts = tags.map((tag) => tag.cards.length);
 const least = Math.log(Math.min(...counts));
@@ -271,7 +270,12 @@ const motionOf = (name: string, step: number): Motion => {
      and stops it eating the page on a small one. */
   .tag-cloud--sphere {
     position: relative;
-    height: clamp(17rem, 34vw, 23rem);
+    /* height: clamp(17rem, 34vw, 23rem); */
+    /* Changed 2026-10-31 at the colleague's request: the words ran together into one knot on a
+       phone. The old height was its 17rem floor on every phone (34vw is less), 272px; this is
+       24rem to 28rem, following the width. The script spreads the words over this height
+       (radiusY in src/scripts/tag-cloud.ts), so a taller block is what separates them. */
+    height: clamp(24rem, 110vw, 28rem);
   }
 
   .tag-cloud--sphere .tag-cloud__sky {
