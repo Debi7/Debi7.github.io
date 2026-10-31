@@ -36,8 +36,23 @@ const initials = site.title
   a hamburger and there is nothing to squeeze, so the padding stays as it was; from 1024px the
   row fits with room to spare and the header is again what Hugo renders. */
 }
+{
+  /* xl:max-w-none added 2026-10-31 at the colleague's request: on a desktop screen the logo goes
+  to the left edge of the window and the menu, search, theme and sign-in to the right, instead of
+  both groups sitting in a 1024px column in the middle. The row already spreads its two groups
+  apart (justify-between below), so lifting the cap is the whole change. Below 1280px nothing
+  moves: the colleague found the centred bar right on a tablet, and up to that width the 1024px
+  cap is close to the window anyway. The side padding stays px-6. */
+}
+{
+  /* Changed the same day from xl:max-w-none to lg:max-w-none at the owner's word: from 1024px to
+  1279px the bar still sat in its centred column, and at 1280px it jumped to the edges. The cap
+  only ever acted from 1024px (below that the window is narrower than it), so lifting it there
+  leaves a tablet exactly as it was and gives every wider window the same 24px from the edges,
+  with no jump. */
+}
 <div
-  class="mx-auto w-full max-w-5xl overflow-x-auto px-6 sm:overflow-visible sm:px-3 lg:px-6"
+  class="mx-auto w-full max-w-5xl overflow-x-auto px-6 sm:overflow-visible sm:px-3 lg:max-w-none lg:px-6"
 >
   <div class="flex items-center justify-between py-3">
     {
