@@ -96,12 +96,24 @@ const helpText = "Нажмите на категорию, чтобы раскр�
             {/* Changed 2026-09-30, from a Tailwind 3.4 audit the owner ordered: a keyboard focus
             ring beside the theme's focus:outline-none (Outline Style, "Removing outlines"). Inset,
             because the card around the button is overflow-hidden and would clip an outer ring. */}
+            {/* Changed 2026-10-31, reported by the colleague on a phone: gap-2 keeps a wrapped
+            title and its count off the chevron, which they touched once the name took two lines. gap-2, not
+            more: at a 320px viewport the row is exactly full with it (measured 2026-10-31). */}
             <button
-              class="category-toggle flex w-full items-center justify-between px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+              class="category-toggle flex w-full items-center justify-between gap-2 px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
               data-target={`category-${key}`}
             >
               <div class="flex items-center">
-                <span class="font-medium text-gray-800">{category.title}</span>
+                {/* Changed 2026-10-31, same report: category-title is the hook for fitTitles() in
+                the script at the bottom of this file, which narrows a wrapped title to its
+                longest line so the count stands next to the text, centred on it. The longer class
+                list no longer fits one line, and Prettier would move the title onto its own,
+                leaving whitespace text nodes around it; set:text escapes like a child does and
+                keeps the span's content exactly the title, as it was. */}
+                <span
+                  class="category-title font-medium text-gray-800"
+                  set:text={category.title}
+                />
                 {/* The count goes in with set:html so that the badge contains exactly
                 "1" and no surrounding whitespace, as Hugo's minified output does. Written
                 as a normal child, Astro keeps Prettier's newlines as text nodes; CSS then
@@ -112,8 +124,11 @@ const helpText = "Нажмите на категорию, чтобы раскр�
                   set:html={String(category.cards.length)}
                 />
               </div>
+              {/* Changed 2026-10-31, same report: shrink-0. Measured on a card 178px wide, the
+              row squeezed the chevron to a width of 0 - it vanished - once the title and the badge
+              filled it; an svg is not a replaced element, so flex lets it shrink below w-5. */}
               <svg
-                class="category-icon h-5 w-5 transform text-gray-500 transition-transform duration-200"
+                class="category-icon h-5 w-5 shrink-0 transform text-gray-500 transition-transform duration-200"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -187,6 +202,34 @@ const helpText = "Нажмите на категорию, чтобы раскр�
 
   <!-- Accordion script -->
   <script is:inline>
+    // Added 2026-10-31, reported by the colleague on a phone: a title that wraps
+    // ("Обучающие Видео") takes the full free width of its flex row, because CSS sizes a
+    // wrapped block to the space it has, not to its longest line, and that pushed the count
+    // badge against the chevron. No CSS shrinks a wrapped block to its longest line, so this
+    // measures the lines and sets that width; the row's items-center then centres the badge
+    // on the two lines, ml-2 from the text. A one-line title is left untouched, so the
+    // desktop page is unchanged. It runs from a ResizeObserver, whose first call comes before
+    // the first paint, and again once the web fonts have loaded and the lines have moved.
+    // Without JavaScript the badge sits at the right edge, kept off the chevron by gap-2.
+    function fitTitles() {
+      document.querySelectorAll(".category-title").forEach((title) => {
+        title.style.width = "";
+        const range = document.createRange();
+        range.selectNodeContents(title);
+        const rects = [...range.getClientRects()].filter((r) => r.width > 0);
+        if (new Set(rects.map((r) => Math.round(r.top))).size < 2) return;
+        const left = Math.min(...rects.map((r) => r.left));
+        const right = Math.max(...rects.map((r) => r.right));
+        // Rounded up: a box a fraction narrower than the line would break it once more.
+        title.style.width = Math.ceil(right - left) + "px";
+      });
+    }
+    const fitObserver = new ResizeObserver(fitTitles);
+    document
+      .querySelectorAll(".category-toggle")
+      .forEach((toggle) => fitObserver.observe(toggle));
+    document.fonts.ready.then(fitTitles);
+
     document.addEventListener("DOMContentLoaded", function () {
       const toggles = document.querySelectorAll(".category-toggle");
 
