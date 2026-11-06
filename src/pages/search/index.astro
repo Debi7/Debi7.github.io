@@ -135,7 +135,7 @@ const tags = (await getTerms("tags")).sort(
           appears only after the first query is a filter nobody finds. */
         }
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title">Раздел</summary>
+          <summary class="search-facet__title">Страница</summary>
           <ul class="search-facet__list">
             {
               Object.values(site.searchSections).map((label) => (
@@ -163,7 +163,7 @@ const tags = (await getTerms("tags")).sort(
         </details>
 
         <details class="search-facet" data-facet-section open>
-          <summary class="search-facet__title">Категория</summary>
+          <summary class="search-facet__title">Раздел</summary>
           <ul class="search-facet__list">
             {
               categories.map((term) => (
