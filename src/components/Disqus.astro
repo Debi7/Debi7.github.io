@@ -73,24 +73,23 @@ const { shortname } = site.disqus;
 </div>
 
 {
-  /* Changed 2026-11-06, after the colleague could not see what she typed into the guest form's
-  name, email and password fields in the dark theme. Disqus picks its colour scheme once, when it
-  loads, from the text colour of this element: light text gives its dark scheme. Measured inside
-  the Disqus frame in headless Edge: in that scheme the three fields keep a white background
-  (rgb(255, 255, 255)) while their text turns light, so typed text is white on white. The frame
-  is Disqus's own page on another domain, so no CSS of this site can reach the fields; the only
-  thing the site decides is which scheme Disqus picks. The thread therefore sits on a light card
-  with dark text in both themes, and Disqus always uses its light scheme, whose fields are
-  readable. The colours are arbitrary values, not bg-white or text-gray-800, because the dark
-  theme repaints those classes (custom.css, main.css); #fafaf9 and #e7e5e4 are the light theme's
-  panel and border, rgb(31, 41, 55) its text. Disqus still takes the page's lighter link colour
-  as its accent in the dark theme, which stays readable on the card; colouring the links inside
-  this element did not change it, so nothing here tries to. A theme switch after the comments
-  have loaded needs nothing either: the card looks the same in both themes. */
+  /* Changed 2026-11-06: [color-scheme:light], after the colleague could not see what she typed
+  into the name, email and password fields of the Disqus guest form in the dark theme. Measured
+  inside the Disqus frame in headless Edge with the CSS rules that colour the name field: Disqus
+  paints the field white in both of its schemes (".dark .input--text { background: #fff }") and
+  leaves its text colour to the browser ("color: fieldtext"). fieldtext follows the colour scheme
+  of the frame's page, and the browser hands that page the colour scheme of the iframe element
+  here: in the dark theme the site sets color-scheme: dark (Head.astro), the frame's page became
+  dark too, and fieldtext turned white - white text on a white field. This element, and the frame
+  inside it, now always has the light colour scheme, so fieldtext is dark on the white field.
+  Disqus still picks its dark look from this element's light text colour, so the comments keep
+  following the site's theme; only the browser's default colours inside the frame stay light.
+  A light card with dark text was tried first the same day and taken back at the owner's word:
+  the comments must look like the theme around them. */
 }
 <div
   id="disqus_thread"
-  class="mt-10 hidden w-full rounded-lg border border-[#e7e5e4] bg-[#fafaf9] px-4 py-6 text-[#1f2937] md:px-6"
+  class="mt-10 hidden w-full [color-scheme:light]"
   data-disqus-url={url}
   data-disqus-identifier={identifier}
   data-disqus-shortname={shortname}

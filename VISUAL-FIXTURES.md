@@ -258,35 +258,49 @@ white, and the typed text was white as well.
 
 ### Why it happened
 
-Disqus has a light and a dark colour scheme. It picks one of them once, when it loads, by looking at the colour of
-the text in the element of our page that holds it. In the dark theme that text is light, so Disqus picked its dark
-scheme. A measurement inside the Disqus frame in headless Edge showed what the dark scheme does: it makes the text of
-those three fields light but leaves their background white. This is a fault in Disqus itself. The frame is a page on
-the domain of Disqus, and the browser does not let the styles of our site reach into it, so our site cannot recolour
-the fields. The one thing our site decides is which of the two schemes Disqus picks.
+Two colours meet in each of these fields, and they come from two different places.
+
+The background comes from Disqus. Its stylesheet paints the fields white in both of its looks, the light one and the
+dark one. This was read inside the Disqus frame in headless Edge, together with the CSS rules that apply to the name
+field.
+
+The text colour comes from the browser. Disqus does not set a text colour for these fields, so the browser uses its
+own default colour for text in a form field. That default depends on the colour scheme of the page the field is on: it
+is black in a light page and white in a dark page. The colour scheme is a setting that tells the browser whether a
+page is light or dark, so that the browser can draw its own controls to match.
+
+The page in the frame took its colour scheme from our page. In the dark theme our site declares the dark colour scheme
+for the whole page (in `src/components/Head.astro`), and the browser passes that setting on to a page shown inside a
+frame. The Disqus page therefore counted as dark, and the browser's default text colour in the fields became white,
+on the white background that Disqus had painted.
+
+The browser does not let the styles of our site reach the fields inside the frame, because the frame is a page on the
+domain of Disqus. But our site does decide which colour scheme it passes on to the frame.
 
 ### What was changed
 
-The element that holds the comments is now a light card with dark text in both themes. The card uses the background,
-the border and the text colour of the light theme's panels. Because the text is dark, Disqus always picks its light
-scheme, and in that scheme the fields have a white background and dark text. In the light theme the comments look as
-they did before. In the dark theme the comments now stand on a light card inside the dark page. Switching the theme
-after the comments have loaded needs nothing extra, because the card does not change with the theme.
+The element that holds the comments now declares the light colour scheme in both themes, and the frame inside it
+takes that setting. The browser's default text colour in the Disqus fields is therefore black in both themes, on the
+white background that Disqus paints. Nothing else changes. Disqus still chooses its dark look in the dark theme,
+because it decides that from the colour of the text around it, and that colour is still light. So the comments keep
+following the site's theme, and only the text inside the white fields becomes dark.
 
-The colours are written as exact values, such as `bg-[#fafaf9]`, and not as the usual classes `bg-white` or
-`text-gray-800`. The reason is that the site's dark theme repaints those usual classes.
+A first attempt the same day put the comments on a light card with dark text in both themes. It made the fields
+readable, but in the dark theme it showed a light block inside a dark page. The owner asked for the comments to match
+the theme, so that card was removed and replaced by the change above.
 
 ### Where
 
-- `src/components/Disqus.astro`: the classes on the element `#disqus_thread`, with the reason in a comment above it.
+- `src/components/Disqus.astro`: the class `[color-scheme:light]` on the element `#disqus_thread`, with the reason
+  in a comment above it.
 - `DISQUS-FIX.md`, section 11, and `README.md`.
 
 ### How to check
 
 Open a post, switch to the dark theme, press "Показать комментарии", click into the comment box and type into the
-name field. The typed text is dark on white and can be read. The measurement in headless Edge gave the same result in
-both themes: the card's text is rgb(31, 41, 55) on rgb(250, 250, 249), Disqus no longer marks its page as dark, and
-the text in its comment box is dark.
+name field. The comments look dark as before, and the typed text is black on the white field. The measurement in
+headless Edge typed into the name field in both themes: the text was rgb(0, 0, 0) on rgb(255, 255, 255) in each,
+where before the fix it was rgb(255, 255, 255) on rgb(255, 255, 255) in the dark theme.
 
 ### Other reasons comments can fail for some visitors
 

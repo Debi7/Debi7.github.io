@@ -469,9 +469,11 @@ explanation of the narrowing still holds.
 
 ## 11. The comment card, 2026-11-06
 
-In the dark theme Disqus read the light text colour of `#disqus_thread` and picked its dark scheme. In that scheme
-Disqus leaves the name, email and password fields of the guest form white while their text turns light, so typed text
-could not be seen. The frame is on the domain of Disqus and cannot be styled from this site. `#disqus_thread` is now a
-light card with dark text in both themes, so Disqus always picks its light scheme. The full account is in
+In the dark theme the text typed into the name, email and password fields of the guest form was white on white.
+Disqus paints those fields white in both of its looks and leaves their text colour to the browser (`fieldtext`), and
+the browser chose white because the page in the frame took the dark colour scheme from this site. `#disqus_thread`
+now carries `[color-scheme:light]`, so the frame always gets the light colour scheme and the typed text is black.
+Disqus still takes its dark look from the light text around it, so the comments keep following the theme. A light
+card tried first the same day was taken back at the owner's word. The full account is in
 [VISUAL-FIXTURES.md](VISUAL-FIXTURES.md), section 6, and the reasoning is in a comment above the element in
 `src/components/Disqus.astro`.
