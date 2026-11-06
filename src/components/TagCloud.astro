@@ -196,13 +196,13 @@ const motionOf = (name: string, step: number): Motion => {
 }
 {
   tags.length > 0 && (
-    // <nav
-    //   aria-label="Теги"
-    //   class="tag-cloud mx-auto block max-w-3xl px-4 pt-10 sm:hidden"
-    // >
+    // Changed 2026-11-06 at the owner's word: back to `block` from the `hidden` of a8c0b26, and
+    // the commented-out copy of this tag that came with it is gone. The cloud is switched off in
+    // src/pages/index.astro instead: hidden here, it was still in the page and its script still
+    // turned the sphere on phones, every frame, for nobody.
     <nav
       aria-label="Теги"
-      class="tag-cloud mx-auto hidden max-w-3xl px-4 pt-10 sm:hidden"
+      class="tag-cloud mx-auto block max-w-3xl px-4 pt-10 sm:hidden"
     >
       <div class="tag-cloud__sky flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
         {tags.map((tag) => {

@@ -317,6 +317,9 @@ split the entries between two pages.
 
 ### The tag cloud on the home page
 
+Switched off on 2026-11-06: the home page shows no cloud (README.md, "The tag cloud under the carousel"). What
+follows describes it for the day it is switched back on.
+
 Under the carousel on the home page stands a cloud of tags. There is no list of words to keep: the cloud is built
 from the tags of the published entries, every time the site is built.
 
