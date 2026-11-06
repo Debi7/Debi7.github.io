@@ -180,6 +180,9 @@ function parseFrontMatter(text, file, problems) {
     draft: scalar("draft") === "true",
     tags: list("tags").map((t) => t.toLowerCase()),
     categories: list("categories"),
+    // Added 2026-11-06 for the open lectures list (/video/open/): a video's `access`, "public"
+    // unless it says "paid", as the schema's default in src/content/config.ts. A post has none.
+    access: scalar("access") === "paid" ? "paid" : "public",
   };
 }
 
@@ -541,6 +544,13 @@ function checkBuild(root, { now = Date.now(), quiet = false } = {}) {
   }
   pages += checkListByYear("/video/", videos, "video year");
   log(`video: ${videoYears.size} years - checked`);
+  // Added 2026-11-06: the open lectures, the Video list without the paid entries, under
+  // /video/open/ (src/pages/video/open/[...page].astro, isOpenLecture() in src/lib/video.ts).
+  const openLectures = videos.filter((v) => v.access === "public");
+  pages += checkListByYear("/video/open/", openLectures, "open lecture year");
+  log(
+    `open lectures: ${openLectures.length} of ${videos.length} videos - checked`,
+  );
 
   // Nothing unpublished shows up, and every published post has its page.
   const publishedSlugs = new Set(published.map((p) => p.slug));

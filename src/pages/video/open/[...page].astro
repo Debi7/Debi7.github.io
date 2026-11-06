@@ -1,0 +1,45 @@
+---
+// The open lectures: /video/open/, /video/open/<year>/ and /video/open/<year>/page/<n>/. Added
+// 2026-11-06 at the client's request, relayed by the colleague and the owner: a button on the
+// home page on phones, "Открытые лекции", leads here. An open lecture is a video whose `access`
+// is "public", the default of the schema (src/content/config.ts); the paid ones, which only a
+// member can watch, are left out. Tags play no part in it.
+//
+// The list is the Video list (../[...video].astro) over fewer entries: the same videoCard(), the
+// same paginateByYear() and the same CardList.astro, so the cards, the year switcher and the
+// pages look and behave exactly as there. The address comes from openLecturesUrl in
+// lib/video.ts, which the home page's button uses too.
+//
+// Routing: /video/[slug].astro also matches one segment after /video/, but Astro 4 ranks a route
+// with more path segments first, and a static segment before a parameter ("Route Priority
+// Order" in the Astro 4.16 routing guide), so /video/open/ is built here. A video named "open"
+// would still collide - see the note at openLecturesUrl.
+import type { InferGetStaticPropsType } from "astro";
+import Base from "../../../layouts/Base.astro";
+import CardList from "../../../components/CardList.astro";
+import {
+  getVideos,
+  isOpenLecture,
+  openLecturesUrl,
+  videoCard,
+} from "../../../lib/video";
+import { paginateByYear } from "../../../lib/lists";
+
+const title = "Открытые лекции";
+
+export async function getStaticPaths() {
+  const open = (await getVideos()).filter(isOpenLecture);
+  return paginateByYear(open.map(videoCard), openLecturesUrl).map((entry) => ({
+    params: { page: entry.param },
+    props: entry,
+  }));
+}
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { page, years, year } = Astro.props;
+---
+
+<Base title={title}>
+  <CardList title={title} page={page} years={years} currentYear={year} />
+</Base>

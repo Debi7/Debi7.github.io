@@ -4,6 +4,8 @@ import Carousel from "../components/Carousel.astro";
 // Commented out 2026-11-06 with the tag cloud below; restore both lines together.
 // import TagCloud from "../components/TagCloud.astro";
 import { site } from "../config";
+// Added 2026-11-06 for the "Открытые лекции" button below.
+import { openLecturesUrl } from "../lib/video";
 ---
 
 <Base>
@@ -32,6 +34,90 @@ import { site } from "../config";
     is kept, and uncommenting this line and the import brings the cloud back as it was.
     <TagCloud /> */
   }
+
+  {
+    /* Added 2026-11-06 at the client's request, relayed by the colleague and the owner: two
+    buttons where the tag cloud stood, on phones only - sm:hidden, the cloud's own breakpoint,
+    since from 640px up the row of menu links further down does this job.
+
+    The first does what the sign-in icon in the header does (AuthButton.astro): a guest goes to
+    the sign-in page, and a member, whom the header shows the account icon, gets "Личный
+    кабинет" and the account page instead. The two links swap on the kb-member class that the
+    inline block at the top of Base.astro sets before the first paint, through the same
+    arbitrary variant the header's icons use, so the right one is there from the first frame and
+    no script is needed here; the header's script keeps the class in step afterwards.
+
+    The second leads to the open lectures, /video/open/ (openLecturesUrl in lib/video.ts).
+
+    The look is the site's own button - rounded bg-blue-600 px-4 py-2 text-white with
+    hover:opacity-90, as in ContactModal.astro and PaidVideo.astro - for the first, and the same
+    shape outlined in the colours of the menu row below for the second, so the two read as one
+    pair with a main action. */
+  }
+  <div class="mx-auto flex max-w-xs flex-col gap-3 px-4 sm:hidden">
+    <a
+      href={site.auth.signIn}
+      class="flex items-center justify-center gap-2 rounded bg-blue-600 px-4 py-2.5 text-white transition-opacity hover:opacity-90 [.kb-member_&]:hidden"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="h-5 w-5"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+        ></path>
+      </svg>
+      Войти
+    </a>
+    <a
+      href={site.auth.account}
+      class="hidden items-center justify-center gap-2 rounded bg-blue-600 px-4 py-2.5 text-white transition-opacity hover:opacity-90 [.kb-member_&]:flex"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-5 w-5"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"></path>
+      </svg>
+      Личный кабинет
+    </a>
+    <a
+      href={openLecturesUrl}
+      class="flex items-center justify-center gap-2 rounded border border-blue-600 px-4 py-2.5 text-blue-700 transition-colors hover:bg-blue-50 dark:border-blue-300 dark:text-blue-300 dark:hover:bg-slate-700/50"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="h-5 w-5"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
+        ></path>
+      </svg>
+      Открытые лекции
+    </a>
+  </div>
 
   <div class="mx-auto max-w-3xl px-4 py-8 text-center md:py-12">
     {
