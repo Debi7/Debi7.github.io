@@ -72,9 +72,25 @@ const { shortname } = site.disqus;
   </button>
 </div>
 
+{
+  /* Changed 2026-11-06, after the colleague could not see what she typed into the guest form's
+  name, email and password fields in the dark theme. Disqus picks its colour scheme once, when it
+  loads, from the text colour of this element: light text gives its dark scheme. Measured inside
+  the Disqus frame in headless Edge: in that scheme the three fields keep a white background
+  (rgb(255, 255, 255)) while their text turns light, so typed text is white on white. The frame
+  is Disqus's own page on another domain, so no CSS of this site can reach the fields; the only
+  thing the site decides is which scheme Disqus picks. The thread therefore sits on a light card
+  with dark text in both themes, and Disqus always uses its light scheme, whose fields are
+  readable. The colours are arbitrary values, not bg-white or text-gray-800, because the dark
+  theme repaints those classes (custom.css, main.css); #fafaf9 and #e7e5e4 are the light theme's
+  panel and border, rgb(31, 41, 55) its text. Disqus still takes the page's lighter link colour
+  as its accent in the dark theme, which stays readable on the card; colouring the links inside
+  this element did not change it, so nothing here tries to. A theme switch after the comments
+  have loaded needs nothing either: the card looks the same in both themes. */
+}
 <div
   id="disqus_thread"
-  class="mt-10 hidden w-full"
+  class="mt-10 hidden w-full rounded-lg border border-[#e7e5e4] bg-[#fafaf9] px-4 py-6 text-[#1f2937] md:px-6"
   data-disqus-url={url}
   data-disqus-identifier={identifier}
   data-disqus-shortname={shortname}

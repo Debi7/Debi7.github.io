@@ -466,3 +466,12 @@ that attribute list.
 The callback is `function (this: DisqusPageConfig)` and `astro check` reports no errors, which means a typo in
 `this.page.identifier` is now a build failure rather than a thread that quietly loads empty. Section 2.3's
 explanation of the narrowing still holds.
+
+## 11. The comment card, 2026-11-06
+
+In the dark theme Disqus read the light text colour of `#disqus_thread` and picked its dark scheme. In that scheme
+Disqus leaves the name, email and password fields of the guest form white while their text turns light, so typed text
+could not be seen. The frame is on the domain of Disqus and cannot be styled from this site. `#disqus_thread` is now a
+light card with dark text in both themes, so Disqus always picks its light scheme. The full account is in
+[VISUAL-FIXTURES.md](VISUAL-FIXTURES.md), section 6, and the reasoning is in a comment above the element in
+`src/components/Disqus.astro`.

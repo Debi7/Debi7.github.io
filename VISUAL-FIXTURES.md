@@ -1,6 +1,6 @@
 # Changes on the branch visual-fixtures, 31.10.2026 to 06.11.2026
 
-This file describes five changes that were made on the branch `visual-fixtures` between 31 October and
+This file describes six changes that were made on the branch `visual-fixtures` between 31 October and
 6 November 2026. For each change it says what was wrong or what was asked for, why it happened, what was changed and
 in which files, how to check the result, and how to undo it where undoing is likely to be wanted.
 
@@ -9,7 +9,7 @@ changes reaches the live site until the colleague merges `visual-fixtures` into 
 the changes of this branch into `main`. Until then the changes can be seen on the owner's computer with
 `npm run dev`, at <http://localhost:4321/>.
 
-The five changes, in the order they were made:
+The six changes, in the order they were made:
 
 1. [The count beside a category name](#1-the-count-beside-a-category-name) stays next to the name when the name wraps.
 2. [The tag cloud is switched off](#2-the-tag-cloud-is-switched-off) on the home page.
@@ -18,6 +18,7 @@ The five changes, in the order they were made:
    edit such posts again.
 5. [Two buttons on the home page and the open lectures](#5-two-buttons-on-the-home-page-and-the-open-lectures):
    the buttons show on phones, and the second leads to a new page of open lectures.
+6. [The comment form in the dark theme](#6-the-comment-form-in-the-dark-theme) is readable again.
 
 Each section ends with the commit that holds the change. A commit is one saved step in git; its short code, such as
 `586efc4`, can be looked up with `git show 586efc4`.
@@ -245,3 +246,53 @@ at a width of 390 pixels in the light and the dark theme; the signed-in state wa
 same mark as the header's icon.
 
 Commit `18c1428`.
+
+## 6. The comment form in the dark theme
+
+### What was wrong
+
+The comments under a post and under a video come from Disqus, an outside service. Disqus shows its block as a small
+web page of its own inside a frame on our page. The colleague, and other people too, could not see what they typed
+into the name, email and password fields of the comment form when the site was in the dark theme: the fields were
+white, and the typed text was white as well.
+
+### Why it happened
+
+Disqus has a light and a dark colour scheme. It picks one of them once, when it loads, by looking at the colour of
+the text in the element of our page that holds it. In the dark theme that text is light, so Disqus picked its dark
+scheme. A measurement inside the Disqus frame in headless Edge showed what the dark scheme does: it makes the text of
+those three fields light but leaves their background white. This is a fault in Disqus itself. The frame is a page on
+the domain of Disqus, and the browser does not let the styles of our site reach into it, so our site cannot recolour
+the fields. The one thing our site decides is which of the two schemes Disqus picks.
+
+### What was changed
+
+The element that holds the comments is now a light card with dark text in both themes. The card uses the background,
+the border and the text colour of the light theme's panels. Because the text is dark, Disqus always picks its light
+scheme, and in that scheme the fields have a white background and dark text. In the light theme the comments look as
+they did before. In the dark theme the comments now stand on a light card inside the dark page. Switching the theme
+after the comments have loaded needs nothing extra, because the card does not change with the theme.
+
+The colours are written as exact values, such as `bg-[#fafaf9]`, and not as the usual classes `bg-white` or
+`text-gray-800`. The reason is that the site's dark theme repaints those usual classes.
+
+### Where
+
+- `src/components/Disqus.astro`: the classes on the element `#disqus_thread`, with the reason in a comment above it.
+- `DISQUS-FIX.md`, section 11, and `README.md`.
+
+### How to check
+
+Open a post, switch to the dark theme, press "Показать комментарии", click into the comment box and type into the
+name field. The typed text is dark on white and can be read. The measurement in headless Edge gave the same result in
+both themes: the card's text is rgb(31, 41, 55) on rgb(250, 250, 249), Disqus no longer marks its page as dark, and
+the text in its comment box is dark.
+
+### Other reasons comments can fail for some visitors
+
+The following causes are not faults of the site, but they can explain reports from other people. Some browsers treat
+Disqus as a tracker and block its storage: Edge printed such warnings during the test, and Safari and Firefox in their
+strict mode do the same. In such a browser, signing in to Disqus may not last, and sending a comment can fail. Ad
+blockers often block Disqus completely, and then the comment block does not appear at all. Finally, Disqus can hold a
+comment for moderation or as possible spam. Such a comment seems to vanish until a moderator approves it in the
+Disqus admin.
