@@ -18,7 +18,8 @@ import { fileURLToPath } from "node:url";
 import worker from "../workers/content-admin/worker.mjs";
 import { gitHubStandIn } from "./github-stand-in.mjs";
 
-const port = 8789;
+// Changed 2026-11-06 at the owner's word: 7789, was 8789 - the local services moved below 8000.
+const port = 7789;
 const root = fileURLToPath(new URL("..", import.meta.url));
 const config = readFileSync(
   new URL("../src/config.ts", import.meta.url),

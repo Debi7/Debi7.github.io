@@ -12,7 +12,7 @@ root of the repository (section 5.2 is the deployment, step by step).
   Added 2026-09-30: a value may also be `{"yandexDisk": "https://disk.yandex.ru/i/<key>"}`, the public link of a
   lecture on Yandex Disk; the service then answers a short-lived file address (`PAID-VIDEO.md` section 10).
 - `npm run check:video-access` tests the file without a network; `npm run video-access:dev` runs it on this machine
-  at `http://127.0.0.1:8787`.
+  at `http://127.0.0.1:7787`.
 - `CLOUDFLARE.md` at the root of the repository: why Cloudflare, registering the account, the costs and the
   alternatives (added 2026-09-28).
 - `npm run dev:all` runs it together with the dev server, in one terminal; this is how to start the site for any

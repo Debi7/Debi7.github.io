@@ -23,7 +23,8 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import worker from "../workers/statuses/worker.mjs";
 import { readSecret, secretFile } from "./statuses-secret.mjs";
 
-const port = 8790;
+// Changed 2026-11-06 at the owner's word: 7790, was 8790 - the local services moved below 8000.
+const port = 7790;
 const config = readFileSync(
   new URL("../src/config.ts", import.meta.url),
   "utf8",

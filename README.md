@@ -20,7 +20,7 @@ npm run check:pages          # after a build: every paginated list in dist/ (PAG
 npm run check:pages:stress   # a temporary copy with 159 generated posts, built and checked twice
 ```
 
-**Working on videos: start the site with `npm run dev:all`, not `npm run dev`.** Added 2026-09-28. `dev:all` starts the dev server and, next to it, the access service of paid videos on `http://127.0.0.1:8787` (`scripts/dev-all.mjs`). With plain `npm run dev` nothing answers a paid video's page, so a signed-in visitor gets "Видео сейчас недоступно" there (a guest still sees the sign-in box); public videos and the rest of the site work either way. Ctrl+C stops both; `PAID-VIDEO.md` section 3 has the details.
+**Working on videos: start the site with `npm run dev:all`, not `npm run dev`.** Added 2026-09-28. `dev:all` starts the dev server and, next to it, the access service of paid videos on `http://127.0.0.1:7787` (`scripts/dev-all.mjs`). With plain `npm run dev` nothing answers a paid video's page, so a signed-in visitor gets "Видео сейчас недоступно" there (a guest still sees the sign-in box); public videos and the rest of the site work either way. Ctrl+C stops both; `PAID-VIDEO.md` section 3 has the details.
 
 ## Skeleton status
 

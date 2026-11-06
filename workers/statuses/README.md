@@ -5,7 +5,7 @@
 does, its rules, its contract and its settings are in the header of `worker.mjs`; how to use it, set it up and test it
 is [ADMIN.md](../../ADMIN.md) (sections 1 to 5).
 
-- On this machine: `npm run statuses:dev` (or `npm run dev:all`), on http://127.0.0.1:8790, against the real Clerk
+- On this machine: `npm run statuses:dev` (or `npm run dev:all`), on http://127.0.0.1:7790, against the real Clerk
   instance, with the secret key and `ADMIN_IDS` from `settings.local.json` in this folder, which git ignores
   (ADMIN.md 4.2).
   Changed later on 2026-10-02: the secret key is no longer in `settings.local.json`, which keeps `ADMIN_IDS` only. It is

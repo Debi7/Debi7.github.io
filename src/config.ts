@@ -136,7 +136,8 @@ export const site = {
   // not.
   videoAccess: {
     endpoint: "",
-    devEndpoint: "http://127.0.0.1:8787",
+    // Changed 2026-11-06 at the owner's word: 7787, was 8787 (scripts/video-access-dev.mjs).
+    devEndpoint: "http://127.0.0.1:7787",
     playerHosts: ["www.youtube.com", "www.youtube-nocookie.com"],
     // Added 2026-09-30, with lectures on Yandex Disk: the only hosts a video file's address may
     // point to - the service answers such a slug with {"videoUrl"}, a direct address of the file
@@ -166,10 +167,12 @@ export const site = {
   // secret key (its header says why).
   admin: {
     endpoint: "",
-    devEndpoint: "http://127.0.0.1:8789",
+    // Changed 2026-11-06 at the owner's word: 7789, was 8789 (scripts/content-admin-dev.mjs).
+    devEndpoint: "http://127.0.0.1:7789",
     postsPage: "/admin/posts/",
     statusesEndpoint: "",
-    statusesDevEndpoint: "http://127.0.0.1:8790",
+    // Changed 2026-11-06 at the owner's word: 7790, was 8790 (scripts/statuses-dev.mjs).
+    statusesDevEndpoint: "http://127.0.0.1:7790",
     usersPage: "/admin/users/",
     statuses: [
       "guest",

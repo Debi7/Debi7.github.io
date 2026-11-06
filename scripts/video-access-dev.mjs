@@ -15,7 +15,8 @@ import { createServer } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
 import worker from "../workers/video-access/worker.mjs";
 
-const port = 8787;
+// Changed 2026-11-06 at the owner's word: 7787, was 8787 - the local services moved below 8000.
+const port = 7787;
 const config = readFileSync(
   new URL("../src/config.ts", import.meta.url),
   "utf8",

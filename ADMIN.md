@@ -151,7 +151,7 @@ On macOS or Linux there is no Windows encryption: set `CLERK_SECRET_KEY` in the 
 npm run dev:all
 ```
 
-It starts four things: the video service (port 8787), the content service (8789), the status service (8790) and the
+It starts four things: the video service (port 7787), the content service (7789), the status service (7790) and the
 site (4321). Among the lines it prints, the status service says
 `Clerk secret key: from the encrypted file (npm run statuses:key).`
 

@@ -79,11 +79,11 @@ of 2026-09-28, and is listed under Video like every lecture; on the live site, u
 `VIDEOS` carries its slug, a guest sees the sign-in box there and a signed-in visitor "Видео сейчас недоступно".
 
 1. Open a terminal in the project folder and run `npm run dev:all`. It starts the service at
-   `http://127.0.0.1:8787` and the site at `http://localhost:4321` together, in the same terminal. The service prints
+   `http://127.0.0.1:7787` and the site at `http://localhost:4321` together, in the same terminal. The service prints
    where it reads the video ids from, then one line per request (`POST /video 401`, `200`, ...).
 2. To stop, press Ctrl+C once. Both end; anything still running five seconds later is killed together with every
    process it started, so no port stays taken. A second Ctrl+C kills at once. If one of the two ends by itself - a
-   crash, or port 8787 taken by a service left running in another terminal - the other is stopped as well and the
+   crash, or port 7787 taken by a service left running in another terminal - the other is stopped as well and the
    terminal says which one ended and why.
 3. Arguments go to the site: `npm run dev:all -- --port 4387`. The local service accepts the ports 4321, 4387 and
    4388 only. The two can still be started separately, `npm run video-access:dev` in one terminal and `npm run dev`

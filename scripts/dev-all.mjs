@@ -132,7 +132,9 @@ for (const { name, child } of children) {
       exitCode = code ?? 1;
       stopAll(`${name} ended (${signal ?? `exit code ${code}`})`, false);
       // Added 2026-10-02: the same advice for the ports of the two admin services.
-      const adminPorts = { "content-admin": 8789, statuses: 8790 };
+      // Changed 2026-11-06 at the owner's word: 7789 and 7790, were 8789 and 8790 (below 8000);
+      // the comments higher in this file still name the old numbers.
+      const adminPorts = { "content-admin": 7789, statuses: 7790 };
       if (Object.hasOwn(adminPorts, name) && code !== 0) {
         const taken = adminPorts[name];
         console.log(
@@ -143,9 +145,10 @@ for (const { name, child } of children) {
       }
       if (name === "video-access" && code !== 0) {
         console.log(
-          "dev:all: if the lines above say EADDRINUSE, port 8787 is taken, usually by a dev:all or " +
-            "video-access:dev still running elsewhere. Find it with `netstat -ano | findstr :8787` " +
-            "(Windows) or `lsof -i :8787`, and end it.",
+          // Changed 2026-11-06: 7787, was 8787, as in video-access-dev.mjs.
+          "dev:all: if the lines above say EADDRINUSE, port 7787 is taken, usually by a dev:all or " +
+            "video-access:dev still running elsewhere. Find it with `netstat -ano | findstr :7787` " +
+            "(Windows) or `lsof -i :7787`, and end it.",
         );
       }
     }
