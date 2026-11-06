@@ -2,6 +2,8 @@
 
 Astro 4 + Tailwind 3 rewrite of the Hugo site in `../klub_biolocation`. The Hugo project stays untouched as the visual reference until this one reaches parity. The step-by-step plan is [MIGRATION-PLAN.md](MIGRATION-PLAN.md); read its "Progress" section, then §4.1, before starting a session.
 
+What changed on the branch `visual-fixtures` between 2026-10-31 and 2026-11-06 - the category badge, the tag cloud, the local service ports, the admin panel and tag lists, the home page buttons and the open lectures - is described with its reasons, its files and how to check it in [VISUAL-FIXTURES.md](VISUAL-FIXTURES.md).
+
 ## Requirements
 
 | Tool    | Version | Notes                                                |
