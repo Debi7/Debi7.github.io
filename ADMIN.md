@@ -290,6 +290,8 @@ reloads by itself, the services do not.
     site: Astro passes raw HTML into the page unchanged, and the pages share their origin with the sign-in pages;
   - an edit rewrites only the lines of the fields the panel shows, and only when their value changed; comments in the
     front matter and fields the panel does not show stay as they were. It adds or updates `lastmod`;
+  - a list written over several lines, as Prettier writes a long one (`tags:` alone, then `[`, an item a line, `]`),
+    is read too since 2026-11-06; an edit that changes the list writes it back on one line;
   - a post changed by someone else since it was opened is not overwritten (the panel says to reload), and the branch is
     never forced, so nothing anybody else committed is lost.
 - A status change writes, by Clerk's merge (Backend API `PATCH /users/{user_id}/metadata`, "a deep merge"), the keys
