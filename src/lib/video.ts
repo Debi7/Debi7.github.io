@@ -108,6 +108,17 @@ export function videoUrl(video: Video): string {
   return `/video/${video.slug}/`;
 }
 
+// Added 2026-11-06 with the open lectures list (src/pages/video/open/[...page].astro), which the
+// home page's button on phones leads to. The address lives here, next to videoUrl(), so the route
+// and the button cannot disagree on it. No video may be named "open" for the same reason no post
+// may be named after a year: its page would be /video/open/ too.
+export const openLecturesUrl = "/video/open/";
+
+/** Whether a video is open to everyone: `access` is "public" unless the entry says "paid". */
+export function isOpenLecture(video: Video): boolean {
+  return video.data.access === "public";
+}
+
 /** What the Video list shows of a video; the last line is the colleague's "Watch the video". */
 export function videoCard(video: Video): Card {
   return {

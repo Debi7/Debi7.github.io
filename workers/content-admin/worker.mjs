@@ -355,13 +355,32 @@ function yamlValue(value) {
 function parsePost(text) {
   const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(text);
   if (match === null) return undefined;
-  const lines = match[1].split("\n");
+  // Changed 2026-11-06: a value may go on over indented lines, as Prettier writes a long list -
+  // "tags:" alone, then "[", one tag a line and "]" further in (the colleague's posts of
+  // 2026-10-31, which the panel had marked not editable since). Such lines are joined to the
+  // key's line into one entry, with their line breaks, so the entries still give the file back
+  // as it was, and an edit still replaces the whole entry of a changed key (editedLines).
+  const lines = [];
+  for (const line of match[1].split("\n")) {
+    const last = lines.length - 1;
+    if (
+      /^[ \t]+[^\s#]/.test(line) &&
+      last >= 0 &&
+      /^[A-Za-z_]\w*:/.test(lines[last])
+    ) {
+      lines[last] += `\n${line}`;
+    } else {
+      lines.push(line);
+    }
+  }
   const values = {};
   let supported = true;
   for (const line of lines) {
     if (/^\s*(?:#.*)?$/.test(line)) continue;
-    const m = /^([A-Za-z_]\w*):[ \t]*(.*?)[ \t]*$/.exec(line);
-    const value = m === null ? undefined : scalar(m[2]);
+    // Changed 2026-11-06 with the joined entries above: `[\s\S]` so the value may span lines,
+    // and trim(), because such a value begins with the line break after "tags:".
+    const m = /^([A-Za-z_]\w*):[ \t]*([\s\S]*?)[ \t]*$/.exec(line);
+    const value = m === null ? undefined : scalar(m[2].trim());
     if (m === null || value === undefined || Object.hasOwn(values, m[1])) {
       supported = false;
       continue;
@@ -379,6 +398,10 @@ function scalar(raw) {
   if (raw === "false") return false;
   if (raw.startsWith('"') || raw.startsWith("[")) {
     try {
+      // Changed 2026-11-06: a list Prettier wrote over several lines ends its last item with a
+      // comma, which YAML allows and JSON does not, so that one comma before the closing bracket
+      // is dropped. A string broken over lines still fails here and stays not editable.
+      if (raw.startsWith("[")) return JSON.parse(raw.replace(/,\s*\]$/, "]"));
       return JSON.parse(raw);
     } catch {
       return undefined;

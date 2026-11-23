@@ -216,6 +216,8 @@ sentences are worth writing even for a lecture that speaks for itself.
 Nothing has to be registered anywhere. Once the file is in `src/content/video/` and the site is rebuilt, it is on:
 
 - `/video/`, and the year page for its date, `/video/2026/`;
+- `/video/open/`, the open lectures, unless it is paid (`access: paid`), with its year pages the same way (added
+  2026-11-06);
 - a numbered page of that year if the year holds more than five lectures (`/video/2026/page/2/`);
 - `/tags/<tag>/` and `/categories/<category>/` for every term it declares, beside the articles that share them;
 - `/video/rss.xml`, if it is among the newest twenty;
@@ -316,6 +318,9 @@ A term is a subject, not a place: prefer an existing one to a near-synonym, beca
 split the entries between two pages.
 
 ### The tag cloud on the home page
+
+Switched off on 2026-11-06: the home page shows no cloud (README.md, "The tag cloud under the carousel"). What
+follows describes it for the day it is switched back on.
 
 Under the carousel on the home page stands a cloud of tags. There is no list of words to keep: the cloud is built
 from the tags of the published entries, every time the site is built.

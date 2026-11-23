@@ -97,7 +97,7 @@ saved until every field is right. If the address is taken, the panel proposes a 
   here, on the live site they are not).
 - <http://localhost:4321/posts/> - the list, newest first.
 - <http://localhost:4321/search/> - search for a word from the post.
-- The tag and category pages it belongs to, and the tag cloud on the home page.
+- The tag and category pages it belongs to. (The tag cloud on the home page is switched off since 2026-11-06.)
 
 To change something, press **Изменить** in the list, correct, save again. To throw the post away before it was ever
 published, press **Удалить**.

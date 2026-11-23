@@ -711,6 +711,46 @@ check(
   before.filter((l) => l.startsWith("#")).every((l) => after.includes(l)),
 );
 check("the edited post passes the real schema", schemaAccepts(edited));
+
+// Added 2026-11-06 with the panel reading a list written over several lines (worker.mjs,
+// parsePost): an edit of such a list replaces the whole of it with one line, and keeps the rest.
+const multi = readdirSync(postsDir)
+  .map((name) => name.replace(/\.md$/, ""))
+  .find((slug) => /^tags:\s*\n[ \t]+\[/m.test(fileText(slug)));
+if (multi === undefined) {
+  check("a post with its tags over several lines exists to edit", false);
+} else {
+  const multiBefore = fileText(multi);
+  answer = await ask({ path: "/posts/get", body: { slug: multi } });
+  const multiGot = answer.json?.post;
+  answer = await ask({
+    path: "/posts/save",
+    body: {
+      slug: multi,
+      sha: multiGot.sha,
+      fields: {
+        ...multiGot.fields,
+        tags: [...multiGot.fields.tags, "проверка"],
+      },
+      body: multiGot.body,
+    },
+  });
+  const multiAfter = fileText(multi);
+  const outside = (text) =>
+    text
+      .replace(/^tags:[^\n]*(?:\n[ \t]+[^\n]*)*\n/m, "")
+      .replace(/^lastmod:[^\n]*\n/m, "");
+  check(
+    "an edit of tags written over several lines puts them on one line and keeps the rest",
+    answer.status === 200 &&
+      multiAfter.includes(
+        `tags: ${JSON.stringify([...multiGot.fields.tags, "проверка"]).replace(/","/g, '", "')}`,
+      ) &&
+      outside(multiAfter) === outside(multiBefore) &&
+      schemaAccepts(multiAfter),
+    multi,
+  );
+}
 check(
   "the stamped lastmod is in the post's own offset",
   /\+03:00"$/.test(lastmodLine),
