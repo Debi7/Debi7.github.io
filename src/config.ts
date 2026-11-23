@@ -10,12 +10,12 @@ const accountPath = "/auth/account/";
 
 export const site = {
   // title: "Radiesthesia Club",
-  title: "Клуб Биолокации",
+  title: "Биолокация для всех",
   language: "ru",
   social: {
     github: "https://github.com/Debi7",
     email: " ",
-    telegram: "https://t.me/+9V8l5AmTLso4MzAy",
+    telegram: "https://t.me/",
   },
 
   avatar: "/images/avatar.png",
@@ -27,7 +27,7 @@ export const site = {
   // the string. Changing it moves every thread on the site to another Disqus account, so it is not
   // a per-page choice; the per-page values are the url and the identifier the component takes as
   // props. See DISQUS-FIX.md.
-  disqus: { shortname: "biolocation-club" },
+  disqus: { shortname: "biolocation" },
 
   // Added 2026-09-19, asked for by the owner: how many posts one page of a list shows - on
   // /posts/, /tags/<tag>/ and /categories/<category>/. Hugo's default is 10; the owner chose 5.

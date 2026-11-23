@@ -11,7 +11,7 @@ The counter code is in `src/layouts/Base.astro` since the colleague's commit e01
 ### 1.1 The counter's name ("Имя счетчика")
 
 The name is only a label in the Metrika account; visitors never see it, and it changes nothing on the site.
-"Клуб Биолокации Radiesthesia Club" is fine. One name is enough as well, for example "Radiesthesia Club". If there is
+"Биолокациия для всех Radiesthesia Club" is fine. One name is enough as well, for example "Radiesthesia Club". If there is
 ever more than one counter, adding the address helps to tell them apart: "Radiesthesia Club (debi7.github.io)".
 
 ### 1.2 The code settings ("Настройки кода счетчика")

@@ -16,7 +16,6 @@ tags:
     "чакры и меридианы",
     "чистки помещений",
     "полтергейст",
-    "метод Меркулова",
   ]
 # Category renamed 2026-09-22 at the owner's request, from "education video". The Categories
 # page prints the term itself, and the site's terms are written in the language of the content,
