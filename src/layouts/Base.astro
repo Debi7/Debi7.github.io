@@ -123,7 +123,15 @@ const page: PageLike = {
       flashes for a guest; still presentation only. */
     }
 
-{import.meta.env.DEV && (
+    {
+      /* Changed 2026-11-23 at the owner's word: the Yandex Metrika counter runs on the live site
+      and under npm run dev alike. Commit 710f88b had put it inside an import.meta.env.DEV
+      condition, which left the live site without the counter (METRIKA.md, section 3.2). Out of
+      that expression the block is also plain JavaScript to Prettier again: inside it, Prettier
+      read the braces of the code as part of the expression, failed on this file and formatted
+      none of it. is:inline renders the code exactly as written (Astro 4, "Scripts and event
+      handling", "Opting out of processing"). */
+    }
     <script is:inline type="text/javascript">
       (function (m, e, t, r, i, k, a) {
         m[i] =
@@ -160,15 +168,15 @@ const page: PageLike = {
         trackLinks: true,
       });
     </script>
-    )}
-    <noscript><div>
+    <noscript
+      ><div>
         <img
           src="https://mc.yandex.ru/watch/113224698"
           style="position:absolute; left:-9999px;"
           alt=""
         />
-      </div></noscript>
-    
+      </div></noscript
+    >
 
     <script is:inline define:vars={{ flagKey: site.auth.flagKey }}>
       (function () {

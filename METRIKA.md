@@ -86,6 +86,11 @@ Load the counter only in the built site: the counter code in `Base.astro` goes i
 `import.meta.env.PROD`, which Astro sets for `astro build` and not for `astro dev`. Local work stops polluting the
 statistics. A local `npm run preview` of a build would still count, which is rare.
 
+Decided 2026-11-23 by the owner: not taken. The counter runs on the live site and under `npm run dev` alike, so local
+visits are counted too, as section 2 describes. Commit 710f88b (2026-10-01) had put the counter inside an
+`import.meta.env.DEV` condition, the opposite of this proposal, which left the live site without the counter; that
+condition is gone (README, "Yandex Metrika").
+
 ### 3.3 Goals (recommended)
 
 Metrika can count the actions that matter to the club as goals. Proposed:
